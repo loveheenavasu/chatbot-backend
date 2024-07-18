@@ -11,6 +11,7 @@ import { BearerToken, InvalidToken, ProvideToken } from "../../handler/error";
 config();
 import jwt from 'jsonwebtoken';
 import { Types } from "mongoose";
+import axios from "axios";
 const { NEO_URL, OPEN_API_KEY, NEO_USERNAME, NEO_PASSWORD } = process.env;
 
 const openai = new OpenAIEmbeddings({
@@ -27,11 +28,14 @@ export default class SocketService {
 
     static getData = async (token: any | undefined) => {
         try {
-            console.log("token----", token)
+            // console.log("token----", token)
             if (!token) {
                 // return res.status(400).send({ message: 'Provide token' });
-                // await Handler.handleCustomError(ProvideToken);
-                return;
+                let res = {
+                    type: "error",
+                    data: ProvideToken
+                }
+                return res;
             }
 
             let splitToken = token?.split(' ');
@@ -39,27 +43,38 @@ export default class SocketService {
             // if (splitToken[0] != 'Bearer') {
             //     await Handler.handleCustomError(BearerToken)
             // }
+            const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${splitToken[1]}`;
+            let response: any
             try {
-                // response = await axios.get(url);
-                let decodeToken: any = await jwt?.decode(splitToken[1]);
-                console.log("decodeToken----", decodeToken)
+                response = await axios.get(url);
+                // let decodeToken: any = await jwt?.decode(splitToken[1]);
                 // const currentTime = Math?.floor(Date.now() / 1000);
-                // console.log("currentTime----", currentTime);
-                // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
+                // // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
 
                 // if (decodeToken?.exp < currentTime) {
-                //     await Handler.handleCustomError(InvalidToken);
+                //     // await Handler.handleCustomError(InvalidToken);
+                //     await Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
+                //     let res = {
+                //         type: "error",
+                //         data:InvalidToken
+                //     }
+                //     return res;
                 // }
-                let query = { email: decodeToken?.email?.toLowerCase() }
+                const tokenInfo = response?.data;
+                console.log("tokenInfo=----,tokenInfo", tokenInfo)
+
+                let query = { email: tokenInfo?.email?.toLowerCase() }
                 let projection = { __v: 0, createdAt: 0, updatedAt: 0 }
                 let option = { lean: true }
                 let data: any = await Models.userModel.findOne(query, projection, option);
-                console.log("data----", data)
-                // data.socialToken = splitToken[1]
                 return data;
             } catch (err: any) {
-                console.error('Error fetching token info:', err?.response?.data || err.message);
                 await Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
+                let res = {
+                        type: "error",
+                        data:InvalidToken
+                    }
+                    return res;
                 // return res.status(400).send({ message: 'Invalid token' });
                 // await Handler.handleCustomError(InvalidToken);
             }
@@ -71,15 +86,15 @@ export default class SocketService {
     }
 
 
-    static searchInput = async (search: any, chatId: any, userId: Types.ObjectId | any, documentId:string) => {
+    static searchInput = async (search: any, chatId: any, userId: Types.ObjectId | any, documentId: string) => {
         try {
-            let dataToSave = {
-                message: search,
-                chatId: chatId,
-                userId: userId,
-                createdAt:moment().utc().valueOf(),
-            }
-            await Models.messageModel.create(dataToSave);
+            // let dataToSave = {
+            //     message: search,
+            //     chatId: chatId,
+            //     userId: userId,
+            //     createdAt: moment().utc().valueOf(),
+            // }
+            // await Models.messageModel.create(dataToSave);
             const embeddingVector = await openai.embedQuery(search);
 
             let config: any = {
@@ -89,7 +104,7 @@ export default class SocketService {
             };
 
             const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, config); // Initialize the vector store
-         
+
             // const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 6, search);
             // console.log("Search Result:", searchResult);
 
@@ -101,41 +116,54 @@ export default class SocketService {
             // console.log("")
             // let dbEmbed = data1[0]?.n?.embedding
 
-            const filter = { "id": { "$eq": documentId?.toString() } };
+            const filter = { "documentId": { "$eq": documentId?.toString() } };
             // const searchResult = await vectorStore.similaritySearchVectorWithScore(dbEmbed, 1, search);
-            
-            const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 1, search, { filter, filterType: 'exact' });
+
+
+            const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 2, "", { filter, filterType: 'exact' });
             console.log("searchResult----", searchResult);
-            
+
             let contents = searchResult.map((result: [Document, number]) => result[0].pageContent).join(" ");
             // console.log("contents----", contents)
 
-            
+
+
+            // const response = await open.chat.completions.create({
+            //     model: 'gpt-3.5-turbo-1106',
+            //     messages: [{ content: `${contents}\nQuery: ${search}\nAnswer:`, role: 'user' }],
+            //     max_tokens: 150,
+            //     stop: ['\n'],
+            // });
+            // console.log("response----", response)
 
             const response = await open.chat.completions.create({
-                model: 'gpt-3.5-turbo-1106', 
-                messages: [{ content: `${contents}\nQuery: ${search}\nAnswer:`, role: 'user' }],
+                model: 'gpt-3.5-turbo-1106', // Or another suitable model
+                messages: [
+                    { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
+                    { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` } // Adjusted content message
+                    // { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
+                    // { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer:` }
+                ],
                 max_tokens: 150,
                 stop: ['\n'],
             });
+
             console.log("response----", response)
 
 
-            let data = {
-                message: response.choices[0].message.content,
-                chatId: chatId,
-                // createdAt: moment().utc().valueOf(),
-            }
-            await Models.messageModel.create(data);
-             
+            // let data = {
+            //     message: response.choices[0].message.content,
+            //     chatId: chatId,
+            //     // createdAt: moment().utc().valueOf(),
+            // }
+            // await Models.messageModel.create(data);
+
             return response.choices[0].message.content;
-            // return refinedResponse;
 
         } catch (err) {
-            // throw err;
             console.log("error----", err)
             throw await Handler.handleCustomError(err);
         }
     }
-    
+
 }

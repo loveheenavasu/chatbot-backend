@@ -21,25 +21,27 @@ const authorization = async (req: express.Request | any, res: express.Response, 
         }
 
         let splitToken = token.split(' ');
-        // console.log("split token----", splitToken)
         if (splitToken[0] != 'Bearer') {
             await Handler.handleCustomError(BearerToken)
         }
 
-        // const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${splitToken[1]}`;
+        const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${splitToken[1]}`;
         let response: any;
         try {
-            // response = await axios.get(url);
-            let decodeToken: any = await jwt.decode(splitToken[1]);
-            console.log("decodeToken----", decodeToken)
-            const currentTime = Math.floor(Date.now() / 1000);
-            console.log("currentTime----", currentTime);
+            response = await axios.get(url);
+            console.log("response-----",response)
+            // let decodeToken: any = await jwt.decode(splitToken[1]);
+            // console.log("decodeToken----", decodeToken)
+            // const currentTime = Math.floor(Date.now() / 1000);
+            // console.log("currentTime----", currentTime);
             // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
 
             // if (decodeToken?.exp < currentTime) {
             //     await Handler.handleCustomError(InvalidToken);
+            const tokenInfo = response?.data;
+            console.log("tokenInfo=----,tokenInfo", tokenInfo)
             // }
-            let query = { email: decodeToken?.email?.toLowerCase() }
+            let query = { email: tokenInfo?.email?.toLowerCase() }
             let projection = { __v: 0, createdAt: 0, updatedAt: 0 }
             let option = { lean: true }
             let data: any = await Models.userModel.findOne(query, projection, option);
@@ -62,8 +64,6 @@ const authorization = async (req: express.Request | any, res: express.Response, 
         //     // return res.status(400).send({ message: 'Token audience mismatch' });
         //     await Handler.handleCustomError(TokenMismatch);
         // }
-
-        
         
 
     } catch (err) {

@@ -60,6 +60,7 @@ const openai = new openai_1.OpenAIEmbeddings({
     apiKey: OPEN_API_KEY, // In Node.js defaults to process.env.OPENAI_API_KEY
 });
 const openai_2 = require("openai");
+const textsplitters_1 = require("@langchain/textsplitters");
 let url = "neo4j+s://b641f24a.databases.neo4j.io";
 let username = "neo4j";
 let password = "8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20";
@@ -233,9 +234,20 @@ Service.searchInput = (req) => __awaiter(void 0, void 0, void 0, function* () {
         const open = new openai_2.OpenAI({
             apiKey: OPEN_API_KEY,
         });
+        // const response = await open.chat.completions.create({
+        //     model: 'gpt-3.5-turbo-1106', // Or another suitable model
+        //     messages: [{ content: `${contents}\nQuery: ${search}\nAnswer:`, role: 'user' }],
+        //     max_tokens: 150,
+        //     stop: ['\n'],
+        // });
+        // { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge. If the answer is not in the content, state "The provided content does not contain information about this query."' },
+        console.log("contents----", contents);
         const response = yield open.chat.completions.create({
-            model: 'gpt-3.5-turbo-1106', // Or another suitable model
-            messages: [{ content: `${contents}\nQuery: ${search}\nAnswer:`, role: 'user' }],
+            model: 'gpt-3.5-turbo-1106',
+            messages: [
+                { role: 'system', content: 'You only know what is contained in the provided content. Do not use any outside knowledge.' },
+                { role: 'user', content: `Content: ${contents}\n\nQuery: ${search}\n\nAnswer:` }
+            ],
             max_tokens: 150,
             stop: ['\n'],
         });
@@ -247,108 +259,47 @@ Service.searchInput = (req) => __awaiter(void 0, void 0, void 0, function* () {
         throw yield handler_1.default.handleCustomError(err);
     }
 });
-// static searchInput = async (req: any) => {
-//     try {
-//         let { search } = req.query;
-//         const embeddingVector = await openai.embedQuery(search)
-//         let config = {
-//             url: url,
-//             username: username,
-//             password: password
-//         }
-//         const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, config); // Initialize the vector store
-//         // const searchResult = await vectorStore.similaritySearch(search, 2);
-//         let searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 1, search)
-//         console.log("d----", searchResult)
-//         // const langchain = new LangChain({
-//         //     apiKey: 'YOUR_OPENAI_API_KEY', // Replace with your actual API key
-//         // });
-//         // let data = new Neo4jVectorStore(
-//         //     search,
-//         //     config
-//         // )
-//         // let fetch = store.asRetriever();
-//         // const results: any = await session.run(
-//         //     `MATCH (n:curie) RETURN n`
-//         // );
-//         // console.log("results----", results)
-//         // console.log("result?.records[0]?._fields", results?.records[0]?._fields);
-//         // console.log("result?.records[0]?.keys---", results?.records[0]?.keys);
-//         // let vectorEmbeddings: any[] = results?.records.map((record: any) => {
-//         //     return record?.get('n')?.properties?.embedding;
-//         // });
-//         // console.log("vectorEmbeddings----", vectorEmbeddings);
-//         // const embeddingVector = await openai.embedQuery(search)
-//         // console.log("embeddingVector----", embeddingVector)
-//         // const similarityResults = await Promise.all(vectorEmbeddings.map(async (embedding: any) => ({
-//         //     embedding: embedding,
-//         //     similarity: await this.cosineSimilarity(embeddingVector, embedding)
-//         // })));
-//         // console.log("similarityResults----", similarityResults)
-//         // // Sort results by similarity (descending) to get the most similar embeddings
-//         // similarityResults.sort((a: any, b: any) => b.similarity - a.similarity);
-//         // const topResults: any = similarityResults.slice(0, 5);
-//         // console.log("topResults0-----", topResults[0]?.similarity)
-//         // console.log("embeddings---------")
-//         // let d = await this.generateTextFromEmbedding(topResults[0]?.embedding)
-//         // console.log("d----", d)
-//         return "topResults";
-//     } catch (err) {
-//         throw err;
-//     }
-// }
-//     static cosineSimilarity = async (vec1: number[], vec2: number[]) => {
-//         const dotProduct = vec1.reduce((acc, value, index) => acc + value * vec2[index], 0);
-//         const magnitude1 = Math.sqrt(vec1.reduce((acc, value) => acc + value * value, 0));
-//         const magnitude2 = Math.sqrt(vec2.reduce((acc, value) => acc + value * value, 0));
-//         return dotProduct / (magnitude1 * magnitude2);
-//     }
-//       static generateTextFromEmbedding = async(embedding:any)=>  {
-//     try {
-//         // Create a prompt based on the embedding
-//         const prompt = `Generate a text based on this embedding: ${JSON.stringify(embedding)}`;
-//               // Make a POST request to the OpenAI API
-//               const response = await axios.post(
-//                   'https://api.openai.com/v1/engines/text-davinci-003/completions',
-//                   {
-//                       prompt: prompt,
-//                       max_tokens: 100,  // Adjust based on your needs
-//                   },
-//                   {
-//                       headers: {
-//                           'Authorization': `Bearer ${OPEN_API_KEY}`,
-//                           'Content-Type': 'application/json',
-//                       },
-//                   }
-//               );
-//         console.log("response.data.choices[0].text.trim();----", response)
-//               // Extract the generated text from the response
-//               const generatedText = response.data.choices[0].text.trim();
-//               return generatedText;
-//     } catch (error) {
-//         console.error('Error generating text:', error);
-//         return null;
-//     }
-// }
 Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { text } = req.body;
-        let embeddingData = yield _a.embeddingsCreate(text);
+        const textSplitter = new textsplitters_1.RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
+        const documentId = uuidv4();
+        console.log("documentId---", documentId);
+        const docOutput = yield textSplitter.splitDocuments([
+            new documents_1.Document({ pageContent: text, metadata: { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString() } }), // Ensure id is converted to string
+        ]);
+        console.log("docOutput----", docOutput);
+        let config = {
+            url: url,
+            username: username,
+            password: password
+        };
+        docOutput.forEach(doc => {
+            if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
+                // delete doc?.metadata?.loc
+                doc.metadata.loc = doc.metadata.loc.toString(); // Convert object to string representation
+            }
+        });
+        const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(
+        // [new Document({ pageContent: text, metadata: { id: documentId } })],
+        // segmentDocuments,
+        docOutput, openai, config);
+        console.log("vectorStore----", vectorStore);
+        // let embeddingData = await this.embeddingsCreate(text)
         let { _id } = req.userData;
         console.log("req.userData----", req.userData);
         console.log("message----", text);
         let dataToSave = {
             text: text,
             userId: _id,
-            documentId: embeddingData === null || embeddingData === void 0 ? void 0 : embeddingData.documentId,
+            documentId: documentId,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
         let saveData = yield Models.textModel.create(dataToSave);
-        // await this.embeddings(text)
-        console.log("saveData---", saveData);
+        // // await this.embeddings(text)
         let response = {
             messgage: "Text Added successfully",
-            data: saveData
+            // data: saveData
         };
         return response;
     }
@@ -358,6 +309,34 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         throw err;
     }
 });
+// static saveTexts = async (req: any) => {
+//     try {
+//         const { text } = req.body;
+//         let embeddingData = await this.embeddingsCreate(text)
+//         let { _id } = req.userData
+//         console.log("req.userData----", req.userData)
+//         console.log("message----", text)
+//         let dataToSave = {
+//             text: text,
+//             userId: _id,
+//             documentId: embeddingData?.documentId,
+//             createdAt: moment().utc().valueOf()
+//         }
+//         let saveData = await Models.textModel.create(dataToSave)
+//         // await this.embeddings(text)
+//         console.log("saveData---", saveData)
+//         let response = {
+//             messgage: "Text Added successfully",
+//             data: saveData
+//         }
+//         return response;
+//     }
+//     catch (err) {
+//         console.log("error---", err)
+//         // await Handler.handleCustomError(err);
+//         throw err;
+//     }
+// }
 Service.embeddings = (text) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     try {
@@ -391,15 +370,29 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let fetchData = yield Models.textModel.findOne(query, projection, options);
         if (fetchData) {
             console.log("fetchData---", fetchData);
-            const embedding = yield openai.embedQuery(text);
+            let { documentId } = fetchData;
             const result = yield neo4j_1.session.run(`
-                    MATCH (n:Chunk {id: $id})
-                    SET n.embedding = $embedding, n.text = $text
-                    RETURN n
-                    `, { id: fetchData === null || fetchData === void 0 ? void 0 : fetchData.documentId, embedding: embedding, text: text });
-            console.log("result --- ", result);
-            // await this.embeddings(text);
-            // await this.embeddingsCreate(text);
+                    MATCH (n:Chunk {documentId: $documentId})
+                    DELETE n
+                    `, { documentId: documentId });
+            const textSplitter = new textsplitters_1.RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
+            console.log("documentId---", documentId);
+            const docOutput = yield textSplitter.splitDocuments([
+                new documents_1.Document({ pageContent: text, metadata: { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString() } }), // Ensure id is converted to string
+            ]);
+            console.log("docOutput----", docOutput);
+            let config = {
+                url: url,
+                username: username,
+                password: password
+            };
+            docOutput.forEach(doc => {
+                if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
+                    // delete doc?.metadata?.loc
+                    doc.metadata.loc = doc.metadata.loc.toString(); // Convert object to string representation
+                }
+            });
+            const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, config);
             let update = {
                 text: text,
                 updatedAt: (0, moment_1.default)().utc().valueOf()
@@ -407,7 +400,7 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
             let data = yield Models.textModel.updateOne(query, update);
             let response = {
                 message: "Text updated successfully",
-                data: data
+                // data: data
             };
             return response;
         }
@@ -420,6 +413,47 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         yield handler_1.default.handleCustomError(err);
     }
 });
+// static updateTexts = async (req: any) => {
+//     try {
+//         const { _id, text } = req.body;
+//         let query = { _id: new Types.ObjectId(_id) }
+//         let projection = { __v: 0 }
+//         let options = { lean: true }
+//         let fetchData = await Models.textModel.findOne(query, projection, options)
+//         if (fetchData) {
+//             console.log("fetchData---", fetchData)
+//             const embedding = await openai.embedQuery(text)
+//             const result: any = await session.run(
+//                 `
+//                 MATCH (n:Chunk {id: $id})
+//                 SET n.embedding = $embedding, n.text = $text
+//                 RETURN n
+//                 `,
+//                 { id: fetchData?.documentId, embedding: embedding, text: text }
+//             );
+//             console.log("result --- ", result)
+//             // await this.embeddings(text);
+//             // await this.embeddingsCreate(text);
+//             let update = {
+//                 text: text,
+//                 updatedAt: moment().utc().valueOf()
+//             }
+//             let data = await Models.textModel.updateOne(query, update);
+//             let response = {
+//                 message: "Text updated successfully",
+//                 data: data
+//             }
+//             return response;
+//         }
+//         else {
+//             await Handler.handleCustomError(NotFound)
+//         }
+//         // const result: any = await session.run(` MATCH (e) DELETE e`)
+//     }
+//     catch (err) {
+//         await Handler.handleCustomError(err);
+//     }
+// }
 Service.textLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log("req.query----", req.query);
@@ -445,10 +479,11 @@ Service.textLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
 Service.textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { _id } = req.params;
-        let query = { _id: new mongoose_1.Types.ObjectId(_id) };
+        let query = { userId: new mongoose_1.Types.ObjectId(_id) };
         let projection = { __v: 0 };
-        let options = { lean: true };
+        let options = { lean: true, sort: { _id: -1 } };
         let response = yield Models.textModel.findOne(query, projection, options);
+        console.log("response----", response);
         return response;
     }
     catch (err) {

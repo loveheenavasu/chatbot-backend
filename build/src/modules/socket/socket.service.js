@@ -42,9 +42,9 @@ const openai_2 = require("openai");
 const Models = __importStar(require("../../models/index"));
 const dotenv_1 = require("dotenv");
 const handler_1 = __importDefault(require("../../handler/handler"));
-const moment_1 = __importDefault(require("moment"));
+const error_1 = require("../../handler/error");
 (0, dotenv_1.config)();
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const axios_1 = __importDefault(require("axios"));
 const { NEO_URL, OPEN_API_KEY, NEO_USERNAME, NEO_PASSWORD } = process.env;
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
@@ -59,40 +59,53 @@ class SocketService {
 }
 _a = SocketService;
 SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c;
+    var _b;
     try {
-        console.log("token----", token);
+        // console.log("token----", token)
         if (!token) {
             // return res.status(400).send({ message: 'Provide token' });
-            // await Handler.handleCustomError(ProvideToken);
-            return;
+            let res = {
+                type: "error",
+                data: error_1.ProvideToken
+            };
+            return res;
         }
         let splitToken = token === null || token === void 0 ? void 0 : token.split(' ');
         // console.log("split token----", splitToken)
         // if (splitToken[0] != 'Bearer') {
         //     await Handler.handleCustomError(BearerToken)
         // }
+        const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${splitToken[1]}`;
+        let response;
         try {
-            // response = await axios.get(url);
-            let decodeToken = yield (jsonwebtoken_1.default === null || jsonwebtoken_1.default === void 0 ? void 0 : jsonwebtoken_1.default.decode(splitToken[1]));
-            console.log("decodeToken----", decodeToken);
+            response = yield axios_1.default.get(url);
+            // let decodeToken: any = await jwt?.decode(splitToken[1]);
             // const currentTime = Math?.floor(Date.now() / 1000);
-            // console.log("currentTime----", currentTime);
-            // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
+            // // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
             // if (decodeToken?.exp < currentTime) {
-            //     await Handler.handleCustomError(InvalidToken);
+            //     // await Handler.handleCustomError(InvalidToken);
+            //     await Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
+            //     let res = {
+            //         type: "error",
+            //         data:InvalidToken
+            //     }
+            //     return res;
             // }
-            let query = { email: (_b = decodeToken === null || decodeToken === void 0 ? void 0 : decodeToken.email) === null || _b === void 0 ? void 0 : _b.toLowerCase() };
+            const tokenInfo = response === null || response === void 0 ? void 0 : response.data;
+            console.log("tokenInfo=----,tokenInfo", tokenInfo);
+            let query = { email: (_b = tokenInfo === null || tokenInfo === void 0 ? void 0 : tokenInfo.email) === null || _b === void 0 ? void 0 : _b.toLowerCase() };
             let projection = { __v: 0, createdAt: 0, updatedAt: 0 };
             let option = { lean: true };
             let data = yield Models.userModel.findOne(query, projection, option);
-            console.log("data----", data);
-            // data.socialToken = splitToken[1]
             return data;
         }
         catch (err) {
-            console.error('Error fetching token info:', ((_c = err === null || err === void 0 ? void 0 : err.response) === null || _c === void 0 ? void 0 : _c.data) || err.message);
             yield Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
+            let res = {
+                type: "error",
+                data: error_1.InvalidToken
+            };
+            return res;
             // return res.status(400).send({ message: 'Invalid token' });
             // await Handler.handleCustomError(InvalidToken);
         }
@@ -103,13 +116,13 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
 });
 SocketService.searchInput = (search, chatId, userId, documentId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let dataToSave = {
-            message: search,
-            chatId: chatId,
-            userId: userId,
-            createdAt: (0, moment_1.default)().utc().valueOf(),
-        };
-        yield Models.messageModel.create(dataToSave);
+        // let dataToSave = {
+        //     message: search,
+        //     chatId: chatId,
+        //     userId: userId,
+        //     createdAt: moment().utc().valueOf(),
+        // }
+        // await Models.messageModel.create(dataToSave);
         const embeddingVector = yield openai.embedQuery(search);
         let config = {
             url: NEO_URL,
@@ -126,30 +139,40 @@ SocketService.searchInput = (search, chatId, userId, documentId) => __awaiter(vo
         // // const filteredDocuments = records.map(record => record.get('n'));
         // console.log("")
         // let dbEmbed = data1[0]?.n?.embedding
-        const filter = { "id": { "$eq": documentId === null || documentId === void 0 ? void 0 : documentId.toString() } };
+        const filter = { "documentId": { "$eq": documentId === null || documentId === void 0 ? void 0 : documentId.toString() } };
         // const searchResult = await vectorStore.similaritySearchVectorWithScore(dbEmbed, 1, search);
-        const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 1, search, { filter, filterType: 'exact' });
+        const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 2, "", { filter, filterType: 'exact' });
         console.log("searchResult----", searchResult);
         let contents = searchResult.map((result) => result[0].pageContent).join(" ");
         // console.log("contents----", contents)
+        // const response = await open.chat.completions.create({
+        //     model: 'gpt-3.5-turbo-1106',
+        //     messages: [{ content: `${contents}\nQuery: ${search}\nAnswer:`, role: 'user' }],
+        //     max_tokens: 150,
+        //     stop: ['\n'],
+        // });
+        // console.log("response----", response)
         const response = yield open.chat.completions.create({
-            model: 'gpt-3.5-turbo-1106',
-            messages: [{ content: `${contents}\nQuery: ${search}\nAnswer:`, role: 'user' }],
+            model: 'gpt-3.5-turbo-1106', // Or another suitable model
+            messages: [
+                { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
+                { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` } // Adjusted content message
+                // { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
+                // { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer:` }
+            ],
             max_tokens: 150,
             stop: ['\n'],
         });
         console.log("response----", response);
-        let data = {
-            message: response.choices[0].message.content,
-            chatId: chatId,
-            // createdAt: moment().utc().valueOf(),
-        };
-        yield Models.messageModel.create(data);
+        // let data = {
+        //     message: response.choices[0].message.content,
+        //     chatId: chatId,
+        //     // createdAt: moment().utc().valueOf(),
+        // }
+        // await Models.messageModel.create(data);
         return response.choices[0].message.content;
-        // return refinedResponse;
     }
     catch (err) {
-        // throw err;
         console.log("error----", err);
         throw yield handler_1.default.handleCustomError(err);
     }

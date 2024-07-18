@@ -14,20 +14,34 @@ const connectSocket = (server: any) => {
             cors: { origin: "*" }
         });
 
+        io.use(async (socket: Socket | any, next) => {
+            try {
+                const token = socket?.handshake?.headers?.token;
+                let socketData = await SocketService.getData(token);
+                if (socketData?.type === 'error') {
+                    return next(socketData?.data);
+                } else {
+                    console.log('socket data - else---', socketData);
+                    socket.user = socketData;
+                    return next();
+                }
+            } catch (err) {
+                console.error('Error in middleware:', err);
+                return next(new Error('Internal server error'));
+            }
+        });
+
         
 
         io.on("connection", async(socket: any | Socket) => {
             console.log("socket id----", socket.id)
-            // console.log("socket", JSON.stringify(socket))
             socket.setMaxListeners(0);
-            // socket.emit("hi", "hello world")
 
+            
             socket.on("search", async (payload: any) => {
                 try {
-                    // let socketData = await SocketService.getData(socket?.handshake?.headers?.token);
-                    // socket.user = socketData;
                    
-                    // let { _id: userId } = socket?.user;
+                    let { _id: userId } = socket?.user;
                     let { text, connectId, documentId } = payload
                     console.log("payload----", payload)
                     let res = {
@@ -48,7 +62,7 @@ const connectSocket = (server: any) => {
                     else {
                         chatId = socket.id
                     }
-                    let userId = new Types.ObjectId("6687bf842e20c2963f0cbf5c");
+                    // let userId = new Types.ObjectId("6687bf842e20c2963f0cbf5c");
                     let data = await SocketService.searchInput(text, chatId, userId, documentId);
                     let response = {
                         message: data,
@@ -67,8 +81,6 @@ const connectSocket = (server: any) => {
                 }
 
             })
-
-
 
 
             socket.on("disconnect", async () => {
