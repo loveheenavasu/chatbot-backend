@@ -16,4 +16,5 @@ router.get('/text', authorization_1.authorization, user_controller_1.default.tex
 router.get('/text/:_id', authorization_1.authorization, user_controller_1.default.textDetail);
 router.delete('/text/:_id', authorization_1.authorization, user_controller_1.default.deleteText);
 router.get('/chatList/', authorization_1.authorization, user_controller_1.default.chatList);
+router.delete('/logout', authorization_1.authorization, user_controller_1.default.logout);
 exports.default = router;

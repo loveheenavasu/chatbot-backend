@@ -43,16 +43,13 @@ const handler_1 = __importDefault(require("../../handler/handler"));
 const error_1 = require("../../handler/error");
 const common_1 = __importDefault(require("../../common/common"));
 const openai_1 = require("@langchain/openai");
-// import { langChain } from '../../config/langchain';
 const dotenv_1 = require("dotenv");
 const neo4j_1 = require("../../config/neo4j");
 (0, dotenv_1.config)();
 const neo4j_vector_1 = require("@langchain/community/vectorstores/neo4j_vector");
-const { OPEN_API_KEY } = process.env;
+const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD } = process.env;
 const documents_1 = require("@langchain/core/documents");
 const { v4: uuidv4 } = require('uuid');
-// Now you can use findSimilarDocuments in your code
-// import { cosineSimilarity } from 'langchain';
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
     // model: "text-embedding-ada-002",
@@ -61,9 +58,14 @@ const openai = new openai_1.OpenAIEmbeddings({
 });
 const openai_2 = require("openai");
 const textsplitters_1 = require("@langchain/textsplitters");
-let url = "neo4j+s://b641f24a.databases.neo4j.io";
-let username = "neo4j";
-let password = "8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20";
+let neoConfig = {
+    url: NEO_URL,
+    username: NEO_USERNAME,
+    password: NEO_PASSWORD
+};
+// let url = "neo4j+s://b641f24a.databases.neo4j.io"
+// let username = "neo4j"
+// let password = "8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20"
 // const graph = Neo4jGraph.initialize({ url, username, password });
 // const model = new ChatOpenAI({
 //     temperature: 0,
@@ -197,15 +199,15 @@ Service.embeddingsCreate = (text) => __awaiter(void 0, void 0, void 0, function*
         //     metadata: { id: documentId }
         // }));
         // console.log("segmentDocuments---", segmentDocuments)
-        let config = {
-            url: url,
-            username: username,
-            password: password
-        };
-        console.log("config----", config);
+        // let config: any = {
+        //     url: NEO_URL,
+        //     username: NEO_USERNAME,
+        //     password: NEO_PASSWORD
+        // };
+        // console.log("config----", neoConfig)
         const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments([new documents_1.Document({ pageContent: text, metadata: { id: documentId } })], 
         // segmentDocuments,
-        openai, config);
+        openai, neoConfig);
         let response = {
             message: "Embeddings created successfully",
             documentId: documentId
@@ -221,12 +223,7 @@ Service.searchInput = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { search, id } = req.query;
         const embeddingVector = yield openai.embedQuery(search);
-        let config = {
-            url: url,
-            username: username,
-            password: password
-        };
-        const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments([], openai, config);
+        const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments([], openai, neoConfig);
         const filter = { "id": { "$eq": id === null || id === void 0 ? void 0 : id.toString() } };
         const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 2, search, { filter, filterType: 'exact' });
         console.log("searchResult----", searchResult);
@@ -269,11 +266,11 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
             new documents_1.Document({ pageContent: text, metadata: { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString() } }), // Ensure id is converted to string
         ]);
         console.log("docOutput----", docOutput);
-        let config = {
-            url: url,
-            username: username,
-            password: password
-        };
+        // let config = {
+        //     url: url,
+        //     username: username,
+        //     password: password
+        // };
         docOutput.forEach(doc => {
             if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
                 // delete doc?.metadata?.loc
@@ -283,7 +280,7 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(
         // [new Document({ pageContent: text, metadata: { id: documentId } })],
         // segmentDocuments,
-        docOutput, openai, config);
+        docOutput, openai, neoConfig);
         console.log("vectorStore----", vectorStore);
         // let embeddingData = await this.embeddingsCreate(text)
         let { _id } = req.userData;
@@ -299,7 +296,7 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         // // await this.embeddings(text)
         let response = {
             messgage: "Text Added successfully",
-            // data: saveData
+            data: saveData
         };
         return response;
     }
@@ -344,14 +341,14 @@ Service.embeddings = (text) => __awaiter(void 0, void 0, void 0, function* () {
         const segments = (_b = text === null || text === void 0 ? void 0 : text.split('.')) === null || _b === void 0 ? void 0 : _b.map((sentence) => sentence.trim());
         const segmentDocuments = segments === null || segments === void 0 ? void 0 : segments.map((segment) => new documents_1.Document({ pageContent: segment }));
         // console.log("segmentDocuments---", segmentDocuments)
-        let config = {
-            url: url,
-            username: username,
-            password: password
-        };
+        // let config = {
+        //     url: url,
+        //     username: username,
+        //     password: password
+        // };
         const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(
         // [new Document({ pageContent: text })],
-        segmentDocuments, openai, config);
+        segmentDocuments, openai, neoConfig);
         return {
             message: "Embeddings created successfully"
         };
@@ -368,6 +365,7 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let projection = { __v: 0 };
         let options = { lean: true };
         let fetchData = yield Models.textModel.findOne(query, projection, options);
+        console.log("fetchData---", fetchData);
         if (fetchData) {
             console.log("fetchData---", fetchData);
             let { documentId } = fetchData;
@@ -381,18 +379,18 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 new documents_1.Document({ pageContent: text, metadata: { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString() } }), // Ensure id is converted to string
             ]);
             console.log("docOutput----", docOutput);
-            let config = {
-                url: url,
-                username: username,
-                password: password
-            };
+            // let config = {
+            //     url: url,
+            //     username: username,
+            //     password: password
+            // };
             docOutput.forEach(doc => {
                 if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
                     // delete doc?.metadata?.loc
                     doc.metadata.loc = doc.metadata.loc.toString(); // Convert object to string representation
                 }
             });
-            const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, config);
+            const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
             let update = {
                 text: text,
                 updatedAt: (0, moment_1.default)().utc().valueOf()
@@ -518,6 +516,20 @@ Service.chatList = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let response = {
             count: count,
             data: fetchData
+        };
+        return response;
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { socialToken } = req.userData;
+        let query = { socialToken: socialToken };
+        yield Models.sessionModel.deleteOne(query);
+        let response = {
+            message: "Logout Successfully"
         };
         return response;
     }

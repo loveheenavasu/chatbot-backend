@@ -3,22 +3,18 @@ import * as Models from '../../models/index';
 import moment from 'moment';
 import { Types } from 'mongoose';
 import Handler from '../../handler/handler';
-import { InvalidToken, NotFound } from '../../handler/error';
+import { NotFound } from '../../handler/error';
 import CommonHelper from '../../common/common';
-import { ChatOpenAI, OpenAICallOptions, OpenAIEmbeddings, } from '@langchain/openai';
-// import { langChain } from '../../config/langchain';
+import { OpenAIEmbeddings } from '@langchain/openai';
 import { config } from 'dotenv';
-import { driver, session } from '../../config/neo4j';
+import { session } from '../../config/neo4j';
 config();
 import { Neo4jVectorStore } from "@langchain/community/vectorstores/neo4j_vector";
-const { OPEN_API_KEY } = process.env;
-import { LLMGraphTransformer } from "@langchain/community/experimental/graph_transformers/llm";
+const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD } = process.env;
 import { Document } from "@langchain/core/documents";
-import { HumanMessage } from "@langchain/core/messages";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
+
 const { v4: uuidv4 } = require('uuid');
-// Now you can use findSimilarDocuments in your code
-// import { cosineSimilarity } from 'langchain';
+
 const openai = new OpenAIEmbeddings({
     model: "text-embedding-3-large",
     // model: "text-embedding-ada-002",
@@ -30,10 +26,15 @@ import { Neo4jGraph } from "@langchain/community/graphs/neo4j_graph";
 import { OpenAI } from 'openai';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
+let neoConfig: any = {
+    url: NEO_URL,
+    username: NEO_USERNAME,
+    password: NEO_PASSWORD
+};
 
-let url = "neo4j+s://b641f24a.databases.neo4j.io"
-let username = "neo4j"
-let password = "8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20"
+// let url = "neo4j+s://b641f24a.databases.neo4j.io"
+// let username = "neo4j"
+// let password = "8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20"
 // const graph = Neo4jGraph.initialize({ url, username, password });
 // const model = new ChatOpenAI({
 //     temperature: 0,
@@ -187,18 +188,18 @@ export default class Service {
             // console.log("segmentDocuments---", segmentDocuments)
 
 
-            let config = {
-                url: url,
-                username: username,
-                password: password
-            };
-            console.log("config----", config)
+            // let config: any = {
+            //     url: NEO_URL,
+            //     username: NEO_USERNAME,
+            //     password: NEO_PASSWORD
+            // };
+            // console.log("config----", neoConfig)
 
             const vectorStore = await Neo4jVectorStore.fromDocuments(
                 [new Document({ pageContent: text, metadata: { id: documentId } })],
                 // segmentDocuments,
                 openai,
-                config
+                neoConfig
             );
             let response = {
                 message: "Embeddings created successfully",
@@ -220,13 +221,7 @@ export default class Service {
 
             const embeddingVector = await openai.embedQuery(search);
 
-            let config = {
-                url: url,
-                username: username,
-                password: password
-            };
-
-            const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, config);
+            const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, neoConfig);
             const filter = { "id": { "$eq": id?.toString() } };
             const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 2, search, { filter, filterType: 'exact' });
             console.log("searchResult----", searchResult);
@@ -275,11 +270,11 @@ export default class Service {
                 new Document({ pageContent: text, metadata: { documentId: documentId?.toString() } }), // Ensure id is converted to string
             ]);
             console.log("docOutput----", docOutput)
-            let config = {
-                url: url,
-                username: username,
-                password: password
-            };
+            // let config = {
+            //     url: url,
+            //     username: username,
+            //     password: password
+            // };
             docOutput.forEach(doc => {
                 if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
                     // delete doc?.metadata?.loc
@@ -291,7 +286,7 @@ export default class Service {
                 // segmentDocuments,
                 docOutput,
                 openai,
-                config
+                neoConfig
             );
             console.log("vectorStore----", vectorStore)
 
@@ -310,7 +305,7 @@ export default class Service {
             // // await this.embeddings(text)
             let response = {
                 messgage: "Text Added successfully",
-                // data: saveData
+                data: saveData
             }
             return response;
         }
@@ -320,7 +315,6 @@ export default class Service {
             throw err;
         }
     }
-
 
     // static saveTexts = async (req: any) => {
     //     try {
@@ -360,17 +354,17 @@ export default class Service {
             const segments = text?.split('.')?.map((sentence: any) => sentence.trim());
             const segmentDocuments = segments?.map((segment: any) => new Document({ pageContent: segment }));
             // console.log("segmentDocuments---", segmentDocuments)
-            let config = {
-                url: url,
-                username: username,
-                password: password
-            };
+            // let config = {
+            //     url: url,
+            //     username: username,
+            //     password: password
+            // };
 
             const vectorStore = await Neo4jVectorStore.fromDocuments(
                 // [new Document({ pageContent: text })],
                 segmentDocuments,
                 openai,
-                config
+                neoConfig
             );
 
             return {
@@ -390,6 +384,7 @@ export default class Service {
             let projection = { __v: 0 }
             let options = { lean: true }
             let fetchData = await Models.textModel.findOne(query, projection, options)
+            console.log("fetchData---", fetchData)
             if (fetchData) {
                 console.log("fetchData---", fetchData)
                 let { documentId } = fetchData;
@@ -406,11 +401,11 @@ export default class Service {
                     new Document({ pageContent: text, metadata: { documentId: documentId?.toString() } }), // Ensure id is converted to string
                 ]);
                 console.log("docOutput----", docOutput)
-                let config = {
-                    url: url,
-                    username: username,
-                    password: password
-                };
+                // let config = {
+                //     url: url,
+                //     username: username,
+                //     password: password
+                // };
                 docOutput.forEach(doc => {
                     if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
                         // delete doc?.metadata?.loc
@@ -420,7 +415,7 @@ export default class Service {
                 const vectorStore = await Neo4jVectorStore.fromDocuments(
                     docOutput,
                     openai,
-                    config
+                    neoConfig
                 );
                 let update = {
                     text: text,
@@ -520,7 +515,7 @@ export default class Service {
             let projection = { __v: 0 }
             let options = { lean: true, sort: { _id: -1 } }
             let response = await Models.textModel.findOne(query, projection, options);
-            console.log("response----", response )
+            console.log("response----", response)
             return response;
         }
         catch (err) {
@@ -558,6 +553,21 @@ export default class Service {
             let response = {
                 count: count,
                 data: fetchData
+            }
+            return response;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static logout = async (req: any) => {
+        try {
+            let { socialToken } = req.userData
+            let query = { socialToken: socialToken }
+            await Models.sessionModel.deleteOne(query);
+            let response = {
+                message:"Logout Successfully"
             }
             return response;
         }

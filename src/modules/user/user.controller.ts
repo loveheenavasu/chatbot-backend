@@ -2,7 +2,6 @@ import express from 'express';
 import Service from './user.service';
 import Handler from '../../handler/handler';
 
-
 export default class Controller {
 
     static login = async (req: express.Request | any, res: express.Response) => {
@@ -90,6 +89,16 @@ export default class Controller {
     static chatList = async (req: express.Request | any, res: express.Response) => {
         try {
             let response = await Service.chatList(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static logout = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.logout(req);
             await Handler.handleSuccess(res, response);
         }
         catch (err) {

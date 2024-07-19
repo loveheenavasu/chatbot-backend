@@ -25,31 +25,29 @@ const connectSocket = (server) => {
         const io = new socket_io_1.Server(server, {
             cors: { origin: "*" }
         });
-        io.use((socket, next) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b;
-            try {
-                const token = (_b = (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.headers) === null || _b === void 0 ? void 0 : _b.token;
-                let socketData = yield socket_service_1.default.getData(token);
-                if ((socketData === null || socketData === void 0 ? void 0 : socketData.type) === 'error') {
-                    return next(socketData === null || socketData === void 0 ? void 0 : socketData.data);
-                }
-                else {
-                    console.log('socket data - else---', socketData);
-                    socket.user = socketData;
-                    return next();
-                }
-            }
-            catch (err) {
-                console.error('Error in middleware:', err);
-                return next(new Error('Internal server error'));
-            }
-        }));
+        // !! ---->>>   MIDDLEWARE FOR AUTH   <<<----
+        // io.use(async (socket: Socket | any, next) => {
+        //     try {
+        //         const token = socket?.handshake?.headers?.token;
+        //         let socketData = await SocketService.getData(token);
+        //         if (socketData?.type === 'error') {
+        //             return next(socketData?.data);
+        //         } else {
+        //             console.log('socket data - else---', socketData);
+        //             socket.user = socketData;
+        //             return next();zsxs
+        //         }
+        //     } catch (err) {
+        //         console.error('Error in middleware:', err);
+        //         return next(new Error('Internal server error'));
+        //     }
+        // });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             console.log("socket id----", socket.id);
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 try {
-                    let { _id: userId } = socket === null || socket === void 0 ? void 0 : socket.user;
+                    // let { _id: userId } = socket?.user;
                     let { text, connectId, documentId } = payload;
                     console.log("payload----", payload);
                     let res = {
@@ -71,14 +69,14 @@ const connectSocket = (server) => {
                         chatId = socket.id;
                     }
                     // let userId = new Types.ObjectId("6687bf842e20c2963f0cbf5c");
-                    let data = yield socket_service_1.default.searchInput(text, chatId, userId, documentId);
+                    let data = yield socket_service_1.default.searchInput(text, chatId, documentId);
                     let response = {
                         message: data,
                         chatId: chatId,
                         type: Role.AI
                     };
-                    console.log("user-----", response);
-                    console.log("chatId------", chatId);
+                    // console.log("user-----", response)
+                    // console.log("chatId------", chatId)
                     // io.to(chatId).emit("searches", response)
                     // socket.emit("search_res", response)
                     socket.emit("searches", response);

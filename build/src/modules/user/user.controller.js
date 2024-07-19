@@ -99,4 +99,13 @@ Controller.chatList = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         yield handler_1.default.handleCatchError(res, err);
     }
 });
+Controller.logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.logout(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
 exports.default = Controller;

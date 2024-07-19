@@ -11,10 +11,10 @@ console.log("open api -", OPEN_API_KEY)
 //     // modelName:'tts-1'
 // });
 
-const langChai = new OpenAI({
+const langChain = new OpenAI({
     apiKey: OPEN_API_KEY,
     modelName: "gpt-4-1106-preview",
     // modelName:'tts-1'
 });
 
-export {langChai};
+export {langChain};

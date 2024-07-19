@@ -86,7 +86,7 @@ export default class SocketService {
     }
 
 
-    static searchInput = async (search: any, chatId: any, userId: Types.ObjectId | any, documentId: string) => {
+    static searchInput = async (search: any, chatId: any, documentId: string) => {
         try {
             // let dataToSave = {
             //     message: search,
@@ -119,14 +119,11 @@ export default class SocketService {
             const filter = { "documentId": { "$eq": documentId?.toString() } };
             // const searchResult = await vectorStore.similaritySearchVectorWithScore(dbEmbed, 1, search);
 
-
             const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 2, "", { filter, filterType: 'exact' });
             console.log("searchResult----", searchResult);
 
             let contents = searchResult.map((result: [Document, number]) => result[0].pageContent).join(" ");
             // console.log("contents----", contents)
-
-
 
             // const response = await open.chat.completions.create({
             //     model: 'gpt-3.5-turbo-1106',
@@ -150,7 +147,6 @@ export default class SocketService {
 
             console.log("response----", response)
 
-
             // let data = {
             //     message: response.choices[0].message.content,
             //     chatId: chatId,
@@ -158,7 +154,7 @@ export default class SocketService {
             // }
             // await Models.messageModel.create(data);
 
-            return response.choices[0].message.content;
+            return response?.choices[0]?.message?.content;
 
         } catch (err) {
             console.log("error----", err)

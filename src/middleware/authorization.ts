@@ -29,7 +29,7 @@ const authorization = async (req: express.Request | any, res: express.Response, 
         let response: any;
         try {
             response = await axios.get(url);
-            console.log("response-----",response)
+            console.log("response-----", response);
             // let decodeToken: any = await jwt.decode(splitToken[1]);
             // console.log("decodeToken----", decodeToken)
             // const currentTime = Math.floor(Date.now() / 1000);

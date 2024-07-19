@@ -114,7 +114,8 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
         throw err;
     }
 });
-SocketService.searchInput = (search, chatId, userId, documentId) => __awaiter(void 0, void 0, void 0, function* () {
+SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c;
     try {
         // let dataToSave = {
         //     message: search,
@@ -170,7 +171,7 @@ SocketService.searchInput = (search, chatId, userId, documentId) => __awaiter(vo
         //     // createdAt: moment().utc().valueOf(),
         // }
         // await Models.messageModel.create(data);
-        return response.choices[0].message.content;
+        return (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content;
     }
     catch (err) {
         console.log("error----", err);
