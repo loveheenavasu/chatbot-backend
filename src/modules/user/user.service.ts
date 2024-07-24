@@ -285,8 +285,9 @@ export default class Service {
     static fileLists = async (req: any) => {
         try {
             // console.log("req.query----", req.query)
+            let { _id: userId } = req.userData;
             let { pagination, limit } = req.query;
-            let query = { type: type?.FILE }
+            let query = { userId: new Types.ObjectId(userId), type: type?.FILE }
             let projection = { __v: 0 }
             // let option = { lean: true, sort: { _id: -1 } }
             let option = await CommonHelper.setOptions(pagination, limit);
@@ -519,7 +520,7 @@ export default class Service {
         }
     }
 
-    
+
 
 
 

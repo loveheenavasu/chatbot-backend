@@ -289,8 +289,9 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
 Service.fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // console.log("req.query----", req.query)
+        let { _id: userId } = req.userData;
         let { pagination, limit } = req.query;
-        let query = { type: text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE };
+        let query = { userId: new mongoose_1.Types.ObjectId(userId), type: text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE };
         let projection = { __v: 0 };
         // let option = { lean: true, sort: { _id: -1 } }
         let option = yield common_1.default.setOptions(pagination, limit);
