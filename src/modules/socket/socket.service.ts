@@ -86,7 +86,7 @@ export default class SocketService {
             // console.log("documentId----", documentId)
             const filter = { "documentId": { "$eq": documentId } };
 
-            const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 3, "", { filter, filterType: 'exact' });
+            const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 5, "", { filter, filterType: 'exact' });
             // console.log("searchResult----", searchResult);
 
             let contents = searchResult.map((result: [Document, number]) => result[0].pageContent).join(" ");

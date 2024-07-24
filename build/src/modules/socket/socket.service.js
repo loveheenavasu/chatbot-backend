@@ -116,7 +116,7 @@ SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, vo
         // const filter = { "documentId": { "$eq": documentId?.toString() } };
         // console.log("documentId----", documentId)
         const filter = { "documentId": { "$eq": documentId } };
-        const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 3, "", { filter, filterType: 'exact' });
+        const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 5, "", { filter, filterType: 'exact' });
         // console.log("searchResult----", searchResult);
         let contents = searchResult.map((result) => result[0].pageContent).join(" ");
         // console.log("contents----", contents)
