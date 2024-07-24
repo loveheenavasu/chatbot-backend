@@ -48,9 +48,8 @@ const axios_1 = __importDefault(require("axios"));
 const { NEO_URL, OPEN_API_KEY, NEO_USERNAME, NEO_PASSWORD } = process.env;
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
-    // model: "text-embedding-ada-002",
-    batchSize: 512, // Defaults to "gpt-3.5-turbo-instruct" if no model provided.
-    apiKey: OPEN_API_KEY, // In Node.js defaults to process.env.OPENAI_API_KEY
+    batchSize: 512,
+    apiKey: OPEN_API_KEY,
 });
 const open = new openai_2.OpenAI({
     apiKey: OPEN_API_KEY,
@@ -61,38 +60,18 @@ _a = SocketService;
 SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     try {
-        // console.log("token----", token)
         if (!token) {
-            // return res.status(400).send({ message: 'Provide token' });
-            let res = {
-                type: "error",
-                data: error_1.ProvideToken
-            };
-            return res;
+            return { type: "error", data: error_1.ProvideToken };
         }
         let splitToken = token === null || token === void 0 ? void 0 : token.split(' ');
-        // console.log("split token----", splitToken)
-        // if (splitToken[0] != 'Bearer') {
-        //     await Handler.handleCustomError(BearerToken)
-        // }
+        if (splitToken[0] != 'Bearer') {
+            return { type: "error", data: error_1.BearerToken };
+        }
         const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${splitToken[1]}`;
         let response;
         try {
             response = yield axios_1.default.get(url);
-            // let decodeToken: any = await jwt?.decode(splitToken[1]);
-            // const currentTime = Math?.floor(Date.now() / 1000);
-            // // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
-            // if (decodeToken?.exp < currentTime) {
-            //     // await Handler.handleCustomError(InvalidToken);
-            //     await Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
-            //     let res = {
-            //         type: "error",
-            //         data:InvalidToken
-            //     }
-            //     return res;
-            // }
             const tokenInfo = response === null || response === void 0 ? void 0 : response.data;
-            console.log("tokenInfo=----,tokenInfo", tokenInfo);
             let query = { email: (_b = tokenInfo === null || tokenInfo === void 0 ? void 0 : tokenInfo.email) === null || _b === void 0 ? void 0 : _b.toLowerCase() };
             let projection = { __v: 0, createdAt: 0, updatedAt: 0 };
             let option = { lean: true };
@@ -101,13 +80,7 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
         }
         catch (err) {
             yield Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
-            let res = {
-                type: "error",
-                data: error_1.InvalidToken
-            };
-            return res;
-            // return res.status(400).send({ message: 'Invalid token' });
-            // await Handler.handleCustomError(InvalidToken);
+            return { type: "error", data: error_1.InvalidToken };
         }
     }
     catch (err) {
@@ -115,7 +88,7 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c;
+    var _b, _c, _d, _e;
     try {
         // let dataToSave = {
         //     message: search,
@@ -140,10 +113,11 @@ SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, vo
         // // const filteredDocuments = records.map(record => record.get('n'));
         // console.log("")
         // let dbEmbed = data1[0]?.n?.embedding
-        const filter = { "documentId": { "$eq": documentId === null || documentId === void 0 ? void 0 : documentId.toString() } };
-        // const searchResult = await vectorStore.similaritySearchVectorWithScore(dbEmbed, 1, search);
-        const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 2, "", { filter, filterType: 'exact' });
-        console.log("searchResult----", searchResult);
+        // const filter = { "documentId": { "$eq": documentId?.toString() } };
+        // console.log("documentId----", documentId)
+        const filter = { "documentId": { "$eq": documentId } };
+        const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 3, "", { filter, filterType: 'exact' });
+        // console.log("searchResult----", searchResult);
         let contents = searchResult.map((result) => result[0].pageContent).join(" ");
         // console.log("contents----", contents)
         // const response = await open.chat.completions.create({
@@ -157,7 +131,7 @@ SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, vo
             model: 'gpt-3.5-turbo-1106', // Or another suitable model
             messages: [
                 { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
-                { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` } // Adjusted content message
+                { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
                 // { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
                 // { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer:` }
             ],
@@ -171,10 +145,10 @@ SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, vo
         //     // createdAt: moment().utc().valueOf(),
         // }
         // await Models.messageModel.create(data);
-        return (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content;
+        console.log("response?.choices[0]?.message----", (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content);
+        return (_e = (_d = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.content;
     }
     catch (err) {
-        console.log("error----", err);
         throw yield handler_1.default.handleCustomError(err);
     }
 });

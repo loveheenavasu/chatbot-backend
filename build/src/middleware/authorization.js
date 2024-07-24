@@ -44,14 +44,10 @@ const Models = __importStar(require("../models/index"));
 const handler_1 = __importDefault(require("../handler/handler"));
 const error_1 = require("../handler/error");
 const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     try {
         let { token } = req.headers;
-        let apiPath = req.originalUrl;
-        // console.log("apiPath----", apiPath);
-        // console.log("authorization---", token);
         if (!token) {
-            // return res.status(400).send({ message: 'Provide token' });
             yield handler_1.default.handleCustomError(error_1.ProvideToken);
         }
         let splitToken = token.split(' ');
@@ -62,7 +58,6 @@ const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         let response;
         try {
             response = yield axios_1.default.get(url);
-            console.log("response-----", response);
             // let decodeToken: any = await jwt.decode(splitToken[1]);
             // console.log("decodeToken----", decodeToken)
             // const currentTime = Math.floor(Date.now() / 1000);
@@ -71,8 +66,6 @@ const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             // if (decodeToken?.exp < currentTime) {
             //     await Handler.handleCustomError(InvalidToken);
             const tokenInfo = response === null || response === void 0 ? void 0 : response.data;
-            console.log("tokenInfo=----,tokenInfo", tokenInfo);
-            // }
             let query = { email: (_a = tokenInfo === null || tokenInfo === void 0 ? void 0 : tokenInfo.email) === null || _a === void 0 ? void 0 : _a.toLowerCase() };
             let projection = { __v: 0, createdAt: 0, updatedAt: 0 };
             let option = { lean: true };
@@ -82,24 +75,12 @@ const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             next();
         }
         catch (err) {
-            console.error('Error fetching token info:', ((_b = err === null || err === void 0 ? void 0 : err.response) === null || _b === void 0 ? void 0 : _b.data) || err.message);
             yield Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
-            // return res.status(400).send({ message: 'Invalid token' });
             yield handler_1.default.handleCustomError(error_1.InvalidToken);
         }
-        // const tokenInfo = response?.data;
-        // console.log("tokenInfo----", tokenInfo);
-        // // Perform checks to ensure the token is valid
-        // if (tokenInfo.aud !== CLIENT_ID) {
-        //     // return res.status(400).send({ message: 'Token audience mismatch' });
-        //     await Handler.handleCustomError(TokenMismatch);
-        // }
     }
     catch (err) {
-        console.log("auth err---", err);
         yield handler_1.default.handleCatchError(res, err);
-        // console.error('Error in authorization middleware:', err);
-        // res.status(500).send({ message: 'Internal server error' });
     }
 });
 exports.authorization = authorization;

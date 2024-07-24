@@ -33,5 +33,4 @@ const { PORT } = process.env;
     });
     yield (0, db_1.dbConnect)();
     (0, socket_1.connectSocket)(server);
-    // await createAdmin();
 }))();

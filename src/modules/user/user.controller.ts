@@ -13,26 +13,6 @@ export default class Controller {
             await Handler.handleCatchError(res, err);
         }
     }
-
-    static embeddingsCreate = async (req: express.Request | any, res: express.Response) => {
-        try {
-            let response = await Service.embeddingsCreate(req);
-            Handler.handleSuccess(res, response);
-        }
-        catch (err) {
-            await Handler.handleCatchError(res, err);
-        }
-    }
-
-    static searchInput = async (req: express.Request | any, res: express.Response) => {
-        try {
-            let response = await Service.searchInput(req);
-            Handler.handleSuccess(res, response);
-        }
-        catch (err) {
-            await Handler.handleCatchError(res, err);
-        }
-    }
     
 
     static saveTexts = async (req: express.Request | any, res: express.Response) => {
@@ -55,16 +35,6 @@ export default class Controller {
         }
     }
 
-    static textLists = async (req: express.Request | any, res: express.Response) => {
-        try {
-            let response = await Service.textLists(req);
-            await Handler.handleSuccess(res, response);
-        }
-        catch (err) {
-            await Handler.handleCatchError(res, err);
-        }
-    }
-
     static textDetail = async (req: express.Request | any, res: express.Response) => {
         try {
             let response = await Service.textDetail(req);
@@ -75,9 +45,19 @@ export default class Controller {
         }
     }
 
-    static deleteText = async (req: express.Request | any, res: express.Response) => {
+    static textExtract = async (req: express.Request | any, res: express.Response) => {
         try {
-            let response = await Service.textDelete(req);
+            let response = await Service.textExtract(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err)
+        }
+    }
+
+    static fileLists = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.fileLists(req);
             await Handler.handleSuccess(res, response);
         }
         catch (err) {
@@ -85,16 +65,18 @@ export default class Controller {
         }
     }
 
+    
 
-    static chatList = async (req: express.Request | any, res: express.Response) => {
+    static deleteFile = async (req: express.Request | any, res: express.Response) => {
         try {
-            let response = await Service.chatList(req);
+            let response = await Service.deleteFile(req);
             await Handler.handleSuccess(res, response);
         }
         catch (err) {
             await Handler.handleCatchError(res, err);
         }
     }
+
 
     static logout = async (req: express.Request | any, res: express.Response) => {
         try {
@@ -105,5 +87,7 @@ export default class Controller {
             await Handler.handleCatchError(res, err);
         }
     }
+
+    
 
 }

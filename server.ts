@@ -18,7 +18,6 @@ const { PORT } = process.env;
     app.use('/user', user);
     
 
-
     let server = http.createServer(app);
     server.listen(PORT, () => {
         console.log(`Server is listening on port ${PORT}`);
@@ -26,8 +25,6 @@ const { PORT } = process.env;
 
     await dbConnect();
    connectSocket(server);
-    // await createAdmin();
-
 
 })();
 

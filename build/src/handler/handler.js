@@ -25,15 +25,12 @@ Handler.handleCustomError = (error) => __awaiter(void 0, void 0, void 0, functio
     try {
         let message = (_b = error === null || error === void 0 ? void 0 : error.message) !== null && _b !== void 0 ? _b : 'Bad Request';
         let statusCode = (_c = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _c !== void 0 ? _c : 400;
-        // console.log("message-----", message)
-        // console.log("statusCode----", statusCode)
         throw {
             message: message,
             statusCode: statusCode
         };
     }
     catch (err) {
-        // console.log("err-----",err)
         throw err;
     }
 });

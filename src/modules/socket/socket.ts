@@ -1,7 +1,5 @@
 import { Server, Socket } from "socket.io";
 import SocketService from "./socket.service";
-import * as Models from '../../models/index';
-import { Types } from "mongoose";
 
 enum Role {
     User = "USER",
@@ -42,7 +40,6 @@ const connectSocket = (server: any) => {
             
             socket.on("search", async (payload: any) => {
                 try {
-                   
                     // let { _id: userId } = socket?.user;
                     let { text, connectId, documentId } = payload
                     console.log("payload----", payload)
@@ -64,19 +61,13 @@ const connectSocket = (server: any) => {
                     else {
                         chatId = socket.id
                     }
-                    // let userId = new Types.ObjectId("6687bf842e20c2963f0cbf5c");
                     let data = await SocketService.searchInput(text, chatId, documentId);
                     let response = {
                         message: data,
                         chatId: chatId,
                         type: Role.AI
                     }
-                    // console.log("user-----", response)
-                    // console.log("chatId------", chatId)
-                    // io.to(chatId).emit("searches", response)
-                    // socket.emit("search_res", response)
                     socket.emit("searches", response)
-                    // socket.to(chatId).emit("search_res", response)
                 }
                 catch (err) {
                     throw err;

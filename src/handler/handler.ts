@@ -10,15 +10,12 @@ export default class Handler {
         try {
             let message = error?.message ?? 'Bad Request'
             let statusCode = error?.statusCode ?? 400
-            // console.log("message-----", message)
-            // console.log("statusCode----", statusCode)
             throw {
                 message: message,
                 statusCode: statusCode
             }
         }
         catch (err) {
-            // console.log("err-----",err)
             throw err;
         }
     }

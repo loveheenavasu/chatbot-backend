@@ -27,24 +27,6 @@ Controller.login = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         yield handler_1.default.handleCatchError(res, err);
     }
 });
-Controller.embeddingsCreate = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        let response = yield user_service_1.default.embeddingsCreate(req);
-        handler_1.default.handleSuccess(res, response);
-    }
-    catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
-    }
-});
-Controller.searchInput = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        let response = yield user_service_1.default.searchInput(req);
-        handler_1.default.handleSuccess(res, response);
-    }
-    catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
-    }
-});
 Controller.saveTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield user_service_1.default.saveTexts(req);
@@ -63,15 +45,6 @@ Controller.updateTexts = (req, res) => __awaiter(void 0, void 0, void 0, functio
         yield handler_1.default.handleCatchError(res, err);
     }
 });
-Controller.textLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        let response = yield user_service_1.default.textLists(req);
-        yield handler_1.default.handleSuccess(res, response);
-    }
-    catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
-    }
-});
 Controller.textDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield user_service_1.default.textDetail(req);
@@ -81,18 +54,27 @@ Controller.textDetail = (req, res) => __awaiter(void 0, void 0, void 0, function
         yield handler_1.default.handleCatchError(res, err);
     }
 });
-Controller.deleteText = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+Controller.textExtract = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.textDelete(req);
+        let response = yield user_service_1.default.textExtract(req);
         yield handler_1.default.handleSuccess(res, response);
     }
     catch (err) {
         yield handler_1.default.handleCatchError(res, err);
     }
 });
-Controller.chatList = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+Controller.fileLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.chatList(req);
+        let response = yield user_service_1.default.fileLists(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.deleteFile(req);
         yield handler_1.default.handleSuccess(res, response);
     }
     catch (err) {

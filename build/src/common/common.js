@@ -32,13 +32,13 @@ CommonHelper.setOptions = (pagination, limit, sort) => __awaiter(void 0, void 0,
         const defaultLimit = 10;
         let options = {
             lean: true,
-            sort: sort
+            sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
         };
         if (pagination == undefined && typeof limit != undefined) {
             options = {
                 lean: true,
                 limit: parseInt(limit),
-                sort: sort
+                sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
             };
         }
         else if (typeof pagination != undefined && typeof limit == undefined) {
@@ -46,7 +46,7 @@ CommonHelper.setOptions = (pagination, limit, sort) => __awaiter(void 0, void 0,
                 lean: true,
                 skip: parseInt(pagination) * defaultLimit,
                 limit: defaultLimit,
-                sort: sort
+                sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
             };
         }
         else if (typeof pagination != undefined && typeof limit != undefined) {
@@ -54,7 +54,7 @@ CommonHelper.setOptions = (pagination, limit, sort) => __awaiter(void 0, void 0,
                 lean: true,
                 skip: parseInt(pagination) * parseInt(limit),
                 limit: parseInt(limit),
-                sort: sort
+                sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
             };
         }
         return options;

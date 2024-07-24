@@ -26,11 +26,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.type = void 0;
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = __importStar(require("mongoose"));
+var type;
+(function (type) {
+    type["TEXT"] = "TEXT";
+    type["FILE"] = "FILE";
+})(type || (exports.type = type = {}));
 const textSchema = new mongoose_1.default.Schema({
     text: { type: String, default: null },
+    type: { type: String, default: type.TEXT, enum: type },
+    fileName: { type: String, default: null },
     documentId: { type: String, default: null },
+    docNo: { type: Number, default: 1 },
     userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "users" },
     createdAt: { type: Number, default: (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
