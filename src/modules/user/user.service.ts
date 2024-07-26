@@ -3,7 +3,7 @@ import * as Models from '../../models/index';
 import moment from 'moment';
 import { Types } from 'mongoose';
 import Handler from '../../handler/handler';
-import { NotFound, ProvideDocumentId, UnsupportedFileType } from '../../handler/error';
+import { NotFound, UnsupportedFileType } from '../../handler/error';
 import CommonHelper from '../../common/common';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { config } from 'dotenv';
@@ -12,25 +12,20 @@ config();
 import { Neo4jVectorStore } from "@langchain/community/vectorstores/neo4j_vector";
 const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD } = process.env;
 import { Document } from "@langchain/core/documents";
-import fs from 'fs';
 const { v4: uuidv4 } = require('uuid');
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
-import { PlaywrightWebBaseLoader } from "@langchain/community/document_loaders/web/playwright";
 import path from 'path';
 import WordExtractor from 'word-extractor';
 
 const openai = new OpenAIEmbeddings({
     model: "text-embedding-3-large",
-    // model: "text-embedding-ada-002",
-    batchSize: 512,// Defaults to "gpt-3.5-turbo-instruct" if no model provided.
-    apiKey: OPEN_API_KEY, // In Node.js defaults to process.env.OPENAI_API_KEY
+    batchSize: 512,
+    apiKey: OPEN_API_KEY
 });
-import { OpenAI } from 'openai';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { type } from '../../models/text.model';
-import axios from 'axios';
 
 let neoConfig: any = {
     url: NEO_URL,
@@ -38,39 +33,19 @@ let neoConfig: any = {
     password: NEO_PASSWORD
 };
 
-// let url = "neo4j+s://b641f24a.databases.neo4j.io"
-// let username = "neo4j"
-// let password = "8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20"
-// const graph = Neo4jGraph.initialize({ url, username, password });
-// const model = new ChatOpenAI({
-//     temperature: 0,
-//     model: "gpt-3.5-turbo-1106",
-//     apiKey: OPEN_API_KEY
-// });
-
-// const llmGraphTransformer = new LLMGraphTransformer({
-//     llm: model,
-// });
-
-
-
 export default class Service {
 
     static login = async (req: express.Request | any) => {
         try {
             let { email, name, image, socialToken, isAdmin } = req.body;
-            console.log("req.body;---", req.body)
             let query = { email: email.toLowerCase() }
             let projection = { __v: 0 }
             let option = { lean: true }
             let fetchData: any = await Models.userModel.findOne(query, projection, option);
-            console.log("fetchData--", fetchData)
             if (fetchData) {
-                console.log("if---")
                 let { _id } = fetchData
                 let session = await this.createSession(_id, socialToken)
                 fetchData.socialToken = session?.socialToken;
-                console.log("fetchData---", fetchData)
                 return fetchData;
             }
             let dataToSave = {
@@ -84,7 +59,6 @@ export default class Service {
             let userData: any = await Models.userModel.create(dataToSave);
             let session = await this.createSession(userData?._id, socialToken)
             userData._doc['socialToken'] = session?.socialToken;
-            console.log("userData----", userData)
             return userData;
         }
         catch (err) {
@@ -109,31 +83,52 @@ export default class Service {
 
     static saveTexts = async (req: any) => {
         try {
-            const { text } = req.body;
+            const { text, documentId } = req.body;
             let { _id } = req.userData;
-            let query = { userId: new Types.ObjectId(_id) }
-            let projection = { __v: 0 }
-            let option = { lean: true, sort: { _id: -1 } }
-            let fetchData = await Models.textModel.findOne(query, projection, option);
-            console.log("fetchData-----", fetchData)
             let num = 1;
             let docId = uuidv4();
-            if (fetchData) {
-                let { docNo, documentId } = fetchData;
-                console.log("docNo--save texts before----", docNo)
-                docNo = docNo + 1;
-                console.log("docNo--save texts after----", docNo)
-                num = docNo;
-                docId = documentId
+            let query = { userId: new Types.ObjectId(_id), documentId: documentId }
+            let projection = { __v: 0 }
+            let option = { lean: true, sort: { _id: -1 } }
+            let data: any;
+            let fetchChatbot = await Models.chatbotModel.findOne(query, projection, option);
+            if (!fetchChatbot) {
+                data = await this.embedText(text, type?.TEXT, _id, null, num, docId);
+                await this.createChatbot(data)
             }
-            console.log("number--------", num)
-            console.log("docId---", docId)
-            let data = await this.embedText(text, type?.TEXT, _id, null, num, docId);
+            else {
+                let fetchData = await Models.textModel.findOne(query, projection, option);
+                if (fetchData) {
+                    let { docNo, documentId } = fetchData;
+                    docNo = docNo + 1;
+                    num = docNo;
+                    docId = documentId
+                }
+                data = await this.embedText(text, type?.TEXT, _id, null, num, docId);
+            }
             let response = {
                 messgage: "Text Added Successfully",
                 data: data
             }
             return response;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static createChatbot = async (data: any) => {
+        try {
+            let { _id, userId, documentId } = data;
+            let dataToSave = {
+                textId: _id,
+                userId: userId,
+                documentId: documentId,
+                createdAt: moment().utc().valueOf()
+            }
+            let response = await Models.chatbotModel.create(dataToSave);
+            return response;
+
         }
         catch (err) {
             await Handler.handleCustomError(err);
@@ -149,7 +144,7 @@ export default class Service {
             ]);
             docOutput.forEach(doc => {
                 if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
-                    doc.metadata.loc = doc.metadata.loc.toString(); // Convert object to string representation
+                    doc.metadata.loc = doc.metadata.loc.toString();
                 }
             });
             const vectorStore = await Neo4jVectorStore.fromDocuments(
@@ -175,66 +170,10 @@ export default class Service {
         }
     }
 
-    // static saveTexts = async (req: any) => {
-    //     try {
-    //         const { text } = req.body;
-    //         const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
-    //         const documentId = uuidv4();
-    //         const docOutput = await textSplitter.splitDocuments([
-    //             new Document({ pageContent: text, metadata: { documentId: documentId?.toString() } }), // Ensure id is converted to string
-    //         ]);
-    //         docOutput.forEach(doc => {
-    //             if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
-    //                 doc.metadata.loc = doc.metadata.loc.toString(); // Convert object to string representation
-    //             }
-    //         });
-    //         const vectorStore = await Neo4jVectorStore.fromDocuments(
-    //             docOutput,
-    //             openai,
-    //             neoConfig
-    //         );
-    //         let { _id } = req.userData
-    //         let dataToSave = {
-    //             text: text,
-    //             userId: _id,
-    //             documentId: documentId,
-    //             createdAt: moment().utc().valueOf()
-    //         }
-    //         let saveData = await Models.textModel.create(dataToSave)
-    //         let response = {
-    //             messgage: "Text Added successfully",
-    //             data: saveData
-    //         }
-    //         return response;
-    //     }
-    //     catch (err) {
-    //         await Handler.handleCustomError(err);
-    //     }
-    // }
-
-    static embeddings = async (text: string) => {
-        try {
-            const segments = text?.split('.')?.map((sentence: any) => sentence.trim());
-            const segmentDocuments = segments?.map((segment: any) => new Document({ pageContent: segment }));
-            const vectorStore = await Neo4jVectorStore.fromDocuments(
-                // [new Document({ pageContent: text })],
-                segmentDocuments,
-                openai,
-                neoConfig
-            );
-
-            return {
-                message: "Embeddings created successfully"
-            };
-        }
-        catch (err) {
-            throw await Handler.handleCustomError(err);
-        }
-    }
-
     static updateTexts = async (req: any) => {
         try {
             const { _id, text } = req.body;
+            let { _id: userId } = req.userData;
             let query = { _id: new Types.ObjectId(_id) }
             let projection = { __v: 0 }
             let options = { lean: true }
@@ -284,10 +223,13 @@ export default class Service {
 
     static fileLists = async (req: any) => {
         try {
-            // console.log("req.query----", req.query)
             let { _id: userId } = req.userData;
-            let { pagination, limit } = req.query;
-            let query = { userId: new Types.ObjectId(userId), type: type?.FILE }
+            let { pagination, limit, documentId } = req.query;
+            let query = {
+                userId: new Types.ObjectId(userId),
+                type: type?.FILE,
+                documentId: documentId
+            }
             let projection = { __v: 0 }
             // let option = { lean: true, sort: { _id: -1 } }
             let option = await CommonHelper.setOptions(pagination, limit);
@@ -306,11 +248,17 @@ export default class Service {
 
     static textDetail = async (req: any) => {
         try {
-            let { _id } = req.params;
-            let query = { userId: new Types.ObjectId(_id), type: type?.TEXT }
+            let { _id } = req.userData;
+            let { documentId } = req?.query;
+            let query = {
+                userId: new Types.ObjectId(_id),
+                type: type?.TEXT,
+                documentId: documentId
+            }
             let projection = { __v: 0 }
             let options = { lean: true, sort: { _id: -1 } }
-            let response = await Models.textModel.findOne(query, projection, options);
+            let data = await Models.textModel.findOne(query, projection, options);
+            let response = data ?? {};
             return response;
         }
         catch (err) {
@@ -320,19 +268,9 @@ export default class Service {
 
     static deleteFile = async (req: any) => {
         try {
-            // let { _id } = req.params;
             let { docNo, documentId } = req.query;
-            // console.log("req.query----", req.query)
+            let { _id: userId } = req.userData;
             let query = { documentId: documentId, docNo: Number(docNo) };
-            // let projection = { __v: 0 };
-            // let option = { lean: true }
-            // let fetchData = await Models.textModel.findOne(query, projection, option);
-            // console.log("fetchData-----", fetchData)
-            // if (!fetchData) await Handler.handleCustomError(NotFound);
-
-            // console.log("documentId---", documentId)
-
-            // if (!documentId) await Handler.handleCustomError(ProvideDocumentId);
             const result: any = await session.run(
                 `
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
@@ -340,13 +278,28 @@ export default class Service {
                     `,
                 { documentId: documentId?.toString(), docNo: Number(docNo) }
             );
-            console.log("result----", result)
-            // let query = { documentId: new Types.ObjectId(documentId) }
             await Models.textModel.deleteOne(query);
+            let query1 = { documentId: documentId }
+            let projection = { __v: 0 }
+            let options = { lean: true, sort: { _id: 1 } }
+            let fetchData = await Models.textModel.findOne(query1, projection, options);
+            if (fetchData) {
+                let { _id: textId } = fetchData
+                let query = {
+                    documentId: documentId,
+                    userId: userId
+                }
+                let update = { textId: textId }
+                let options = { new: true }
+                await Models.chatbotModel.findOneAndUpdate(query, update, options)
+            }
+            else {
+                await Models.chatbotModel.deleteOne(query1);
+            }
+
             let response = {
                 message: "Deleted Successfully"
             }
-            console.log("response", response)
             return response;
         }
         catch (err) {
@@ -365,6 +318,7 @@ export default class Service {
             return response;
         }
         catch (err) {
+            console.log("err-------",err)
             await Handler.handleCustomError(err);
         }
     }
@@ -373,11 +327,11 @@ export default class Service {
         try {
             const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
             const docOutput = await textSplitter.splitDocuments([
-                new Document({ pageContent: text, metadata: { documentId: documentId?.toString(), docNo: docNo } }), // Ensure id is converted to string
+                new Document({ pageContent: text, metadata: { documentId: documentId?.toString(), docNo: docNo } }), 
             ]);
             docOutput.forEach(doc => {
                 if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
-                    doc.metadata.loc = doc.metadata.loc.toString(); // Convert object to string representation
+                    doc.metadata.loc = doc.metadata.loc.toString();
                 }
             });
             const vectorStore = await Neo4jVectorStore.fromDocuments(
@@ -385,7 +339,6 @@ export default class Service {
                 openai,
                 neoConfig
             );
-
             let dataToSave = {
                 text: text,
                 userId: userId,
@@ -405,11 +358,43 @@ export default class Service {
 
     static textExtract = async (req: any) => {
         try {
-            console.log("req-----", req?.file)
-            let { originalname, buffer } = req?.file
+            let { documentId } = req.body
+            let { originalname, buffer } = req?.file;
             let { _id: userId } = req.userData;
+            let textData = await this.extract(originalname, buffer)
+            let docId = uuidv4();
+            let query = { userId: new Types.ObjectId(userId), documentId: documentId }
+            let projection = { __v: 0 }
+            let option = { lean: true, sort: { _id: -1 } }
+            let data: any;
+            let fetchChatbot = await Models.chatbotModel.findOne(query, projection, option);
+            if (!fetchChatbot) {
+                data = await this.embedText(textData, type?.FILE, userId, originalname, 1, docId);
+                await this.createChatbot(data);
+            }
+            else {
+                let fetchData = await Models.textModel.findOne(query, projection, option);
+                if (fetchData) {
+                    let { documentId, docNo } = fetchData;
+                    docNo = docNo + 1;
+                    data = await this.updateFileText(textData, type?.FILE, documentId, userId, originalname, docNo)
+                }
+            }
+
+            let response = {
+                message: "File Added Successfully",
+                data: data
+            }
+            return response;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static extract = async (originalname: any, buffer: any) => {
+        try {
             const extension = path.extname(originalname).toLowerCase();
-            console.log("extension---", extension)
             let text: any;
             const blob = new Blob([buffer]);
             switch (extension) {
@@ -430,32 +415,8 @@ export default class Service {
                     break;
                 default: await Handler.handleCustomError(UnsupportedFileType);
             }
-            console.log("text---", text);
-            let textData = text?.trim()
-            let query = { userId: new Types.ObjectId(userId) }
-            let projection = { __v: 0 }
-            let option = { lean: true, sort: { _id: -1 } }
-            let fetchData = await Models.textModel.findOne(query, projection, option);
-            console.log("fetchData-----", fetchData)
-            let data: any;
-            if (fetchData) {
-                let { documentId, docNo } = fetchData;
-                console.log("docNo-- before----", docNo)
-                docNo = docNo + 1;
-                console.log("docNo-- after----", docNo)
-                data = await this.updateFileText(textData, type?.FILE, documentId, userId, originalname, docNo)
-            }
-            else {
-                let docId = uuidv4();
-                data = await this.embedText(textData, type?.FILE, userId, originalname, 1, docId);
-            }
-
-
-            let response = {
-                message: "File Added Successfully",
-                data: data
-            }
-            return response;
+            let textData = text?.trim();
+            return textData;
         }
         catch (err) {
             await Handler.handleCustomError(err);
@@ -520,12 +481,59 @@ export default class Service {
         }
     }
 
+    static chatbotLists = async (req: any) => {
+        try {
+            let { _id: userId } = req.userData;
+            let query = { userId: userId }
+            let projection = { __v: 0 }
+            let options = { lean: true, sort: { _id: -1 } }
+            let populate = [
+                {
+                    path: "textId",
+                    select: "text type fileName documentId"
+                }
+            ]
 
+            let data = await Models.chatbotModel.find(query, projection, options).populate(populate);
+            let count = await Models.chatbotModel.countDocuments(query);
+            let response = {
+                count: count,
+                data: data
+            }
+            return response;
+        }
+        catch (err) {
+            console.log("err---",err)
+            await Handler.handleCustomError(err);
+        }
+    }
 
-
-
-
-
+    static deleteChatbot = async (req: any) => {
+        try {
+            let { documentId } = req.query;
+            let { _id: userId } = req.userData;
+            const result: any = await session.run(
+                `
+                    MATCH (n:Chunk {documentId: $documentId})
+                    DELETE n
+                    `,
+                { documentId: documentId }
+            );
+            let query = {
+                userId: userId,
+                documentId: documentId
+            }
+            await Models.textModel.deleteMany(query);
+            await Models.chatbotModel.deleteOne(query);
+            let response = {
+                message: "Chatbot Deleted Successfully"
+            }
+            return response;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
 
 
 }

@@ -44,9 +44,10 @@ const Models = __importStar(require("../models/index"));
 const handler_1 = __importDefault(require("../handler/handler"));
 const error_1 = require("../handler/error");
 const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         let { token } = req.headers;
+        // console.log("token---",token)
         if (!token) {
             yield handler_1.default.handleCustomError(error_1.ProvideToken);
         }
@@ -59,24 +60,29 @@ const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         try {
             response = yield axios_1.default.get(url);
             // let decodeToken: any = await jwt.decode(splitToken[1]);
-            // console.log("decodeToken----", decodeToken)
             // const currentTime = Math.floor(Date.now() / 1000);
             // console.log("currentTime----", currentTime);
             // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
             // if (decodeToken?.exp < currentTime) {
             //     await Handler.handleCustomError(InvalidToken);
+            // }
             const tokenInfo = response === null || response === void 0 ? void 0 : response.data;
             let query = { email: (_a = tokenInfo === null || tokenInfo === void 0 ? void 0 : tokenInfo.email) === null || _a === void 0 ? void 0 : _a.toLowerCase() };
+            // let query = { email: decodeToken?.email?.toLowerCase() }
             let projection = { __v: 0, createdAt: 0, updatedAt: 0 };
             let option = { lean: true };
             let data = yield Models.userModel.findOne(query, projection, option);
-            data.socialToken = splitToken[1];
+            let userdata = data;
+            userdata.socialToken = splitToken[1];
             req.userData = data;
             next();
         }
         catch (err) {
             yield Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
-            yield handler_1.default.handleCustomError(error_1.InvalidToken);
+            if (((_b = err === null || err === void 0 ? void 0 : err.response) === null || _b === void 0 ? void 0 : _b.data.error) == "invalid_token") {
+                yield handler_1.default.handleCustomError(error_1.InvalidToken);
+            }
+            yield handler_1.default.handleCustomError(err);
         }
     }
     catch (err) {

@@ -14,6 +14,25 @@ export default class Controller {
         }
     }
     
+    static chatbotLists = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.chatbotLists(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static deleteChatbot = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.deleteChatbot(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
 
     static saveTexts = async (req: express.Request | any, res: express.Response) => {
         try {
@@ -65,8 +84,6 @@ export default class Controller {
         }
     }
 
-    
-
     static deleteFile = async (req: express.Request | any, res: express.Response) => {
         try {
             let response = await Service.deleteFile(req);
@@ -89,5 +106,4 @@ export default class Controller {
     }
 
     
-
 }

@@ -27,6 +27,24 @@ Controller.login = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         yield handler_1.default.handleCatchError(res, err);
     }
 });
+Controller.chatbotLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.chatbotLists(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.deleteChatbot = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.deleteChatbot(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
 Controller.saveTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield user_service_1.default.saveTexts(req);
