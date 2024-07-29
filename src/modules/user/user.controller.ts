@@ -4,9 +4,91 @@ import Handler from '../../handler/handler';
 
 export default class Controller {
 
+    static signup = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.signup(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static verifyEmail = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.verifyEmail(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static resendOtp = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.resendOtp(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static forgotPassword = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.forgotPassword(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    } 
+
+    static verifyOtp = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.verifyOtp(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static resetPassword = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.resetPassword(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    
+
     static login = async (req: express.Request | any, res: express.Response) => {
         try {
             let response = await Service.login(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static profile = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.profile(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static socialLogin = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.socialLogin(req);
             await Handler.handleSuccess(res, response);
         }
         catch (err) {
@@ -104,6 +186,16 @@ export default class Controller {
             await Handler.handleCatchError(res, err);
         }
     }
+
+    // static url = async (req: express.Request | any, res: express.Response) => {
+    //     try {
+    //         let response = await Service.url(req);
+    //         await Handler.handleSuccess(res, response);
+    //     }
+    //     catch (err) {
+    //         await Handler.handleCatchError(res, err);
+    //     }
+    // }
 
     
 }

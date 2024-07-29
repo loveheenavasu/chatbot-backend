@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 config();
 
 const { OPEN_API_KEY } = process.env;
-console.log("open api -", OPEN_API_KEY)
+// console.log("open api -", OPEN_API_KEY)
 
 // const langChain = new ChatOpenAI({
 //     apiKey: OPEN_API_KEY,

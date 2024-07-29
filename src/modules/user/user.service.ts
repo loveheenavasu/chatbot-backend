@@ -3,14 +3,14 @@ import * as Models from '../../models/index';
 import moment from 'moment';
 import { Types } from 'mongoose';
 import Handler from '../../handler/handler';
-import { NotFound, UnsupportedFileType } from '../../handler/error';
+import { EmailAlreadyExists, EmailNotRegistered, NotFound, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
 import CommonHelper from '../../common/common';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { config } from 'dotenv';
 import { session } from '../../config/neo4j';
 config();
 import { Neo4jVectorStore } from "@langchain/community/vectorstores/neo4j_vector";
-const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD } = process.env;
+const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
 import { Document } from "@langchain/core/documents";
 const { v4: uuidv4 } = require('uuid');
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
@@ -18,6 +18,8 @@ import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import path from 'path';
 import WordExtractor from 'word-extractor';
+import { PlaywrightWebBaseLoader } from "@langchain/community/document_loaders/web/playwright";
+import cheerio from 'cheerio';
 
 const openai = new OpenAIEmbeddings({
     model: "text-embedding-3-large",
@@ -26,6 +28,8 @@ const openai = new OpenAIEmbeddings({
 });
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { type } from '../../models/text.model';
+import { signType } from '../../models/user.model';
+import { sendEmail } from '../../common/email';
 
 let neoConfig: any = {
     url: NEO_URL,
@@ -35,17 +39,292 @@ let neoConfig: any = {
 
 export default class Service {
 
-    static login = async (req: express.Request | any) => {
+    static signup = async (req: any) => {
         try {
-            let { email, name, image, socialToken, isAdmin } = req.body;
+            let { email, password } = req.body;
+            let query = { email: email.toLowerCase(), isEmailVerified: true }
+            let projection = { __v: 0 }
+            let options = { lean: true }
+            let fetchData = await Models.userModel.findOne(query, projection, options);
+            if (fetchData) {
+                await Handler.handleCustomError(EmailAlreadyExists);
+            }
+            else {
+                let bcryptPass = await CommonHelper.hashPass(password);
+                let otp = await CommonHelper.generateOtp();
+                let dataToSave = {
+                    email: email.toLowerCase(),
+                    password: bcryptPass,
+                    otp: otp,
+                    createdAt: moment().utc().valueOf()
+                }
+                let saveData: any = await Models.userModel.create(dataToSave);
+                delete saveData._doc["password"];
+                delete saveData._doc["otp"];
+                console.log("save  data befor----", saveData)
+                let data = {
+                    _id: saveData?._id,
+                    scope: SCOPE
+                }
+                let accessToken = await CommonHelper.signToken(data);
+                saveData._doc["accessToken"] = accessToken
+                let emailData = {
+                    email: email,
+                    otp: otp
+                }
+                await sendEmail(emailData);
+                console.log("--", saveData)
+                let response = {
+                    message: `Otp sent to ${email}`,
+                    data: saveData
+                }
+                return response;
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static verifyEmail = async (req: any) => {
+        try {
+            let { otp: inputOtp } = req.body;
+            let { _id } = req.userData;
+            let query = { _id: _id }
+            let projection = { otp: 1, email: 1 }
+            let option = { lean: true }
+            let fetchData = await Models.userModel.findOne(query, projection, option);
+            console.log("fetchData---", fetchData)
+            if (fetchData) {
+                let { otp, email } = fetchData;
+                if (inputOtp === otp) {
+                    let update = {
+                        isEmailVerified: true,
+                        otp: null
+                    }
+                    let options = { new: true }
+                    await Models.userModel.findOneAndUpdate(query, update, options);
+                    let query1 = { email: email, isEmailVerified: false }
+                    let projection = { _id: 1 }
+                    let fetchUnverified = await Models.userModel.find(query1, projection, option);
+                    if (fetchUnverified?.length) {
+                        await Models.userModel.deleteMany(query1);
+                        for (let i = 0; i < fetchUnverified?.length; i++) {
+                            let { _id } = fetchUnverified[i]
+                            let query = { userId: _id }
+                            await Models.sessionModel.deleteOne(query);
+                        }
+                    }
+                    let response = {
+                        message: "Otp verified successfully"
+                    }
+                    return response;
+                }
+                else {
+                    await Handler.handleCustomError(WrongOtp);
+                }
+            }
+            else {
+                await Handler.handleCustomError(NotFound);
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static resendOtp = async (req: any) => {
+        try {
+            let { email } = req.body;
+            let query = { email: email?.toLowerCase() }
+            let fetchData = await CommonHelper.fetchUser(query);
+            if (fetchData) {
+                let { email } = fetchData;
+                let otp = await CommonHelper.generateOtp();
+                let update = {
+                    otp: otp
+                }
+                let option = { new: true }
+                await Models.userModel.findOneAndUpdate(query, update, option);
+                let emailData = {
+                    email: email,
+                    otp: otp
+                }
+                await sendEmail(emailData);
+                let response = {
+                    message: `Otp sent to ${email}`
+                }
+                return response;
+            }
+            else {
+                await Handler.handleCustomError(EmailNotRegistered);
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static forgotPassword = async (req: any) => {
+        try {
+            let { email } = req.body;
+            let query = { email: email.toLowerCase() }
+            let fetchData = await CommonHelper.fetchUser(query);
+            if (fetchData) {
+                let { _id, email } = fetchData;
+                let otp = await CommonHelper.generateOtp();
+                let query = { _id: _id }
+                let update = { otp: otp }
+                let option = { new: true }
+                await Models.userModel.findOneAndUpdate(query, update, option);
+                let emailData = {
+                    email: email,
+                    otp: otp
+                }
+                await sendEmail(emailData);
+                let response = {
+                    message: `Otp sent to ${email}`
+                }
+                return response;
+            }
+            else {
+                await Handler.handleCustomError(EmailNotRegistered);
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static verifyOtp = async (req: any) => {
+        try {
+            let { otp: inputOtp, email } = req.body;
+            let query = { email: email?.toLowerCase() }
+            let projection = { otp: 1 }
+            let option = { lean: true }
+            let fetchData = await Models.userModel.findOne(query, projection, option);
+            if (fetchData) {
+                let { otp } = fetchData;
+                if (inputOtp === otp) {
+                    let uniqueCode = await CommonHelper.generateUniqueCode();
+                    let update = {
+                        uniqueCode: uniqueCode,
+                        otp: null
+                    }
+                    let options = { new: true }
+                    await Models.userModel.findOneAndUpdate(query, update, options)
+                    let response = {
+                        message: "Otp verified successfully",
+                        uniqueCode: uniqueCode
+                    }
+                    return response;
+                }
+                else {
+                    await Handler.handleCustomError(WrongOtp);
+                }
+            }
+            else {
+                await Handler.handleCustomError(NotFound);
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static resetPassword = async (req: any) => {
+        try {
+            let { uniqueCode, password } = req.body;
+            let query = { uniqueCode: uniqueCode }
+            let fetchData = await CommonHelper.fetchUser(query);
+            if (fetchData) {
+                let hashPass = await CommonHelper.hashPass(password);
+                let update = {
+                    uniqueCode: null,
+                    password: hashPass
+                }
+                let options = { new: true }
+                await Models.userModel.findOneAndUpdate(query, update, options)
+                let response = {
+                    message: "Password Changed Successfully"
+                }
+                return response;
+            }
+            else {
+                await Handler.handleCustomError(NotFound);
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static login = async (req: any) => {
+        try {
+            let { email, password } = req.body;
             let query = { email: email.toLowerCase() }
             let projection = { __v: 0 }
             let option = { lean: true }
-            let fetchData: any = await Models.userModel.findOne(query, projection, option);
+            let fetchData = await Models.userModel.findOne(query, projection, option);
+            if (fetchData) {
+                let { _id, password: oldPassword, type } = fetchData;
+                if (oldPassword == null) {
+                    await Handler.handleCustomError(SomethingWentWrong);
+                }
+                let decryptPass = await CommonHelper.comparePass(oldPassword, password);
+                if (!decryptPass) {
+                    await Handler.handleCustomError(WrongPassword);
+                }
+                else {
+                    let data = {
+                        _id: _id,
+                        scope: SCOPE
+                    }
+                    let accessToken = await CommonHelper.signToken(data);
+                    let resData = {
+                        _id: fetchData?._id,
+                        email: fetchData?.email,
+                        accessToken: accessToken
+                    }
+                    let response = {
+                        message: "Login successfully",
+                        data: resData
+                    }
+                    return response;
+                }
+            }
+            else {
+                await Handler.handleCustomError(EmailNotRegistered);
+            }
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static profile = async (req: any) => {
+        try {
+            let { _id } = req.userData;
+            let query = { _id: _id }
+            let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 }
+            let option = { lean: true }
+            let fetchData = await Models.userModel.findOne(query, projection, option);
+            return fetchData ?? {};
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static socialLogin = async (req: express.Request | any) => {
+        try {
+            let { email, name, image, socialToken, isAdmin } = req.body;
+            let query = { email: email.toLowerCase() }
+            let fetchData: any = await CommonHelper.fetchUser(query);
             if (fetchData) {
                 let { _id } = fetchData
                 let session = await this.createSession(_id, socialToken)
-                fetchData.socialToken = session?.socialToken;
+                fetchData.accessToken = session?.accessToken;
                 return fetchData;
             }
             let dataToSave = {
@@ -53,12 +332,13 @@ export default class Service {
                 name: name,
                 image: image,
                 isAdmin: isAdmin,
+                isEmailVerified: true,
+                type: signType?.GOOGLE,
                 createdAt: moment().utc().valueOf()
             }
-
             let userData: any = await Models.userModel.create(dataToSave);
             let session = await this.createSession(userData?._id, socialToken)
-            userData._doc['socialToken'] = session?.socialToken;
+            userData._doc['accessToken'] = session?.accessToken;
             return userData;
         }
         catch (err) {
@@ -66,11 +346,11 @@ export default class Service {
         }
     }
 
-    static createSession = async (user_id: Types.ObjectId, socialToken: string) => {
+    static createSession = async (user_id: Types.ObjectId, accessToken: string) => {
         try {
             let dataToSession = {
                 userId: user_id,
-                socialToken: socialToken,
+                accessToken: accessToken,
                 createdAt: moment().utc().valueOf()
             }
             let response = await Models.sessionModel.create(dataToSession);
@@ -309,8 +589,8 @@ export default class Service {
 
     static logout = async (req: any) => {
         try {
-            let { socialToken } = req.userData
-            let query = { socialToken: socialToken }
+            let { accessToken } = req.userData
+            let query = { accessToken: accessToken }
             await Models.sessionModel.deleteOne(query);
             let response = {
                 message: "Logout Successfully"
@@ -318,7 +598,7 @@ export default class Service {
             return response;
         }
         catch (err) {
-            console.log("err-------",err)
+            console.log("err-------", err)
             await Handler.handleCustomError(err);
         }
     }
@@ -327,7 +607,7 @@ export default class Service {
         try {
             const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
             const docOutput = await textSplitter.splitDocuments([
-                new Document({ pageContent: text, metadata: { documentId: documentId?.toString(), docNo: docNo } }), 
+                new Document({ pageContent: text, metadata: { documentId: documentId?.toString(), docNo: docNo } }),
             ]);
             docOutput.forEach(doc => {
                 if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
@@ -503,7 +783,7 @@ export default class Service {
             return response;
         }
         catch (err) {
-            console.log("err---",err)
+            console.log("err---", err)
             await Handler.handleCustomError(err);
         }
     }
@@ -534,6 +814,48 @@ export default class Service {
             await Handler.handleCustomError(err);
         }
     }
+
+    // static url = async (req: any) => {
+    //     try {
+    //         // let {url} = req.body
+    //         // let url = `https://www.zestgeek.com/`;
+    //         // let url = `https://www.geeksforgeeks.org/nodejs/`
+    //         let url = `https://timesofindia.indiatimes.com/travel/`
+    //         const loader = new PlaywrightWebBaseLoader(url);
+    //         console.log("loader---", loader)
+    //         const docs = await loader.load();
+    //         console.log("docs-----", docs);
+    //         // const response = await axios.get(url);
+    //         // let html = response?.data
+    //         const htmlContent = docs[0]?.pageContent; // Assuming the first document has the HTML content
+    //         const $ = cheerio.load(htmlContent);
+    //         // // console.log("$-----", $)
+    //         // let textContent: any = [];
+    //         $('*').each((i, elem) => {
+    //             textContent.push($(elem).text());
+    //         });
+
+    //         let textContent: any = '';
+
+    //         // $('*').each((i, elem) => {
+    //         //     textContent += $(elem).text().trim() + ' ';
+    //         // });
+    //         textContent = textContent.replace(/\s+/g, ' ').trim();
+    //         console.log("textContent----------------", textContent);
+    //         // $('h1, h2, h3, h4, h5, h6, p').each((i, elem) => {
+    //         //     textContent.push($(elem).text());
+    //         // });
+    //         // console.log("textContent---", textContent)
+    //         // Join the extracted text into a single string
+    //         // const extractedText = textContent.join(' ');
+    //         // console.log("extractedText-----", extractedText)
+    //         // const docs = await loader.load();
+    //         return "text";
+    //     }
+    //     catch (err) {
+    //         await Handler.handleCustomError(err);
+    //     }
+    // }
 
 
 }

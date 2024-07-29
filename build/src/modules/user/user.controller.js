@@ -18,9 +18,81 @@ const handler_1 = __importDefault(require("../../handler/handler"));
 class Controller {
 }
 _a = Controller;
+Controller.signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.signup(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.verifyEmail(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.resendOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.resendOtp(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.forgotPassword(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.verifyOtp(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.resetPassword(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
 Controller.login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield user_service_1.default.login(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.profile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.profile(req);
+        yield handler_1.default.handleSuccess(res, response);
+    }
+    catch (err) {
+        yield handler_1.default.handleCatchError(res, err);
+    }
+});
+Controller.socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let response = yield user_service_1.default.socialLogin(req);
         yield handler_1.default.handleSuccess(res, response);
     }
     catch (err) {

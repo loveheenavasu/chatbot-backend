@@ -79,7 +79,7 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
             return data;
         }
         catch (err) {
-            yield Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
+            yield Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
             return { type: "error", data: error_1.InvalidToken };
         }
     }

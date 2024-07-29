@@ -3,7 +3,8 @@ import mongoose, { Types } from 'mongoose';
 
 const sessionSchema = new mongoose.Schema({
     userId: { type: Types.ObjectId, default: null, ref: "users" },
-    socialToken: { type: String, default: null },
+    accessToken: { type: String, default: null },
+    tokenGenAt: { type: Number, default: 0 },
     createdAt: { type: Number, default: moment().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 })

@@ -3,13 +3,16 @@ import { config } from 'dotenv';
 config();
 const { SALT_ROUND, SECRET_KEY, CLIENT_ID } = process.env;
 
-console.log("salt round---", SALT_ROUND);
-console.log("secret key----", SECRET_KEY);
+// console.log("salt round---", SALT_ROUND);
+// console.log("secret key----", SECRET_KEY);
 import * as jwt from 'jsonwebtoken';
 import moment from 'moment';
 import * as Models from '../models/index';
 import { Types } from 'mongoose';
 import axios from 'axios';
+import random from 'randomstring';
+import Handler from '../handler/handler';
+import { Unauthorized } from '../handler/error';
 
 export default class CommonHelper {
 
@@ -106,88 +109,123 @@ export default class CommonHelper {
     //         throw err;
     //     }
     // }
-    // static hashPass = async (password: string) => {
-    //     try {
-    //         let response = await bcrypt.hash(password, Number(SALT_ROUND));
-    //         return response;
 
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
+    static hashPass = async (password: string) => {
+        try {
+            let response = await bcrypt.hash(password, Number(SALT_ROUND));
+            return response;
 
-    // static comparePass = async (hashPass: string, password: string) => {
-    //     try {
-    //         let response = await bcrypt.compare(password, hashPass);
-    //         return response;
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    static comparePass = async (hashPass: string, password: string) => {
+        try {
+            let response = await bcrypt.compare(password, hashPass);
+            return response;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    static generateOtp = async () => {
+        try {
+            let options = {
+                length:4,
+                charset: 'numeric'
+            }
+            let response = random.generate(options);
+            return response;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    static generateUniqueCode = async () => {
+        try {
+            let options = {
+                length: 6,
+                charset: 'alphabetic'
+            }
+            let response = random.generate(options);
+            return response;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
 
 
-    // static signToken = async (data: any) => {
-    //     try {
-    //         data.tokenGenAt = moment().utc().valueOf();
-    //         let token = await jwt.sign(data, String(SECRET_KEY));
-    //         await this.saveSession(token, data)
-    //         return token;
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
+    static signToken = async (data: any) => {
+        try {
+            data.tokenGenAt = moment().utc().valueOf();
+            let token = await jwt.sign(data, String(SECRET_KEY));
+            await this.saveSession(token, data)
+            return token;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
 
-    // static saveSession = async (token: string, data: any) => {
-    //     try {
-    //         let { _id, type, tokenGenAt } = data
-    //         let saveData: any = {
-    //             accessToken: token,
-    //             tokenGenAt: tokenGenAt
-    //         }
-    //         if (type == "Admin") {
-    //             saveData.adminId = _id
-    //         }
-    //         else {
-    //             saveData.userId = _id
-    //         }
-    //         let response = await Models.sessionModel.create(saveData);
-    //         return response;
+    static saveSession = async (token: string, data: any) => {
+        try {
+            let { _id, tokenGenAt } = data
+            let saveData: any = {
+                accessToken: token,
+                tokenGenAt: tokenGenAt,
+                userId: _id
+            }
+            let response = await Models.sessionModel.create(saveData);
+            return response;
 
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
+        }
+        catch (err) {
+            throw err;
+        }
+    }
 
-    // static verifyToken = async (token: string) => {
-    //     try {
-    //         let data = await jwt.verify(token, String(SECRET_KEY))
-    //         let checkSession = await this.checkSessionData(data);
-    //         // if (!checkSession) throw new Unauthorized();
-    //         return data;
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
+    static verifyToken = async (token: string) => {
+        try {
+            let data = await jwt.verify(token, String(SECRET_KEY))
+            let checkSession = await this.checkSessionData(data);
+            if (!checkSession) await Handler.handleCustomError(Unauthorized);
+            return data;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
 
-    // static checkSessionData = async (data: any) => {
-    //     try {
-    //         let { type, _id } = data;
-    //         let query: any = { userId: new Types.ObjectId(_id) };
-    //         if (type == 'Admin') query = { adminId: new Types.ObjectId(_id) };
-    //         let projection = { __v: 0 }
-    //         let option = { lean: true }
-    //         let response = await Models.sessionModel.findOne(query, projection, option);
-    //         return response;
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
+    static checkSessionData = async (data: any) => {
+        try {
+            let { _id } = data;
+            let query: any = { userId: new Types.ObjectId(_id) };
+            let projection = { __v: 0 }
+            let option = { lean: true }
+            let response = await Models.sessionModel.findOne(query, projection, option);
+            return response;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    static fetchUser = async (query: any) => {
+        try {
+            let projection = { __v: 0, password:0 }
+            let option = { lean: true }
+            let data = await Models.userModel.findOne(query, projection, option);
+            return data;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
 
 
 }

@@ -41,7 +41,7 @@ export default class SocketService {
                 let data: any = await Models.userModel.findOne(query, projection, option);
                 return data;
             } catch (err: any) {
-                await Models.sessionModel.deleteOne({ socialToken: splitToken[1] });
+                await Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
                 return { type: "error", data: InvalidToken }
             }
 

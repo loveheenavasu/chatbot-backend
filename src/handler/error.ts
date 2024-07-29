@@ -1,16 +1,35 @@
+export const Unauthorized = {
+    message: "Sorry, you are not authorized to perform this action.",
+    statusCode: 401
+}
+
 export const WrongPassword = {
     message: "Sorry, you entered wrong password",
-    statusCode:400
+    statusCode: 400
+}
+
+export const SomethingWentWrong = {
+    message: "Something went wrong",
+    statusCode: 400
 }
 
 export const EmailNotRegistered = {
-    message: "Sorry, email is not registered with us",
-    statusCode:400
+    message: "Sorry, this email is not registered with us",
+    statusCode: 400
 }
 
+export const EmailAlreadyExists = {
+    message: "Sorry, this email is already registered with us",
+    statusCode: 400
+}
+
+export const WrongOtp = {
+    message: "Wrong otp",
+    statusCode: 400
+}
 export const ProvideToken = {
     message: "Please provide token",
-    statusCode:400
+    statusCode: 400
 }
 
 export const BearerToken = {
@@ -25,7 +44,7 @@ export const InvalidToken = {
 
 export const TokenMismatch = {
     message: "Token mismatch",
-    statusCode:400
+    statusCode: 400
 }
 
 export const NotFound = {
@@ -33,7 +52,7 @@ export const NotFound = {
     statusCode: 404
 }
 
- export const UnsupportedFileType = {
+export const UnsupportedFileType = {
     message: "Unsupported file type"
 }
 

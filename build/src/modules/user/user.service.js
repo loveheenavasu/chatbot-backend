@@ -47,7 +47,7 @@ const dotenv_1 = require("dotenv");
 const neo4j_1 = require("../../config/neo4j");
 (0, dotenv_1.config)();
 const neo4j_vector_1 = require("@langchain/community/vectorstores/neo4j_vector");
-const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD } = process.env;
+const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
 const documents_1 = require("@langchain/core/documents");
 const { v4: uuidv4 } = require('uuid');
 const pdf_1 = require("@langchain/community/document_loaders/fs/pdf");
@@ -62,6 +62,8 @@ const openai = new openai_1.OpenAIEmbeddings({
 });
 const textsplitters_1 = require("@langchain/textsplitters");
 const text_model_1 = require("../../models/text.model");
+const user_model_1 = require("../../models/user.model");
+const email_1 = require("../../common/email");
 let neoConfig = {
     url: NEO_URL,
     username: NEO_USERNAME,
@@ -70,17 +72,284 @@ let neoConfig = {
 class Service {
 }
 _a = Service;
+Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { email, password } = req.body;
+        let query = { email: email.toLowerCase(), isEmailVerified: true };
+        let projection = { __v: 0 };
+        let options = { lean: true };
+        let fetchData = yield Models.userModel.findOne(query, projection, options);
+        if (fetchData) {
+            yield handler_1.default.handleCustomError(error_1.EmailAlreadyExists);
+        }
+        else {
+            let bcryptPass = yield common_1.default.hashPass(password);
+            let otp = yield common_1.default.generateOtp();
+            let dataToSave = {
+                email: email.toLowerCase(),
+                password: bcryptPass,
+                otp: otp,
+                createdAt: (0, moment_1.default)().utc().valueOf()
+            };
+            let saveData = yield Models.userModel.create(dataToSave);
+            delete saveData._doc["password"];
+            delete saveData._doc["otp"];
+            console.log("save  data befor----", saveData);
+            let data = {
+                _id: saveData === null || saveData === void 0 ? void 0 : saveData._id,
+                scope: SCOPE
+            };
+            let accessToken = yield common_1.default.signToken(data);
+            saveData._doc["accessToken"] = accessToken;
+            let emailData = {
+                email: email,
+                otp: otp
+            };
+            yield (0, email_1.sendEmail)(emailData);
+            console.log("--", saveData);
+            let response = {
+                message: `Otp sent to ${email}`,
+                data: saveData
+            };
+            return response;
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { otp: inputOtp } = req.body;
+        let { _id } = req.userData;
+        let query = { _id: _id };
+        let projection = { otp: 1, email: 1 };
+        let option = { lean: true };
+        let fetchData = yield Models.userModel.findOne(query, projection, option);
+        console.log("fetchData---", fetchData);
+        if (fetchData) {
+            let { otp, email } = fetchData;
+            if (inputOtp === otp) {
+                let update = {
+                    isEmailVerified: true,
+                    otp: null
+                };
+                let options = { new: true };
+                yield Models.userModel.findOneAndUpdate(query, update, options);
+                let query1 = { email: email, isEmailVerified: false };
+                let projection = { _id: 1 };
+                let fetchUnverified = yield Models.userModel.find(query1, projection, option);
+                if (fetchUnverified === null || fetchUnverified === void 0 ? void 0 : fetchUnverified.length) {
+                    yield Models.userModel.deleteMany(query1);
+                    for (let i = 0; i < (fetchUnverified === null || fetchUnverified === void 0 ? void 0 : fetchUnverified.length); i++) {
+                        let { _id } = fetchUnverified[i];
+                        let query = { userId: _id };
+                        yield Models.sessionModel.deleteOne(query);
+                    }
+                }
+                let response = {
+                    message: "Otp verified successfully"
+                };
+                return response;
+            }
+            else {
+                yield handler_1.default.handleCustomError(error_1.WrongOtp);
+            }
+        }
+        else {
+            yield handler_1.default.handleCustomError(error_1.NotFound);
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { email } = req.body;
+        let query = { email: email === null || email === void 0 ? void 0 : email.toLowerCase() };
+        let fetchData = yield common_1.default.fetchUser(query);
+        if (fetchData) {
+            let { email } = fetchData;
+            let otp = yield common_1.default.generateOtp();
+            let update = {
+                otp: otp
+            };
+            let option = { new: true };
+            yield Models.userModel.findOneAndUpdate(query, update, option);
+            let emailData = {
+                email: email,
+                otp: otp
+            };
+            yield (0, email_1.sendEmail)(emailData);
+            let response = {
+                message: `Otp sent to ${email}`
+            };
+            return response;
+        }
+        else {
+            yield handler_1.default.handleCustomError(error_1.EmailNotRegistered);
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { email } = req.body;
+        let query = { email: email.toLowerCase() };
+        let fetchData = yield common_1.default.fetchUser(query);
+        if (fetchData) {
+            let { _id, email } = fetchData;
+            let otp = yield common_1.default.generateOtp();
+            let query = { _id: _id };
+            let update = { otp: otp };
+            let option = { new: true };
+            yield Models.userModel.findOneAndUpdate(query, update, option);
+            let emailData = {
+                email: email,
+                otp: otp
+            };
+            yield (0, email_1.sendEmail)(emailData);
+            let response = {
+                message: `Otp sent to ${email}`
+            };
+            return response;
+        }
+        else {
+            yield handler_1.default.handleCustomError(error_1.EmailNotRegistered);
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { otp: inputOtp, email } = req.body;
+        let query = { email: email === null || email === void 0 ? void 0 : email.toLowerCase() };
+        let projection = { otp: 1 };
+        let option = { lean: true };
+        let fetchData = yield Models.userModel.findOne(query, projection, option);
+        if (fetchData) {
+            let { otp } = fetchData;
+            if (inputOtp === otp) {
+                let uniqueCode = yield common_1.default.generateUniqueCode();
+                let update = {
+                    uniqueCode: uniqueCode,
+                    otp: null
+                };
+                let options = { new: true };
+                yield Models.userModel.findOneAndUpdate(query, update, options);
+                let response = {
+                    message: "Otp verified successfully",
+                    uniqueCode: uniqueCode
+                };
+                return response;
+            }
+            else {
+                yield handler_1.default.handleCustomError(error_1.WrongOtp);
+            }
+        }
+        else {
+            yield handler_1.default.handleCustomError(error_1.NotFound);
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.resetPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { uniqueCode, password } = req.body;
+        let query = { uniqueCode: uniqueCode };
+        let fetchData = yield common_1.default.fetchUser(query);
+        if (fetchData) {
+            let hashPass = yield common_1.default.hashPass(password);
+            let update = {
+                uniqueCode: null,
+                password: hashPass
+            };
+            let options = { new: true };
+            yield Models.userModel.findOneAndUpdate(query, update, options);
+            let response = {
+                message: "Password Changed Successfully"
+            };
+            return response;
+        }
+        else {
+            yield handler_1.default.handleCustomError(error_1.NotFound);
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
 Service.login = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, name, image, socialToken, isAdmin } = req.body;
+        let { email, password } = req.body;
         let query = { email: email.toLowerCase() };
         let projection = { __v: 0 };
         let option = { lean: true };
         let fetchData = yield Models.userModel.findOne(query, projection, option);
         if (fetchData) {
+            let { _id, password: oldPassword, type } = fetchData;
+            if (oldPassword == null) {
+                yield handler_1.default.handleCustomError(error_1.SomethingWentWrong);
+            }
+            let decryptPass = yield common_1.default.comparePass(oldPassword, password);
+            if (!decryptPass) {
+                yield handler_1.default.handleCustomError(error_1.WrongPassword);
+            }
+            else {
+                let data = {
+                    _id: _id,
+                    scope: SCOPE
+                };
+                let accessToken = yield common_1.default.signToken(data);
+                let resData = {
+                    _id: fetchData === null || fetchData === void 0 ? void 0 : fetchData._id,
+                    email: fetchData === null || fetchData === void 0 ? void 0 : fetchData.email,
+                    accessToken: accessToken
+                };
+                let response = {
+                    message: "Login successfully",
+                    data: resData
+                };
+                return response;
+            }
+        }
+        else {
+            yield handler_1.default.handleCustomError(error_1.EmailNotRegistered);
+        }
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.profile = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { _id } = req.userData;
+        let query = { _id: _id };
+        let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 };
+        let option = { lean: true };
+        let fetchData = yield Models.userModel.findOne(query, projection, option);
+        return fetchData !== null && fetchData !== void 0 ? fetchData : {};
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { email, name, image, socialToken, isAdmin } = req.body;
+        let query = { email: email.toLowerCase() };
+        let fetchData = yield common_1.default.fetchUser(query);
+        if (fetchData) {
             let { _id } = fetchData;
             let session = yield _a.createSession(_id, socialToken);
-            fetchData.socialToken = session === null || session === void 0 ? void 0 : session.socialToken;
+            fetchData.accessToken = session === null || session === void 0 ? void 0 : session.accessToken;
             return fetchData;
         }
         let dataToSave = {
@@ -88,22 +357,24 @@ Service.login = (req) => __awaiter(void 0, void 0, void 0, function* () {
             name: name,
             image: image,
             isAdmin: isAdmin,
+            isEmailVerified: true,
+            type: user_model_1.signType === null || user_model_1.signType === void 0 ? void 0 : user_model_1.signType.GOOGLE,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
         let userData = yield Models.userModel.create(dataToSave);
         let session = yield _a.createSession(userData === null || userData === void 0 ? void 0 : userData._id, socialToken);
-        userData._doc['socialToken'] = session === null || session === void 0 ? void 0 : session.socialToken;
+        userData._doc['accessToken'] = session === null || session === void 0 ? void 0 : session.accessToken;
         return userData;
     }
     catch (err) {
         yield handler_1.default.handleCustomError(err);
     }
 });
-Service.createSession = (user_id, socialToken) => __awaiter(void 0, void 0, void 0, function* () {
+Service.createSession = (user_id, accessToken) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let dataToSession = {
             userId: user_id,
-            socialToken: socialToken,
+            accessToken: accessToken,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
         let response = yield Models.sessionModel.create(dataToSession);
@@ -317,8 +588,8 @@ Service.deleteFile = (req) => __awaiter(void 0, void 0, void 0, function* () {
 });
 Service.logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { socialToken } = req.userData;
-        let query = { socialToken: socialToken };
+        let { accessToken } = req.userData;
+        let query = { accessToken: accessToken };
         yield Models.sessionModel.deleteOne(query);
         let response = {
             message: "Logout Successfully"

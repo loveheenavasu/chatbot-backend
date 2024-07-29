@@ -5,7 +5,7 @@ const openai_1 = require("@langchain/openai");
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const { OPEN_API_KEY } = process.env;
-console.log("open api -", OPEN_API_KEY);
+// console.log("open api -", OPEN_API_KEY)
 // const langChain = new ChatOpenAI({
 //     apiKey: OPEN_API_KEY,
 //     modelName: "gpt-4-1106-preview",

@@ -1,12 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProvideDocumentId = exports.UnsupportedFileType = exports.NotFound = exports.TokenMismatch = exports.InvalidToken = exports.BearerToken = exports.ProvideToken = exports.EmailNotRegistered = exports.WrongPassword = void 0;
+exports.ProvideDocumentId = exports.UnsupportedFileType = exports.NotFound = exports.TokenMismatch = exports.InvalidToken = exports.BearerToken = exports.ProvideToken = exports.WrongOtp = exports.EmailAlreadyExists = exports.EmailNotRegistered = exports.SomethingWentWrong = exports.WrongPassword = exports.Unauthorized = void 0;
+exports.Unauthorized = {
+    message: "Sorry, you are not authorized to perform this action.",
+    statusCode: 401
+};
 exports.WrongPassword = {
     message: "Sorry, you entered wrong password",
     statusCode: 400
 };
+exports.SomethingWentWrong = {
+    message: "Something went wrong",
+    statusCode: 400
+};
 exports.EmailNotRegistered = {
-    message: "Sorry, email is not registered with us",
+    message: "Sorry, this email is not registered with us",
+    statusCode: 400
+};
+exports.EmailAlreadyExists = {
+    message: "Sorry, this email is already registered with us",
+    statusCode: 400
+};
+exports.WrongOtp = {
+    message: "Wrong otp",
     statusCode: 400
 };
 exports.ProvideToken = {
