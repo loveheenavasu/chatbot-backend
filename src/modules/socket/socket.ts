@@ -12,7 +12,7 @@ const connectSocket = (server: any) => {
             cors: { origin: "*" }
         });
 
-        
+
         // !! ---->>>   MIDDLEWARE FOR AUTH   <<<----
 
         // io.use(async (socket: Socket | any, next) => {
@@ -35,6 +35,7 @@ const connectSocket = (server: any) => {
 
         io.on("connection", async (socket: any | Socket) => {
             const ip = socket?.handshake?.address
+            console.log("socket----", socket)
             console.log("ip--", ip)
 
             socket.setMaxListeners(0);

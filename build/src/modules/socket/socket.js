@@ -66,6 +66,7 @@ const connectSocket = (server) => {
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
             const ip = (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.address;
+            console.log("socket----", socket);
             console.log("ip--", ip);
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
