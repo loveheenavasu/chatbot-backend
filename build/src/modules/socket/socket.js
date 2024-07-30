@@ -64,18 +64,18 @@ const connectSocket = (server) => {
         //     }
         // });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a;
-            const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
-            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket.request.connection.remoteAddress || socket.conn.remoteAddress;
-            // Handle the case of multiple IP addresses in x-forwarded-for
-            if (ip && ip.includes(',')) {
-                ip = ip.split(',')[0].trim();
-            }
-            console.log("ip-----", ip);
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a;
                 try {
                     // let { _id: userId } = socket?.user;
+                    const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
+                    let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket.request.connection.remoteAddress || socket.conn.remoteAddress;
+                    // Handle the case of multiple IP addresses in x-forwarded-for
+                    if (ip && ip.includes(',')) {
+                        ip = ip.split(',')[0].trim();
+                    }
+                    console.log("ip-----", ip);
                     let { text, connectId, documentId } = payload;
                     console.log("payload----", payload);
                     let res = {
