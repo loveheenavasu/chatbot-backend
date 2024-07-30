@@ -95,7 +95,7 @@ Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
             let saveData = yield Models.userModel.create(dataToSave);
             delete saveData._doc["password"];
             delete saveData._doc["otp"];
-            console.log("save  data befor----", saveData);
+            // console.log("save  data befor----", saveData)
             let data = {
                 _id: saveData === null || saveData === void 0 ? void 0 : saveData._id,
                 scope: SCOPE
@@ -107,7 +107,7 @@ Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 otp: otp
             };
             yield (0, email_1.sendEmail)(emailData);
-            console.log("--", saveData);
+            // console.log("--", saveData)
             let response = {
                 message: `Otp sent to ${email}`,
                 data: saveData
@@ -127,7 +127,7 @@ Service.verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let projection = { otp: 1, email: 1 };
         let option = { lean: true };
         let fetchData = yield Models.userModel.findOne(query, projection, option);
-        console.log("fetchData---", fetchData);
+        // console.log("fetchData---", fetchData)
         if (fetchData) {
             let { otp, email } = fetchData;
             if (inputOtp === otp) {
@@ -598,7 +598,7 @@ Service.logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        console.log("err-------", err);
+        // console.log("err-------", err)
         yield handler_1.default.handleCustomError(err);
     }
 });
@@ -768,7 +768,7 @@ Service.chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        console.log("err---", err);
+        // console.log("err---", err)
         yield handler_1.default.handleCustomError(err);
     }
 });

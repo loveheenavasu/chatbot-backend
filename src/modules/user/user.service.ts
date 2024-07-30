@@ -63,7 +63,7 @@ export default class Service {
                 let saveData: any = await Models.userModel.create(dataToSave);
                 delete saveData._doc["password"];
                 delete saveData._doc["otp"];
-                console.log("save  data befor----", saveData)
+                // console.log("save  data befor----", saveData)
                 let data = {
                     _id: saveData?._id,
                     scope: SCOPE
@@ -75,7 +75,7 @@ export default class Service {
                     otp: otp
                 }
                 await sendEmail(emailData);
-                console.log("--", saveData)
+                // console.log("--", saveData)
                 let response = {
                     message: `Otp sent to ${email}`,
                     data: saveData
@@ -96,7 +96,7 @@ export default class Service {
             let projection = { otp: 1, email: 1 }
             let option = { lean: true }
             let fetchData = await Models.userModel.findOne(query, projection, option);
-            console.log("fetchData---", fetchData)
+            // console.log("fetchData---", fetchData)
             if (fetchData) {
                 let { otp, email } = fetchData;
                 if (inputOtp === otp) {
@@ -600,7 +600,7 @@ export default class Service {
             return response;
         }
         catch (err) {
-            console.log("err-------", err)
+            // console.log("err-------", err)
             await Handler.handleCustomError(err);
         }
     }
@@ -785,7 +785,7 @@ export default class Service {
             return response;
         }
         catch (err) {
-            console.log("err---", err)
+            // console.log("err---", err)
             await Handler.handleCustomError(err);
         }
     }

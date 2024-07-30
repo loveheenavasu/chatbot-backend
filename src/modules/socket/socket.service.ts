@@ -115,7 +115,7 @@ export default class SocketService {
                 stop: ['\n'],
             });
 
-            console.log("response----", response)
+            // console.log("response----", response)
 
             let dataSave = {
                 message: response?.choices[0]?.message?.content,

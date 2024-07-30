@@ -141,7 +141,7 @@ SocketService.searchInput = (search, chatId, documentId, ipAddressId) => __await
             max_tokens: 150,
             stop: ['\n'],
         });
-        console.log("response----", response);
+        // console.log("response----", response)
         let dataSave = {
             message: (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content,
             ipAddressId: ipAddressId,

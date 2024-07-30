@@ -42,13 +42,15 @@ const connectSocket = (server: any) => {
                 try {
                     // let { _id: userId } = socket?.user;
                     const headers = socket?.request?.headers;
-                    let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket.request.connection.remoteAddress || socket.conn.remoteAddress;
+                    let d = socket?.handshake
+                    console.log("socket?.handshake---", d)
+                    let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket?.request?.connection?.remoteAddress || socket?.conn?.remoteAddress;
 
                     // Handle the case of multiple IP addresses in x-forwarded-for
                     if (ip && ip.includes(',')) {
                         ip = ip.split(',')[0].trim();
                     }
-                    
+
                     console.log("ip-----", ip)
 
                     let { text, connectId, documentId } = payload

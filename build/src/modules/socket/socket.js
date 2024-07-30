@@ -66,11 +66,13 @@ const connectSocket = (server) => {
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a;
+                var _a, _b, _c, _d;
                 try {
                     // let { _id: userId } = socket?.user;
                     const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
-                    let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket.request.connection.remoteAddress || socket.conn.remoteAddress;
+                    let d = socket === null || socket === void 0 ? void 0 : socket.handshake;
+                    console.log("socket?.handshake---", d);
+                    let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || ((_c = (_b = socket === null || socket === void 0 ? void 0 : socket.request) === null || _b === void 0 ? void 0 : _b.connection) === null || _c === void 0 ? void 0 : _c.remoteAddress) || ((_d = socket === null || socket === void 0 ? void 0 : socket.conn) === null || _d === void 0 ? void 0 : _d.remoteAddress);
                     // Handle the case of multiple IP addresses in x-forwarded-for
                     if (ip && ip.includes(',')) {
                         ip = ip.split(',')[0].trim();
