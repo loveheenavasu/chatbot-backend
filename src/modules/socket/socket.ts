@@ -34,15 +34,8 @@ const connectSocket = (server: any) => {
 
 
         io.on("connection", async (socket: any | Socket) => {
-
-            const app = express();
-            app.set('trust proxy', true);
-            console.log("socket----", socket)
-            const ip = socket.handshake.headers['x-forwarded-for'] ||
-                socket.handshake.headers['cf-connecting-ip'] ||
-                socket.request.connection.remoteAddress;
-            console.log("socket ----  ip----",ip)
-
+            const ip = socket?.handshake?.address
+            console.log("ip--", ip)
 
             socket.setMaxListeners(0);
 
