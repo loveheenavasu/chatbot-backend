@@ -31,15 +31,20 @@ const connectSocket = (server: any) => {
         //         return next(new Error('Internal server error'));
         //     }
         // });
-        const app = express();
-        app.use((req, res, next) => {
-            console.log("req----", req?.ip)
-            const ip = req?.headers['x-forwarded-for'] || req?.connection?.remoteAddress;
-            console.log(`HTTP Request from IP: ${ip}`);
-            next();
-        });
+       
     
-        io.on("connection", async(socket: any | Socket) => {
+        io.on("connection", async (socket: any | Socket) => {
+            
+            const app = express();
+            app.use((req, res, next) => {
+                console.log("req----", req?.ip)
+                const ip = req?.headers['x-forwarded-for'] || req?.socket?.remoteAddress;
+                console.log(`HTTP Request from IP: ${ip}`);
+                next();
+            });
+
+
+
             console.log("socket id----", socket.id)
             console.log("------", socket)
             console.log('connection :', socket?.request?.connection?._peername);

@@ -64,16 +64,16 @@ const connectSocket = (server) => {
         //         return next(new Error('Internal server error'));
         //     }
         // });
-        const app = (0, express_1.default)();
-        app.use((req, res, next) => {
-            var _a;
-            console.log("req----", req === null || req === void 0 ? void 0 : req.ip);
-            const ip = (req === null || req === void 0 ? void 0 : req.headers['x-forwarded-for']) || ((_a = req === null || req === void 0 ? void 0 : req.connection) === null || _a === void 0 ? void 0 : _a.remoteAddress);
-            console.log(`HTTP Request from IP: ${ip}`);
-            next();
-        });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e;
+            const app = (0, express_1.default)();
+            app.use((req, res, next) => {
+                var _a;
+                console.log("req----", req === null || req === void 0 ? void 0 : req.ip);
+                const ip = (req === null || req === void 0 ? void 0 : req.headers['x-forwarded-for']) || ((_a = req === null || req === void 0 ? void 0 : req.socket) === null || _a === void 0 ? void 0 : _a.remoteAddress);
+                console.log(`HTTP Request from IP: ${ip}`);
+                next();
+            });
             console.log("socket id----", socket.id);
             console.log("------", socket);
             console.log('connection :', (_b = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.connection) === null || _b === void 0 ? void 0 : _b._peername);
