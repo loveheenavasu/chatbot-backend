@@ -12,7 +12,7 @@ const connectSocket = (server: any) => {
             cors: { origin: "*" }
         });
 
-
+        
         // !! ---->>>   MIDDLEWARE FOR AUTH   <<<----
 
         // io.use(async (socket: Socket | any, next) => {
@@ -31,35 +31,22 @@ const connectSocket = (server: any) => {
         //         return next(new Error('Internal server error'));
         //     }
         // });
-       
-    
+
+
         io.on("connection", async (socket: any | Socket) => {
-            
+
             const app = express();
-            app.use((req, res, next) => {
-                console.log("req----", req?.ip)
-                const ip = req?.headers['x-forwarded-for'] || req?.socket?.remoteAddress;
-                console.log(`HTTP Request from IP: ${ip}`);
-                next();
-            });
-
-
-
-            console.log("socket id----", socket.id)
-            console.log("------", socket)
-            console.log('connection :', socket?.request?.connection?._peername);
-            console.log("------socket?.handshake?.address", socket?.handshake?.address)
-            console.log("socket.request.socket.remoteAddress=-----", socket?.request?.socket?.remoteAddress)
-
+            app.set('trust proxy', true);
+            console.log("socket----", socket)
             const ip = socket.handshake.headers['x-forwarded-for'] ||
                 socket.handshake.headers['cf-connecting-ip'] ||
-                socket.handshake.address;
-            
-            console.log("ip----",ip)
+                socket.request.connection.remoteAddress;
+            console.log("socket ----  ip----",ip)
+
 
             socket.setMaxListeners(0);
 
-            
+
             socket.on("search", async (payload: any) => {
                 try {
                     // let { _id: userId } = socket?.user;
@@ -96,7 +83,7 @@ const connectSocket = (server: any) => {
                     else {
                         let dataToSave = {
                             ipAddress: clientIpAddress,
-                            createdAt:moment().utc().valueOf()
+                            createdAt: moment().utc().valueOf()
                         }
                         let saveData = await Models.ipAddressModel.create(dataToSave);
                         ipAddressId = saveData?._id

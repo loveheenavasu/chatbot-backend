@@ -65,24 +65,13 @@ const connectSocket = (server) => {
         //     }
         // });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e;
             const app = (0, express_1.default)();
-            app.use((req, res, next) => {
-                var _a;
-                console.log("req----", req === null || req === void 0 ? void 0 : req.ip);
-                const ip = (req === null || req === void 0 ? void 0 : req.headers['x-forwarded-for']) || ((_a = req === null || req === void 0 ? void 0 : req.socket) === null || _a === void 0 ? void 0 : _a.remoteAddress);
-                console.log(`HTTP Request from IP: ${ip}`);
-                next();
-            });
-            console.log("socket id----", socket.id);
-            console.log("------", socket);
-            console.log('connection :', (_b = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.connection) === null || _b === void 0 ? void 0 : _b._peername);
-            console.log("------socket?.handshake?.address", (_c = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _c === void 0 ? void 0 : _c.address);
-            console.log("socket.request.socket.remoteAddress=-----", (_e = (_d = socket === null || socket === void 0 ? void 0 : socket.request) === null || _d === void 0 ? void 0 : _d.socket) === null || _e === void 0 ? void 0 : _e.remoteAddress);
+            app.set('trust proxy', true);
+            console.log("socket----", socket);
             const ip = socket.handshake.headers['x-forwarded-for'] ||
                 socket.handshake.headers['cf-connecting-ip'] ||
-                socket.handshake.address;
-            console.log("ip----", ip);
+                socket.request.connection.remoteAddress;
+            console.log("socket ----  ip----", ip);
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a;
