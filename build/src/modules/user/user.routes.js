@@ -17,7 +17,7 @@ router.post('/forgot', user_controller_1.default.forgotPassword);
 router.post('/verify-otp', user_controller_1.default.verifyOtp);
 router.post('/reset', user_controller_1.default.resetPassword);
 router.post('/login', user_controller_1.default.login);
-router.get('/profile', authorization_1.authorization, user_controller_1.default.profile);
+// router.get('/profile',authorization, Controller.profile)
 router.post('/social-login', user_controller_1.default.socialLogin);
 router.get('/chatbot', authorization_1.authorization, user_controller_1.default.chatbotLists);
 router.delete('/chatbot', authorization_1.authorization, user_controller_1.default.deleteChatbot);

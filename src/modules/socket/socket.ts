@@ -1,10 +1,9 @@
 import { Server, Socket } from "socket.io";
 import SocketService from "./socket.service";
+import { Role } from "../../models/message.model";
+import * as Models from '../../models/index';
+import moment from "moment";
 
-enum Role {
-    User = "USER",
-    AI = "AI"
-}
 
 const connectSocket = (server: any) => {
     try {
@@ -35,6 +34,8 @@ const connectSocket = (server: any) => {
     
         io.on("connection", async(socket: any | Socket) => {
             console.log("socket id----", socket.id)
+            console.log("------", socket?.handshake?.address)
+
             socket.setMaxListeners(0);
 
             
@@ -50,18 +51,38 @@ const connectSocket = (server: any) => {
                     }
                     socket.emit("searches", res)
                     let chatId: any
-                    if (connectId) {
-                        chatId = connectId
-                        // let fetchData = await Models.messageModel.findOne({ chatId: chatId }, { __v: 0 }, { lean: true })
-                        // if (fetchData) {
-                        //     let { chatId } = fetchData
-                        //     chatId = chatId
-                        // }
+                    // if (connectId) {
+                    //     chatId = connectId
+                    //     // let fetchData = await Models.messageModel.findOne({ chatId: chatId }, { __v: 0 }, { lean: true })
+                    //     // if (fetchData) {
+                    //     //     let { chatId } = fetchData
+                    //     //     chatId = chatId
+                    //     // }
+                    // }
+                    // else {
+                    //     chatId = socket.id
+                    // }
+                    let clientIpAddress = socket?.handshake?.address
+                    let query = { ipAddress: clientIpAddress }
+                    let projection = { __v: 0 }
+                    let option = { lean: true }
+                    let fetchData = await Models.ipAddressModel.findOne(query, projection, option)
+                    let ipAddressId: any;
+                    if (fetchData) {
+                        let { _id } = fetchData
+                        ipAddressId = _id
                     }
                     else {
-                        chatId = socket.id
+                        let dataToSave = {
+                            ipAddress: clientIpAddress,
+                            createdAt:moment().utc().valueOf()
+                        }
+                        let saveData = await Models.ipAddressModel.create(dataToSave);
+                        ipAddressId = saveData?._id
                     }
-                    let data = await SocketService.searchInput(text, chatId, documentId);
+
+
+                    let data = await SocketService.searchInput(text, chatId, documentId, ipAddressId);
                     let response = {
                         message: data,
                         chatId: chatId,
@@ -72,9 +93,7 @@ const connectSocket = (server: any) => {
                 catch (err) {
                     throw err;
                 }
-
             })
-
 
             socket.on("disconnect", async () => {
                 try {

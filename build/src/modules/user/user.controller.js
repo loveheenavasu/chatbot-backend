@@ -81,15 +81,15 @@ Controller.login = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         yield handler_1.default.handleCatchError(res, err);
     }
 });
-Controller.profile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        let response = yield user_service_1.default.profile(req);
-        yield handler_1.default.handleSuccess(res, response);
-    }
-    catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
-    }
-});
+// static profile = async (req: express.Request | any, res: express.Response) => {
+//     try {
+//         let response = await Service.profile(req);
+//         await Handler.handleSuccess(res, response);
+//     }
+//     catch (err) {
+//         await Handler.handleCatchError(res, err);
+//     }
+// }
 Controller.socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield user_service_1.default.socialLogin(req);

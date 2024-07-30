@@ -76,15 +76,15 @@ export default class Controller {
         }
     }
 
-    static profile = async (req: express.Request | any, res: express.Response) => {
-        try {
-            let response = await Service.profile(req);
-            await Handler.handleSuccess(res, response);
-        }
-        catch (err) {
-            await Handler.handleCatchError(res, err);
-        }
-    }
+    // static profile = async (req: express.Request | any, res: express.Response) => {
+    //     try {
+    //         let response = await Service.profile(req);
+    //         await Handler.handleSuccess(res, response);
+    //     }
+    //     catch (err) {
+    //         await Handler.handleCatchError(res, err);
+    //     }
+    // }
 
     static socialLogin = async (req: express.Request | any, res: express.Response) => {
         try {

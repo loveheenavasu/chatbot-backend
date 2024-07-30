@@ -8,6 +8,8 @@ import Handler from "../../handler/handler";
 import { BearerToken, InvalidToken, ProvideToken } from "../../handler/error";
 config();
 import axios from "axios";
+import moment from "moment";
+import { Role } from "../../models/message.model";
 const { NEO_URL, OPEN_API_KEY, NEO_USERNAME, NEO_PASSWORD } = process.env;
 
 const openai = new OpenAIEmbeddings({
@@ -40,11 +42,11 @@ export default class SocketService {
                 let option = { lean: true }
                 let data: any = await Models.userModel.findOne(query, projection, option);
                 return data;
-            } catch (err: any) {
+            }
+            catch (err: any) {
                 await Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
                 return { type: "error", data: InvalidToken }
             }
-
         }
         catch (err) {
             throw err;
@@ -52,15 +54,16 @@ export default class SocketService {
     }
 
 
-    static searchInput = async (search: any, chatId: any, documentId: string) => {
+    static searchInput = async (search: any, chatId: any, documentId: string, ipAddressId:any) => {
         try {
-            // let dataToSave = {
-            //     message: search,
-            //     chatId: chatId,
-            //     userId: userId,
-            //     createdAt: moment().utc().valueOf(),
-            // }
-            // await Models.messageModel.create(dataToSave);
+            let dataToSave = {
+                message: search,
+                ipAddressId: ipAddressId,
+                documentId: documentId,
+                messageType: Role.User,
+                createdAt: moment().utc().valueOf(),
+            }
+            await Models.messageModel.create(dataToSave);
             const embeddingVector = await openai.embedQuery(search);
 
             let config: any = {
@@ -113,6 +116,15 @@ export default class SocketService {
             });
 
             console.log("response----", response)
+
+            let dataSave = {
+                message: response?.choices[0]?.message?.content,
+                ipAddressId: ipAddressId,
+                documentId: documentId,
+                messageType: Role.AI,
+                createdAt: moment().utc().valueOf(),
+            }
+            await Models.messageModel.create(dataSave);
 
             // let data = {
             //     message: response.choices[0].message.content,

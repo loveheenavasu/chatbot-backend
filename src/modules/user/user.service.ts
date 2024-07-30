@@ -20,6 +20,8 @@ import path from 'path';
 import WordExtractor from 'word-extractor';
 import { PlaywrightWebBaseLoader } from "@langchain/community/document_loaders/web/playwright";
 import cheerio from 'cheerio';
+// import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
+
 
 const openai = new OpenAIEmbeddings({
     model: "text-embedding-3-large",
@@ -302,19 +304,19 @@ export default class Service {
         }
     }
 
-    static profile = async (req: any) => {
-        try {
-            let { _id } = req.userData;
-            let query = { _id: _id }
-            let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 }
-            let option = { lean: true }
-            let fetchData = await Models.userModel.findOne(query, projection, option);
-            return fetchData ?? {};
-        }
-        catch (err) {
-            await Handler.handleCustomError(err);
-        }
-    }
+    // static profile = async (req: any) => {
+    //     try {
+    //         let { _id } = req.userData;
+    //         let query = { _id: _id }
+    //         let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 }
+    //         let option = { lean: true }
+    //         let fetchData = await Models.userModel.findOne(query, projection, option);
+    //         return fetchData ?? {};
+    //     }
+    //     catch (err) {
+    //         await Handler.handleCustomError(err);
+    //     }
+    // }
 
     static socialLogin = async (req: express.Request | any) => {
         try {
@@ -817,39 +819,30 @@ export default class Service {
 
     // static url = async (req: any) => {
     //     try {
-    //         // let {url} = req.body
-    //         // let url = `https://www.zestgeek.com/`;
-    //         // let url = `https://www.geeksforgeeks.org/nodejs/`
-    //         let url = `https://timesofindia.indiatimes.com/travel/`
+    //         let url = `https://timesofindia.indiatimes.com/travel/`;
+
     //         const loader = new PlaywrightWebBaseLoader(url);
-    //         console.log("loader---", loader)
     //         const docs = await loader.load();
-    //         console.log("docs-----", docs);
-    //         // const response = await axios.get(url);
-    //         // let html = response?.data
-    //         const htmlContent = docs[0]?.pageContent; // Assuming the first document has the HTML content
+
+    //         const htmlContent = docs[0]?.pageContent;
+
     //         const $ = cheerio.load(htmlContent);
-    //         // // console.log("$-----", $)
-    //         // let textContent: any = [];
+    //         let textContent: string = '';
+
+            
     //         $('*').each((i, elem) => {
-    //             textContent.push($(elem).text());
+    //             textContent += $(elem).text().trim() + ' ';
     //         });
 
-    //         let textContent: any = '';
-
-    //         // $('*').each((i, elem) => {
-    //         //     textContent += $(elem).text().trim() + ' ';
-    //         // });
     //         textContent = textContent.replace(/\s+/g, ' ').trim();
     //         console.log("textContent----------------", textContent);
-    //         // $('h1, h2, h3, h4, h5, h6, p').each((i, elem) => {
-    //         //     textContent.push($(elem).text());
+
+    //         // const loader = YoutubeLoader.createFromUrl("https://youtu.be/vsWxs1tuwDk?feature=shared", {
+    //         //     addVideoInfo: true,
     //         // });
-    //         // console.log("textContent---", textContent)
-    //         // Join the extracted text into a single string
-    //         // const extractedText = textContent.join(' ');
-    //         // console.log("extractedText-----", extractedText)
+
     //         // const docs = await loader.load();
+
     //         return "text";
     //     }
     //     catch (err) {

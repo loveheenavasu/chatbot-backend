@@ -23,12 +23,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Role = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+var Role;
+(function (Role) {
+    Role["User"] = "USER";
+    Role["AI"] = "AI";
+})(Role || (exports.Role = Role = {}));
 const messageSchema = new mongoose_1.default.Schema({
     message: { type: String, default: null },
-    chatId: { type: String, default: null },
-    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "users" },
-    image: { type: String, default: null },
+    ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "ips" },
+    documentId: { type: String, default: null },
+    messageType: { type: String, default: null, enum: Role },
     createdAt: { type: Number, default: 0 },
     updatedAt: { type: Number, default: 0 },
 });

@@ -14,8 +14,7 @@ router.post('/forgot', Controller.forgotPassword)
 router.post('/verify-otp', Controller.verifyOtp)
 router.post('/reset', Controller.resetPassword)
 router.post('/login', Controller.login)
-router.get('/profile',authorization, Controller.profile)
-
+// router.get('/profile',authorization, Controller.profile)
 
 router.post('/social-login', Controller.socialLogin);
 router.get('/chatbot', authorization, Controller.chatbotLists)
@@ -28,7 +27,5 @@ router.get('/files', authorization, Controller.fileLists)
 router.delete('/files', authorization, Controller.deleteFile)
 router.delete('/logout', authorization, Controller.logout);
 
-
 // router.post('/url', Controller.url)
-
 export default router;

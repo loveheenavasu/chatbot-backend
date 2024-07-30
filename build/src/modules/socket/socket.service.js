@@ -45,6 +45,8 @@ const handler_1 = __importDefault(require("../../handler/handler"));
 const error_1 = require("../../handler/error");
 (0, dotenv_1.config)();
 const axios_1 = __importDefault(require("axios"));
+const moment_1 = __importDefault(require("moment"));
+const message_model_1 = require("../../models/message.model");
 const { NEO_URL, OPEN_API_KEY, NEO_USERNAME, NEO_PASSWORD } = process.env;
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
@@ -87,16 +89,17 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
         throw err;
     }
 });
-SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c, _d, _e;
+SocketService.searchInput = (search, chatId, documentId, ipAddressId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c, _d, _e, _f, _g;
     try {
-        // let dataToSave = {
-        //     message: search,
-        //     chatId: chatId,
-        //     userId: userId,
-        //     createdAt: moment().utc().valueOf(),
-        // }
-        // await Models.messageModel.create(dataToSave);
+        let dataToSave = {
+            message: search,
+            ipAddressId: ipAddressId,
+            documentId: documentId,
+            messageType: message_model_1.Role.User,
+            createdAt: (0, moment_1.default)().utc().valueOf(),
+        };
+        yield Models.messageModel.create(dataToSave);
         const embeddingVector = yield openai.embedQuery(search);
         let config = {
             url: NEO_URL,
@@ -139,14 +142,22 @@ SocketService.searchInput = (search, chatId, documentId) => __awaiter(void 0, vo
             stop: ['\n'],
         });
         console.log("response----", response);
+        let dataSave = {
+            message: (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content,
+            ipAddressId: ipAddressId,
+            documentId: documentId,
+            messageType: message_model_1.Role.AI,
+            createdAt: (0, moment_1.default)().utc().valueOf(),
+        };
+        yield Models.messageModel.create(dataSave);
         // let data = {
         //     message: response.choices[0].message.content,
         //     chatId: chatId,
         //     // createdAt: moment().utc().valueOf(),
         // }
         // await Models.messageModel.create(data);
-        console.log("response?.choices[0]?.message----", (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content);
-        return (_e = (_d = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.content;
+        console.log("response?.choices[0]?.message----", (_e = (_d = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.content);
+        return (_g = (_f = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _f === void 0 ? void 0 : _f.message) === null || _g === void 0 ? void 0 : _g.content;
     }
     catch (err) {
         throw yield handler_1.default.handleCustomError(err);

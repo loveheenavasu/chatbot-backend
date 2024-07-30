@@ -55,6 +55,7 @@ const csv_1 = require("@langchain/community/document_loaders/fs/csv");
 const docx_1 = require("@langchain/community/document_loaders/fs/docx");
 const path_1 = __importDefault(require("path"));
 const word_extractor_1 = __importDefault(require("word-extractor"));
+// import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
     batchSize: 512,
@@ -328,19 +329,19 @@ Service.login = (req) => __awaiter(void 0, void 0, void 0, function* () {
         yield handler_1.default.handleCustomError(err);
     }
 });
-Service.profile = (req) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        let { _id } = req.userData;
-        let query = { _id: _id };
-        let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 };
-        let option = { lean: true };
-        let fetchData = yield Models.userModel.findOne(query, projection, option);
-        return fetchData !== null && fetchData !== void 0 ? fetchData : {};
-    }
-    catch (err) {
-        yield handler_1.default.handleCustomError(err);
-    }
-});
+// static profile = async (req: any) => {
+//     try {
+//         let { _id } = req.userData;
+//         let query = { _id: _id }
+//         let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 }
+//         let option = { lean: true }
+//         let fetchData = await Models.userModel.findOne(query, projection, option);
+//         return fetchData ?? {};
+//     }
+//     catch (err) {
+//         await Handler.handleCustomError(err);
+//     }
+// }
 Service.socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email, name, image, socialToken, isAdmin } = req.body;
