@@ -65,12 +65,15 @@ const connectSocket = (server) => {
         // });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
-            const ip = (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.address;
-            console.log("socket----", socket);
-            console.log("ip--", ip);
+            const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket.request.connection.remoteAddress || socket.conn.remoteAddress;
+            // Handle the case of multiple IP addresses in x-forwarded-for
+            if (ip && ip.includes(',')) {
+                ip = ip.split(',')[0].trim();
+            }
+            console.log("ip-----", ip);
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a;
                 try {
                     // let { _id: userId } = socket?.user;
                     let { text, connectId, documentId } = payload;
@@ -93,7 +96,7 @@ const connectSocket = (server) => {
                     // else {
                     //     chatId = socket.id
                     // }
-                    let clientIpAddress = (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.address;
+                    let clientIpAddress = ip;
                     let query = { ipAddress: clientIpAddress };
                     let projection = { __v: 0 };
                     let option = { lean: true };

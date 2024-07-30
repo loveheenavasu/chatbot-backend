@@ -92,8 +92,6 @@ Controller.login = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 // }
 Controller.socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("req---", req);
-        console.log("req---", req === null || req === void 0 ? void 0 : req.ip);
         let response = yield user_service_1.default.socialLogin(req);
         yield handler_1.default.handleSuccess(res, response);
     }

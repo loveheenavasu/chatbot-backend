@@ -88,8 +88,6 @@ export default class Controller {
 
     static socialLogin = async (req: express.Request | any, res: express.Response) => {
         try {
-            console.log("req---", req);
-            console.log("req---", req?.ip);
             let response = await Service.socialLogin(req);
             await Handler.handleSuccess(res, response);
         }

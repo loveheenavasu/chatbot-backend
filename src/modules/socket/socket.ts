@@ -34,10 +34,14 @@ const connectSocket = (server: any) => {
 
 
         io.on("connection", async (socket: any | Socket) => {
-            const ip = socket?.handshake?.address
-            console.log("socket----", socket)
-            console.log("ip--", ip)
+            const headers = socket?.request?.headers;
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket.request.connection.remoteAddress || socket.conn.remoteAddress;
 
+            // Handle the case of multiple IP addresses in x-forwarded-for
+            if (ip && ip.includes(',')) {
+                ip = ip.split(',')[0].trim();
+            }
+            console.log("ip-----", ip)
             socket.setMaxListeners(0);
 
 
@@ -64,7 +68,7 @@ const connectSocket = (server: any) => {
                     // else {
                     //     chatId = socket.id
                     // }
-                    let clientIpAddress = socket?.handshake?.address
+                    let clientIpAddress = ip;
                     let query = { ipAddress: clientIpAddress }
                     let projection = { __v: 0 }
                     let option = { lean: true }
