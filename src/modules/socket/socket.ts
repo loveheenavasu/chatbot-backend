@@ -34,6 +34,7 @@ const connectSocket = (server: any) => {
     
         io.on("connection", async(socket: any | Socket) => {
             console.log("socket id----", socket.id)
+            console.log("------", socket)
             console.log("------", socket?.handshake?.address)
 
             socket.setMaxListeners(0);
