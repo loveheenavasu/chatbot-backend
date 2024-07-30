@@ -41,6 +41,7 @@ const socket_service_1 = __importDefault(require("./socket.service"));
 const message_model_1 = require("../../models/message.model");
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
+const express_1 = __importDefault(require("express"));
 const connectSocket = (server) => {
     try {
         const io = new socket_io_1.Server(server, {
@@ -63,11 +64,25 @@ const connectSocket = (server) => {
         //         return next(new Error('Internal server error'));
         //     }
         // });
-        io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
+        const app = (0, express_1.default)();
+        app.use((req, res, next) => {
             var _a;
+            console.log("req----", req === null || req === void 0 ? void 0 : req.ip);
+            const ip = (req === null || req === void 0 ? void 0 : req.headers['x-forwarded-for']) || ((_a = req === null || req === void 0 ? void 0 : req.connection) === null || _a === void 0 ? void 0 : _a.remoteAddress);
+            console.log(`HTTP Request from IP: ${ip}`);
+            next();
+        });
+        io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b, _c, _d, _e;
             console.log("socket id----", socket.id);
             console.log("------", socket);
-            console.log("------", (_a = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _a === void 0 ? void 0 : _a.address);
+            console.log('connection :', (_b = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.connection) === null || _b === void 0 ? void 0 : _b._peername);
+            console.log("------socket?.handshake?.address", (_c = socket === null || socket === void 0 ? void 0 : socket.handshake) === null || _c === void 0 ? void 0 : _c.address);
+            console.log("socket.request.socket.remoteAddress=-----", (_e = (_d = socket === null || socket === void 0 ? void 0 : socket.request) === null || _d === void 0 ? void 0 : _d.socket) === null || _e === void 0 ? void 0 : _e.remoteAddress);
+            const ip = socket.handshake.headers['x-forwarded-for'] ||
+                socket.handshake.headers['cf-connecting-ip'] ||
+                socket.handshake.address;
+            console.log("ip----", ip);
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a;

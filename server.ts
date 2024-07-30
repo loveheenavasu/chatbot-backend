@@ -16,7 +16,6 @@ const { PORT } = process.env;
     app.use(express.urlencoded({ extended: true }));
     app.use(cors({ origin: "*" }));
     app.use('/user', user);
-    
 
     let server = http.createServer(app);
     server.listen(PORT, () => {

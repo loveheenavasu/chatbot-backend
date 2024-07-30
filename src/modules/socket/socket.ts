@@ -3,6 +3,7 @@ import SocketService from "./socket.service";
 import { Role } from "../../models/message.model";
 import * as Models from '../../models/index';
 import moment from "moment";
+import express from "express";
 
 
 const connectSocket = (server: any) => {
@@ -30,12 +31,26 @@ const connectSocket = (server: any) => {
         //         return next(new Error('Internal server error'));
         //     }
         // });
-
+        const app = express();
+        app.use((req, res, next) => {
+            console.log("req----", req?.ip)
+            const ip = req?.headers['x-forwarded-for'] || req?.connection?.remoteAddress;
+            console.log(`HTTP Request from IP: ${ip}`);
+            next();
+        });
     
         io.on("connection", async(socket: any | Socket) => {
             console.log("socket id----", socket.id)
             console.log("------", socket)
-            console.log("------", socket?.handshake?.address)
+            console.log('connection :', socket?.request?.connection?._peername);
+            console.log("------socket?.handshake?.address", socket?.handshake?.address)
+            console.log("socket.request.socket.remoteAddress=-----", socket?.request?.socket?.remoteAddress)
+
+            const ip = socket.handshake.headers['x-forwarded-for'] ||
+                socket.handshake.headers['cf-connecting-ip'] ||
+                socket.handshake.address;
+            
+            console.log("ip----",ip)
 
             socket.setMaxListeners(0);
 
