@@ -877,6 +877,7 @@ export default class Service {
     static chatDetail = async (req: any) => {
         try {
             let { sessionId, pagination, limit } = req.query;
+            console.log("sessionId---", sessionId)
             let query = { sessionId: new Types.ObjectId(sessionId) }
             let projection = { __v: 0 }
             let options = await CommonHelper.setOptions(pagination, limit, { _id: 1 });

@@ -845,6 +845,7 @@ Service.chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
 Service.chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { sessionId, pagination, limit } = req.query;
+        console.log("sessionId---", sessionId);
         let query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
         let projection = { __v: 0 };
         let options = yield common_1.default.setOptions(pagination, limit, { _id: 1 });
