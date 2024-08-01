@@ -32,6 +32,8 @@ import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { type } from '../../models/text.model';
 import { signType } from '../../models/user.model';
 import { sendEmail } from '../../common/email';
+import ChatHistory from './aggregation/chat-history.aggregation';
+import ChatHistoryAggregation from './aggregation/chat-history.aggregation';
 
 let neoConfig: any = {
     url: NEO_URL,
@@ -819,7 +821,7 @@ export default class Service {
 
     // static url = async (req: any) => {
     //     try {
-    //         let url = `https://timesofindia.indiatimes.com/travel/`;
+    //         let url = `https://www.zestgeek.com/about-us`;
 
     //         const loader = new PlaywrightWebBaseLoader(url);
     //         const docs = await loader.load();
@@ -829,7 +831,6 @@ export default class Service {
     //         const $ = cheerio.load(htmlContent);
     //         let textContent: string = '';
 
-            
     //         $('*').each((i, elem) => {
     //             textContent += $(elem).text().trim() + ' ';
     //         });
@@ -849,6 +850,48 @@ export default class Service {
     //         await Handler.handleCustomError(err);
     //     }
     // }
+
+    static chatHistory = async (req: any) => {
+        try {
+            let { documentId, pagination, limit } = req.query;
+            let query: any = [
+                await ChatHistoryAggregation.matchData(documentId),
+                await ChatHistoryAggregation.lookupChatSessions(),
+                await ChatHistoryAggregation.unwindChatSessions(),
+                await ChatHistoryAggregation.lookupMessages(),
+                await ChatHistoryAggregation.groupData(),
+                await ChatHistoryAggregation.facetData(pagination, limit)
+            ];
+            let fetchData = await Models.ipAddressModel.aggregate(query);
+            let response = {
+                count: fetchData[0]?.count[0]?.count ?? 0,
+                data: fetchData[0]?.data ?? []
+            }
+            return response;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
+    static chatDetail = async (req: any) => {
+        try {
+            let { sessionId, pagination, limit } = req.query;
+            let query = { sessionId: new Types.ObjectId(sessionId) }
+            let projection = { __v: 0 }
+            let options = await CommonHelper.setOptions(pagination, limit, { _id: 1 });
+            let fetchData = await Models.messageModel.find(query, projection, options);
+            let count = await Models.messageModel.countDocuments(query);
+            let response = {
+                count: count,
+                data: fetchData
+            }
+            return response;
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
 
 
 }

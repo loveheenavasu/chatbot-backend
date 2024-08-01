@@ -6,6 +6,7 @@ export enum Role {
 const messageSchema = new mongoose.Schema({
     message: { type: String, default: null },
     ipAddressId: { type: Types.ObjectId, default: null, ref: "ips" },
+    sessionId: { type: Types.ObjectId, default: null, ref: "chatsessions" },
     documentId: { type: String, default: null },
     messageType: { type: String, default: null, enum: Role },
     createdAt: { type: Number, default: 0 },

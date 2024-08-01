@@ -27,5 +27,7 @@ router.get('/files', authorization, Controller.fileLists)
 router.delete('/files', authorization, Controller.deleteFile)
 router.delete('/logout', authorization, Controller.logout);
 
+router.get('/chat-history', authorization, Controller.chatHistory)
+router.get('/chat', authorization, Controller.chatDetail)
 // router.post('/url', Controller.url)
 export default router;

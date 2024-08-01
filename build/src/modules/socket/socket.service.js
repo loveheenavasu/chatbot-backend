@@ -89,12 +89,26 @@ SocketService.getData = (token) => __awaiter(void 0, void 0, void 0, function* (
         throw err;
     }
 });
-SocketService.searchInput = (search, chatId, documentId, ipAddressId) => __awaiter(void 0, void 0, void 0, function* () {
+SocketService.saveChatSession = (ipAddressId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let dataToSave = {
+            ipAddressId: ipAddressId,
+            createdAt: (0, moment_1.default)().utc().valueOf()
+        };
+        let response = yield Models.chatSessionModel.create(dataToSave);
+        return response;
+    }
+    catch (err) {
+        throw yield handler_1.default.handleCustomError(err);
+    }
+});
+SocketService.searchInput = (search, chatId, documentId, ipAddressId, sessionId) => __awaiter(void 0, void 0, void 0, function* () {
     var _b, _c, _d, _e, _f, _g;
     try {
         let dataToSave = {
             message: search,
             ipAddressId: ipAddressId,
+            sessionId: sessionId,
             documentId: documentId,
             messageType: message_model_1.Role.User,
             createdAt: (0, moment_1.default)().utc().valueOf(),
@@ -145,6 +159,7 @@ SocketService.searchInput = (search, chatId, documentId, ipAddressId) => __await
         let dataSave = {
             message: (_c = (_b = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content,
             ipAddressId: ipAddressId,
+            sessionId: sessionId,
             documentId: documentId,
             messageType: message_model_1.Role.AI,
             createdAt: (0, moment_1.default)().utc().valueOf(),

@@ -53,12 +53,27 @@ export default class SocketService {
         }
     }
 
+    static saveChatSession = async (ipAddressId: any) => {
+        try {
+            let dataToSave = {
+                ipAddressId: ipAddressId,
+                createdAt: moment().utc().valueOf()
+            }
+            let response = await Models.chatSessionModel.create(dataToSave);
+            return response;
+        }
+        catch (err) {
+            throw await Handler.handleCustomError(err);
+        }
+    }
 
-    static searchInput = async (search: any, chatId: any, documentId: string, ipAddressId:any) => {
+
+    static searchInput = async (search: any, chatId: any, documentId: string, ipAddressId: any, sessionId:any) => {
         try {
             let dataToSave = {
                 message: search,
                 ipAddressId: ipAddressId,
+                sessionId: sessionId,
                 documentId: documentId,
                 messageType: Role.User,
                 createdAt: moment().utc().valueOf(),
@@ -120,6 +135,7 @@ export default class SocketService {
             let dataSave = {
                 message: response?.choices[0]?.message?.content,
                 ipAddressId: ipAddressId,
+                sessionId: sessionId,
                 documentId: documentId,
                 messageType: Role.AI,
                 createdAt: moment().utc().valueOf(),

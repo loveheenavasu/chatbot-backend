@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 const ipSchema = new mongoose.Schema({
     ipAddress: { type: String, default: null },
+    documentId: { type: String, default: null },
     createdAt: { type: Number, default: moment().utc().valueOf() }
 })
 

@@ -41,6 +41,7 @@ const socket_service_1 = __importDefault(require("./socket.service"));
 const message_model_1 = require("../../models/message.model");
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
+const chat_session_model_1 = require("../../models/chat-session.model");
 const connectSocket = (server) => {
     try {
         const io = new socket_io_1.Server(server, {
@@ -70,16 +71,18 @@ const connectSocket = (server) => {
                 try {
                     // let { _id: userId } = socket?.user;
                     const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
+                    console.log("headers------", headers);
                     let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || ((_c = (_b = socket === null || socket === void 0 ? void 0 : socket.request) === null || _b === void 0 ? void 0 : _b.connection) === null || _c === void 0 ? void 0 : _c.remoteAddress) || ((_d = socket === null || socket === void 0 ? void 0 : socket.conn) === null || _d === void 0 ? void 0 : _d.remoteAddress);
                     if (ip && ip.includes(',')) {
                         ip = ip.split(',')[0].trim();
                     }
                     console.log("ip-----", ip);
-                    let { text, connectId, documentId } = payload;
+                    let { text, connectId, documentId, chatSessionId } = payload;
                     console.log("payload----", payload);
                     let res = {
                         message: text,
                         chatId: connectId !== null && connectId !== void 0 ? connectId : socket === null || socket === void 0 ? void 0 : socket.id,
+                        sessionId: chatSessionId !== null && chatSessionId !== void 0 ? chatSessionId : null,
                         type: message_model_1.Role.User
                     };
                     socket.emit("searches", res);
@@ -101,24 +104,40 @@ const connectSocket = (server) => {
                     let option = { lean: true };
                     let fetchData = yield Models.ipAddressModel.findOne(query, projection, option);
                     let ipAddressId;
+                    let sessionId;
                     if (fetchData) {
                         let { _id } = fetchData;
                         ipAddressId = _id;
+                        let query = { _id: chatSessionId, sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.ONGOING };
+                        let fetchSession = yield Models.chatSessionModel.findOne(query, projection, option);
+                        if (fetchSession) {
+                            let { _id } = fetchSession;
+                            sessionId = _id;
+                        }
+                        else {
+                            let sessionSave = yield socket_service_1.default.saveChatSession(ipAddressId);
+                            sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
+                        }
                     }
                     else {
                         let dataToSave = {
                             ipAddress: clientIpAddress,
+                            documentId: documentId,
                             createdAt: (0, moment_1.default)().utc().valueOf()
                         };
                         let saveData = yield Models.ipAddressModel.create(dataToSave);
                         ipAddressId = saveData === null || saveData === void 0 ? void 0 : saveData._id;
+                        let sessionSave = yield socket_service_1.default.saveChatSession(ipAddressId);
+                        sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
                     }
-                    let data = yield socket_service_1.default.searchInput(text, chatId, documentId, ipAddressId);
+                    let data = yield socket_service_1.default.searchInput(text, chatId, documentId, ipAddressId, sessionId);
                     let response = {
                         message: data,
                         chatId: chatId,
+                        sessionId: sessionId,
                         type: message_model_1.Role.AI
                     };
+                    socket.chatSessionId = sessionId;
                     socket.emit("searches", response);
                 }
                 catch (err) {
@@ -127,6 +146,16 @@ const connectSocket = (server) => {
             }));
             socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
                 try {
+                    console.log("socket disconnected--------");
+                    // console.log("socket discconect----", socket);
+                    console.log("chatSessionId-----", socket === null || socket === void 0 ? void 0 : socket.chatSessionId);
+                    let query = { _id: socket === null || socket === void 0 ? void 0 : socket.chatSessionId };
+                    let update = {
+                        sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.COMPLETED,
+                        updatedAt: (0, moment_1.default)().utc().valueOf()
+                    };
+                    let options = { new: true };
+                    yield Models.chatSessionModel.findOneAndUpdate(query, update, options);
                 }
                 catch (err) {
                     throw err;

@@ -187,6 +187,29 @@ export default class Controller {
         }
     }
 
+    static chatHistory = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.chatHistory(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+    static chatDetail = async (req: express.Request | any, res: express.Response) => {
+        try {
+            let response = await Service.chatDetail(req);
+            await Handler.handleSuccess(res, response);
+        }
+        catch (err) {
+            await Handler.handleCatchError(res, err);
+        }
+    }
+
+
+
+
     // static url = async (req: express.Request | any, res: express.Response) => {
     //     try {
     //         let response = await Service.url(req);

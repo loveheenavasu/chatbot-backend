@@ -65,6 +65,7 @@ const textsplitters_1 = require("@langchain/textsplitters");
 const text_model_1 = require("../../models/text.model");
 const user_model_1 = require("../../models/user.model");
 const email_1 = require("../../common/email");
+const chat_history_aggregation_1 = __importDefault(require("./aggregation/chat-history.aggregation"));
 let neoConfig = {
     url: NEO_URL,
     username: NEO_USERNAME,
@@ -788,6 +789,70 @@ Service.deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () 
         yield Models.chatbotModel.deleteOne(query);
         let response = {
             message: "Chatbot Deleted Successfully"
+        };
+        return response;
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+// static url = async (req: any) => {
+//     try {
+//         let url = `https://www.zestgeek.com/about-us`;
+//         const loader = new PlaywrightWebBaseLoader(url);
+//         const docs = await loader.load();
+//         const htmlContent = docs[0]?.pageContent;
+//         const $ = cheerio.load(htmlContent);
+//         let textContent: string = '';
+//         $('*').each((i, elem) => {
+//             textContent += $(elem).text().trim() + ' ';
+//         });
+//         textContent = textContent.replace(/\s+/g, ' ').trim();
+//         console.log("textContent----------------", textContent);
+//         // const loader = YoutubeLoader.createFromUrl("https://youtu.be/vsWxs1tuwDk?feature=shared", {
+//         //     addVideoInfo: true,
+//         // });
+//         // const docs = await loader.load();
+//         return "text";
+//     }
+//     catch (err) {
+//         await Handler.handleCustomError(err);
+//     }
+// }
+Service.chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c, _d, _e, _f;
+    try {
+        let { documentId, pagination, limit } = req.query;
+        let query = [
+            yield chat_history_aggregation_1.default.matchData(documentId),
+            yield chat_history_aggregation_1.default.lookupChatSessions(),
+            yield chat_history_aggregation_1.default.unwindChatSessions(),
+            yield chat_history_aggregation_1.default.lookupMessages(),
+            yield chat_history_aggregation_1.default.groupData(),
+            yield chat_history_aggregation_1.default.facetData(pagination, limit)
+        ];
+        let fetchData = yield Models.ipAddressModel.aggregate(query);
+        let response = {
+            count: (_d = (_c = (_b = fetchData[0]) === null || _b === void 0 ? void 0 : _b.count[0]) === null || _c === void 0 ? void 0 : _c.count) !== null && _d !== void 0 ? _d : 0,
+            data: (_f = (_e = fetchData[0]) === null || _e === void 0 ? void 0 : _e.data) !== null && _f !== void 0 ? _f : []
+        };
+        return response;
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { sessionId, pagination, limit } = req.query;
+        let query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
+        let projection = { __v: 0 };
+        let options = yield common_1.default.setOptions(pagination, limit, { _id: 1 });
+        let fetchData = yield Models.messageModel.find(query, projection, options);
+        let count = yield Models.messageModel.countDocuments(query);
+        let response = {
+            count: count,
+            data: fetchData
         };
         return response;
     }

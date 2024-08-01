@@ -28,5 +28,7 @@ router.post('/upload', authorization_1.authorization, upload.single('file'), use
 router.get('/files', authorization_1.authorization, user_controller_1.default.fileLists);
 router.delete('/files', authorization_1.authorization, user_controller_1.default.deleteFile);
 router.delete('/logout', authorization_1.authorization, user_controller_1.default.logout);
+router.get('/chat-history', authorization_1.authorization, user_controller_1.default.chatHistory);
+router.get('/chat', authorization_1.authorization, user_controller_1.default.chatDetail);
 // router.post('/url', Controller.url)
 exports.default = router;
