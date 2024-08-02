@@ -39,13 +39,13 @@ exports.authorization = void 0;
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
-const { SCOPE } = process.env;
 const Models = __importStar(require("../models/index"));
 const handler_1 = __importDefault(require("../handler/handler"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const error_1 = require("../handler/error");
 const common_1 = __importDefault(require("../common/common"));
 const mongoose_1 = require("mongoose");
+const { SCOPE } = process.env;
 const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -98,8 +98,8 @@ const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, func
                 next();
             }
             catch (err) {
-                yield Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
                 if (((_b = err === null || err === void 0 ? void 0 : err.response) === null || _b === void 0 ? void 0 : _b.data.error) == "invalid_token") {
+                    yield Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
                     yield handler_1.default.handleCustomError(error_1.InvalidToken);
                 }
                 yield handler_1.default.handleCustomError(err);

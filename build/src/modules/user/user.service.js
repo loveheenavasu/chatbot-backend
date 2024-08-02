@@ -47,25 +47,24 @@ const dotenv_1 = require("dotenv");
 const neo4j_1 = require("../../config/neo4j");
 (0, dotenv_1.config)();
 const neo4j_vector_1 = require("@langchain/community/vectorstores/neo4j_vector");
-const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
 const documents_1 = require("@langchain/core/documents");
-const { v4: uuidv4 } = require('uuid');
 const pdf_1 = require("@langchain/community/document_loaders/fs/pdf");
 const csv_1 = require("@langchain/community/document_loaders/fs/csv");
 const docx_1 = require("@langchain/community/document_loaders/fs/docx");
 const path_1 = __importDefault(require("path"));
 const word_extractor_1 = __importDefault(require("word-extractor"));
-// import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
+const textsplitters_1 = require("@langchain/textsplitters");
+const text_model_1 = require("../../models/text.model");
+const user_model_1 = require("../../models/user.model");
+const chat_history_aggregation_1 = __importDefault(require("./aggregation/chat-history.aggregation"));
+const emailService_1 = __importDefault(require("../../common/emailService"));
+const { v4: uuidv4 } = require('uuid');
+const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
     batchSize: 512,
     apiKey: OPEN_API_KEY
 });
-const textsplitters_1 = require("@langchain/textsplitters");
-const text_model_1 = require("../../models/text.model");
-const user_model_1 = require("../../models/user.model");
-const email_1 = require("../../common/email");
-const chat_history_aggregation_1 = __importDefault(require("./aggregation/chat-history.aggregation"));
 let neoConfig = {
     url: NEO_URL,
     username: NEO_USERNAME,
@@ -76,7 +75,8 @@ class Service {
 _a = Service;
 Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, password } = req.body;
+        let { email, password, firstname, lastname } = req.body;
+        console.log("req.body-------", req.body);
         let query = { email: email.toLowerCase(), isEmailVerified: true };
         let projection = { __v: 0 };
         let options = { lean: true };
@@ -91,6 +91,8 @@ Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 email: email.toLowerCase(),
                 password: bcryptPass,
                 otp: otp,
+                firstname: firstname,
+                lastname: lastname,
                 createdAt: (0, moment_1.default)().utc().valueOf()
             };
             let saveData = yield Models.userModel.create(dataToSave);
@@ -103,12 +105,7 @@ Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
             };
             let accessToken = yield common_1.default.signToken(data);
             saveData._doc["accessToken"] = accessToken;
-            let emailData = {
-                email: email,
-                otp: otp
-            };
-            yield (0, email_1.sendEmail)(emailData);
-            // console.log("--", saveData)
+            yield emailService_1.default.verificationCode(email, otp);
             let response = {
                 message: `Otp sent to ${email}`,
                 data: saveData
@@ -128,7 +125,7 @@ Service.verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let projection = { otp: 1, email: 1 };
         let option = { lean: true };
         let fetchData = yield Models.userModel.findOne(query, projection, option);
-        // console.log("fetchData---", fetchData)
+        console.log("fetchData---", fetchData);
         if (fetchData) {
             let { otp, email } = fetchData;
             if (inputOtp === otp) {
@@ -179,11 +176,12 @@ Service.resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
             };
             let option = { new: true };
             yield Models.userModel.findOneAndUpdate(query, update, option);
-            let emailData = {
-                email: email,
-                otp: otp
-            };
-            yield (0, email_1.sendEmail)(emailData);
+            // let emailData = {
+            //     email: email,
+            //     otp: otp
+            // }
+            // await emailService.verificationCode(email, otp)
+            // await sendEmail(emailData);
             let response = {
                 message: `Otp sent to ${email}`
             };
@@ -209,11 +207,12 @@ Service.forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* ()
             let update = { otp: otp };
             let option = { new: true };
             yield Models.userModel.findOneAndUpdate(query, update, option);
-            let emailData = {
-                email: email,
-                otp: otp
-            };
-            yield (0, email_1.sendEmail)(emailData);
+            // let emailData = {
+            //     email: email,
+            //     otp: otp
+            // }
+            yield emailService_1.default.verificationCode(email, otp);
+            // await sendEmail(emailData);
             let response = {
                 message: `Otp sent to ${email}`
             };
@@ -345,7 +344,7 @@ Service.login = (req) => __awaiter(void 0, void 0, void 0, function* () {
 // }
 Service.socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, name, image, socialToken, isAdmin } = req.body;
+        let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
         let query = { email: email.toLowerCase() };
         let fetchData = yield common_1.default.fetchUser(query);
         if (fetchData) {
@@ -357,6 +356,8 @@ Service.socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let dataToSave = {
             email: email.toLowerCase(),
             name: name,
+            firstname: firstname,
+            lastname: lastname,
             image: image,
             isAdmin: isAdmin,
             isEmailVerified: true,
@@ -536,7 +537,7 @@ Service.fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
 Service.textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { _id } = req.userData;
-        let { documentId } = req === null || req === void 0 ? void 0 : req.query;
+        let { documentId } = req.query;
         let query = {
             userId: new mongoose_1.Types.ObjectId(_id),
             type: text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT,
@@ -634,6 +635,7 @@ Service.updateFileText = (text, type, documentId, userId, fileName, docNo) => __
 Service.textExtract = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { documentId } = req.body;
+        console.log("req.body---", req.body);
         let { originalname, buffer } = req === null || req === void 0 ? void 0 : req.file;
         let { _id: userId } = req.userData;
         let textData = yield _a.extract(originalname, buffer);
@@ -769,7 +771,6 @@ Service.chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        // console.log("err---", err)
         yield handler_1.default.handleCustomError(err);
     }
 });
@@ -787,10 +788,29 @@ Service.deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () 
         };
         yield Models.textModel.deleteMany(query);
         yield Models.chatbotModel.deleteOne(query);
+        let query1 = { documentId: documentId };
+        yield _a.deleteSessions(query1);
         let response = {
             message: "Chatbot Deleted Successfully"
         };
         return response;
+    }
+    catch (err) {
+        yield handler_1.default.handleCustomError(err);
+    }
+});
+Service.deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let projection = { __v: 0 };
+        let option = { lean: true };
+        let fetchIps = yield Models.ipAddressModel.find(query, projection, option);
+        if (fetchIps === null || fetchIps === void 0 ? void 0 : fetchIps.length) {
+            let ids = fetchIps.map((item) => item === null || item === void 0 ? void 0 : item._id);
+            let query1 = { ipAddressId: { $in: ids } };
+            yield Models.chatSessionModel.deleteMany(query1);
+        }
+        yield Models.ipAddressModel.deleteMany(query);
+        yield Models.messageModel.deleteMany(query);
     }
     catch (err) {
         yield handler_1.default.handleCustomError(err);
@@ -845,7 +865,6 @@ Service.chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
 Service.chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { sessionId, pagination, limit } = req.query;
-        console.log("sessionId---", sessionId);
         let query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
         let projection = { __v: 0 };
         let options = yield common_1.default.setOptions(pagination, limit, { _id: 1 });

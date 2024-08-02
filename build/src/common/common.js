@@ -39,9 +39,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
-const { SALT_ROUND, SECRET_KEY, CLIENT_ID } = process.env;
-// console.log("salt round---", SALT_ROUND);
-// console.log("secret key----", SECRET_KEY);
 const jwt = __importStar(require("jsonwebtoken"));
 const moment_1 = __importDefault(require("moment"));
 const Models = __importStar(require("../models/index"));
@@ -49,20 +46,12 @@ const mongoose_1 = require("mongoose");
 const randomstring_1 = __importDefault(require("randomstring"));
 const handler_1 = __importDefault(require("../handler/handler"));
 const error_1 = require("../handler/error");
+const { SALT_ROUND, SECRET_KEY } = process.env;
 class CommonHelper {
 }
 _a = CommonHelper;
 CommonHelper.setOptions = (pagination, limit, sort) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        //     let setPagination = typeof(pagination) ?? 1;
-        //     let setLimit = typeof(limit) ?? 10;
-        //     let options = {
-        //         lean: true,
-        //         skip: parseInt(setPagination) * parseInt(setLimit),
-        //         limit: setLimit,
-        //         sort: { _id: -1 }
-        //     }
-        //     return options;
         const defaultLimit = 10;
         let options = {
             lean: true,
@@ -97,51 +86,6 @@ CommonHelper.setOptions = (pagination, limit, sort) => __awaiter(void 0, void 0,
         throw err;
     }
 });
-// static setOptions = async (pagination: any, limit: any) => {
-//     try {
-//     //     let setPagination = typeof(pagination) ?? 1;
-//     //     let setLimit = typeof(limit) ?? 10;
-//     //     let options = {
-//     //         lean: true,
-//     //         skip: parseInt(setPagination) * parseInt(setLimit),
-//     //         limit: setLimit,
-//     //         sort: { _id: -1 }
-//     //     }
-//     //     return options;
-//         const defaultLimit = 10
-//         let options :any= {
-//             lean: true,
-//             sort:{_id:-1}
-//         }
-//         if (pagination == undefined && typeof limit != undefined) {
-//             options = {
-//                 lean: true,
-//                 limit: parseInt(limit),
-//                 sort: { _id: -1 }
-//             }
-//         }
-//         else if (typeof pagination != undefined && typeof limit == undefined) {
-//             options = {
-//                 lean: true,
-//                 skip: parseInt(pagination) * defaultLimit,
-//                 limit:defaultLimit,
-//                 sort: { _id: -1 }
-//             }
-//         }
-//         else if (typeof pagination != undefined && typeof limit != undefined) {
-//             options = {
-//                 lean: true,
-//                 skip: parseInt(pagination) * parseInt(limit),
-//                 limit: parseInt(limit),
-//                 sort: { _id: -1 }
-//             }
-//         }
-//         return options;
-//     }
-//     catch (err) {
-//         throw err;
-//     }
-// }
 CommonHelper.hashPass = (password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield bcrypt_1.default.hash(password, Number(SALT_ROUND));

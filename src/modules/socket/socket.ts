@@ -58,7 +58,7 @@ const connectSocket = (server: any) => {
                         sessionId: chatSessionId ?? null,
                         type: Role.User
                     }
-                    socket.emit("searches", res)
+                    socket.emit("searches", res);
                     let chatId: any;
                     // if (connectId) {
                     //     chatId = connectId
@@ -127,7 +127,7 @@ const connectSocket = (server: any) => {
                     let query = { _id: socket?.chatSessionId }
                     let update = {
                         sessionType: sessionType?.COMPLETED,
-                        updatedAt:moment().utc().valueOf()
+                        updatedAt: moment().utc().valueOf()
                     }
                     let options = { new: true }
                     await Models.chatSessionModel.findOneAndUpdate(query, update, options);

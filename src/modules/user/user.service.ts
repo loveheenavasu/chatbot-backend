@@ -10,31 +10,25 @@ import { config } from 'dotenv';
 import { session } from '../../config/neo4j';
 config();
 import { Neo4jVectorStore } from "@langchain/community/vectorstores/neo4j_vector";
-const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
 import { Document } from "@langchain/core/documents";
-const { v4: uuidv4 } = require('uuid');
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import path from 'path';
 import WordExtractor from 'word-extractor';
-import { PlaywrightWebBaseLoader } from "@langchain/community/document_loaders/web/playwright";
-import cheerio from 'cheerio';
-// import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { type } from '../../models/text.model';
+import { signType } from '../../models/user.model';
+import ChatHistoryAggregation from './aggregation/chat-history.aggregation';
+import EmailService from '../../common/emailService';
 
-
+const { v4: uuidv4 } = require('uuid');
+const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
 const openai = new OpenAIEmbeddings({
     model: "text-embedding-3-large",
     batchSize: 512,
     apiKey: OPEN_API_KEY
 });
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { type } from '../../models/text.model';
-import { signType } from '../../models/user.model';
-import { sendEmail } from '../../common/email';
-import ChatHistory from './aggregation/chat-history.aggregation';
-import ChatHistoryAggregation from './aggregation/chat-history.aggregation';
-
 let neoConfig: any = {
     url: NEO_URL,
     username: NEO_USERNAME,
@@ -45,7 +39,8 @@ export default class Service {
 
     static signup = async (req: any) => {
         try {
-            let { email, password } = req.body;
+            let { email, password, firstname, lastname } = req.body;
+            console.log("req.body-------", req.body)
             let query = { email: email.toLowerCase(), isEmailVerified: true }
             let projection = { __v: 0 }
             let options = { lean: true }
@@ -60,6 +55,8 @@ export default class Service {
                     email: email.toLowerCase(),
                     password: bcryptPass,
                     otp: otp,
+                    firstname: firstname,
+                    lastname: lastname,
                     createdAt: moment().utc().valueOf()
                 }
                 let saveData: any = await Models.userModel.create(dataToSave);
@@ -72,12 +69,7 @@ export default class Service {
                 }
                 let accessToken = await CommonHelper.signToken(data);
                 saveData._doc["accessToken"] = accessToken
-                let emailData = {
-                    email: email,
-                    otp: otp
-                }
-                await sendEmail(emailData);
-                // console.log("--", saveData)
+                await EmailService.verificationCode(email, otp);
                 let response = {
                     message: `Otp sent to ${email}`,
                     data: saveData
@@ -98,7 +90,7 @@ export default class Service {
             let projection = { otp: 1, email: 1 }
             let option = { lean: true }
             let fetchData = await Models.userModel.findOne(query, projection, option);
-            // console.log("fetchData---", fetchData)
+            console.log("fetchData---", fetchData)
             if (fetchData) {
                 let { otp, email } = fetchData;
                 if (inputOtp === otp) {
@@ -150,11 +142,13 @@ export default class Service {
                 }
                 let option = { new: true }
                 await Models.userModel.findOneAndUpdate(query, update, option);
-                let emailData = {
-                    email: email,
-                    otp: otp
-                }
-                await sendEmail(emailData);
+                // let emailData = {
+                //     email: email,
+                //     otp: otp
+                // }
+                // await emailService.verificationCode(email, otp)
+
+                // await sendEmail(emailData);
                 let response = {
                     message: `Otp sent to ${email}`
                 }
@@ -181,11 +175,13 @@ export default class Service {
                 let update = { otp: otp }
                 let option = { new: true }
                 await Models.userModel.findOneAndUpdate(query, update, option);
-                let emailData = {
-                    email: email,
-                    otp: otp
-                }
-                await sendEmail(emailData);
+                // let emailData = {
+                //     email: email,
+                //     otp: otp
+                // }
+                await EmailService.verificationCode(email, otp)
+
+                // await sendEmail(emailData);
                 let response = {
                     message: `Otp sent to ${email}`
                 }
@@ -322,7 +318,7 @@ export default class Service {
 
     static socialLogin = async (req: express.Request | any) => {
         try {
-            let { email, name, image, socialToken, isAdmin } = req.body;
+            let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
             let query = { email: email.toLowerCase() }
             let fetchData: any = await CommonHelper.fetchUser(query);
             if (fetchData) {
@@ -334,6 +330,8 @@ export default class Service {
             let dataToSave = {
                 email: email.toLowerCase(),
                 name: name,
+                firstname: firstname,
+                lastname: lastname,
                 image: image,
                 isAdmin: isAdmin,
                 isEmailVerified: true,
@@ -509,7 +507,7 @@ export default class Service {
         try {
             let { _id: userId } = req.userData;
             let { pagination, limit, documentId } = req.query;
-            let query = {
+            let query: any = {
                 userId: new Types.ObjectId(userId),
                 type: type?.FILE,
                 documentId: documentId
@@ -533,7 +531,7 @@ export default class Service {
     static textDetail = async (req: any) => {
         try {
             let { _id } = req.userData;
-            let { documentId } = req?.query;
+            let { documentId } = req.query;
             let query = {
                 userId: new Types.ObjectId(_id),
                 type: type?.TEXT,
@@ -643,6 +641,7 @@ export default class Service {
     static textExtract = async (req: any) => {
         try {
             let { documentId } = req.body
+            console.log("req.body---", req.body)
             let { originalname, buffer } = req?.file;
             let { _id: userId } = req.userData;
             let textData = await this.extract(originalname, buffer)
@@ -787,7 +786,6 @@ export default class Service {
             return response;
         }
         catch (err) {
-            // console.log("err---", err)
             await Handler.handleCustomError(err);
         }
     }
@@ -809,6 +807,8 @@ export default class Service {
             }
             await Models.textModel.deleteMany(query);
             await Models.chatbotModel.deleteOne(query);
+            let query1 = { documentId: documentId }
+            await this.deleteSessions(query1);
             let response = {
                 message: "Chatbot Deleted Successfully"
             }
@@ -818,6 +818,25 @@ export default class Service {
             await Handler.handleCustomError(err);
         }
     }
+
+    static deleteSessions = async (query: any) => {
+        try {
+            let projection = { __v: 0 }
+            let option = { lean: true }
+            let fetchIps = await Models.ipAddressModel.find(query, projection, option)
+            if (fetchIps?.length) {
+                let ids = fetchIps.map((item) => item?._id);
+                let query1 = { ipAddressId: { $in: ids } }
+                await Models.chatSessionModel.deleteMany(query1);
+            }
+            await Models.ipAddressModel.deleteMany(query)
+            await Models.messageModel.deleteMany(query);
+        }
+        catch (err) {
+            await Handler.handleCustomError(err);
+        }
+    }
+
 
     // static url = async (req: any) => {
     //     try {
@@ -877,7 +896,6 @@ export default class Service {
     static chatDetail = async (req: any) => {
         try {
             let { sessionId, pagination, limit } = req.query;
-            console.log("sessionId---", sessionId)
             let query = { sessionId: new Types.ObjectId(sessionId) }
             let projection = { __v: 0 }
             let options = await CommonHelper.setOptions(pagination, limit, { _id: 1 });

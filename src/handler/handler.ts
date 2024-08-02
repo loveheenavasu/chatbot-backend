@@ -1,4 +1,3 @@
-import { error } from "neo4j-driver";
 import express from 'express';
 
 export default class Handler {
@@ -29,6 +28,22 @@ export default class Handler {
     static handleSocketError = async (error: any) => {
         let { message, statusCode } = error
         express?.response?.status(statusCode).send({ message: message });
+    }
+
+    static handleJoiError = async (error: any) => {
+        try {
+            console.log("error---", error)
+            let message = error?.details[0]?.message;
+            let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
+            throw {
+                message: errorMessage,
+                statusCode: 400
+            }
+        }
+        catch (err) {
+            throw err;
+        }
+        
     }
 
 

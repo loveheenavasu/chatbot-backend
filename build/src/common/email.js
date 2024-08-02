@@ -21,20 +21,19 @@ const { NODEMAILER_EMAIL, NODEMAILER_PASSWORD } = process.env;
 const transporter = nodemailer_1.default.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    // secure: false, // Use `true` for port 465, `false` for all other ports
     auth: {
         user: NODEMAILER_EMAIL,
         pass: NODEMAILER_PASSWORD,
     },
 });
-const sendEmail = (data) => __awaiter(void 0, void 0, void 0, function* () {
+const sendEmail = (email, subject, html) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, otp } = data;
         const mailOptions = {
             from: NODEMAILER_EMAIL,
             to: email,
-            subject: "Otp Verification",
-            text: `${otp} is your verification code.`
+            subject: subject,
+            // text: `${otp} is your verification code.`
+            html: html
         };
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -50,3 +49,21 @@ const sendEmail = (data) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.sendEmail = sendEmail;
+// export const sendEmail = async (data: any) => {
+//     try {
+//         let { email, otp } = data;
+//         const mailOptions = {
+//             from: NODEMAILER_EMAIL,
+//             to: email,
+//             subject: "Otp Verification",
+//             text: `${otp} is your verification code.`
+//         }
+//         transporter.sendMail(mailOptions, (error: any, info: any) => {
+//             if (error) { console.log("error---", error) }
+//             if (info) { console.log("email sent", info?.response) }
+//         })
+//     }
+//     catch (err) {
+//         await Handler.handleCustomError(err);
+//     }
+// }

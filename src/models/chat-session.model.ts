@@ -4,8 +4,6 @@ export enum sessionType {
     ONGOING = "ONGOING",
     COMPLETED = "COMPLETED"
 }
-
-
 const chatSessionSchema = new mongoose.Schema({
     ipAddressId: { type: Types.ObjectId, default: null, ref: "ips" },
     sessionType: { type: String, enum: sessionType, default: sessionType?.ONGOING },

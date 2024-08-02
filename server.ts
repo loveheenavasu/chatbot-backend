@@ -2,12 +2,10 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import { config } from 'dotenv';
-
 config();
 import user from './src/modules/user/user.routes';
 import { dbConnect } from './src/config/db';
 import { connectSocket } from './src/modules/socket/socket';
-
 const { PORT } = process.env;
 
 (async () => {

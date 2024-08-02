@@ -11,20 +11,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.dbConnect = void 0;
-const mongoose_1 = __importDefault(require("mongoose"));
-const dotenv_1 = require("dotenv");
-(0, dotenv_1.config)();
-// const { DB_HOST, DB_NAME, DB_PORT } = process.env;
-const URI = process.env.URI;
-const dbConnect = () => __awaiter(void 0, void 0, void 0, function* () {
+const handler_1 = __importDefault(require("../handler/handler"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const email_1 = require("./email");
+class EmailService {
+}
+_a = EmailService;
+EmailService.verificationCode = (email, otp) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // const URI = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
-        mongoose_1.default.connect(URI);
+        let subject = "OTP Verification";
+        let filepath = path_1.default.join(__dirname, '../email-templates/verify-code.html');
+        let html = fs_1.default.readFileSync(filepath, { encoding: 'utf-8' });
+        html = html.replace('VERIFICATION_CODE', otp);
+        yield (0, email_1.sendEmail)(email, subject, html);
     }
     catch (err) {
-        throw err;
+        yield handler_1.default.handleCustomError(err);
     }
 });
-exports.dbConnect = dbConnect;
+exports.default = EmailService;

@@ -2,13 +2,14 @@ import express from 'express';
 import axios from 'axios';
 import { config } from 'dotenv';
 config();
-const { SCOPE } = process.env;
 import * as Models from '../models/index';
 import Handler from '../handler/handler';
 import jwt from 'jsonwebtoken';
 import { BearerToken, InvalidToken, ProvideToken, Unauthorized } from '../handler/error';
 import CommonHelper from '../common/common';
 import { Types } from 'mongoose';
+const { SCOPE } = process.env;
+
 
 const authorization = async (req: express.Request | any, res: express.Response, next: any) => {
     try {
@@ -63,8 +64,8 @@ const authorization = async (req: express.Request | any, res: express.Response, 
                 next();
             }
             catch (err: any) {
-                await Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
                 if (err?.response?.data.error == "invalid_token") {
+                    await Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
                     await Handler.handleCustomError(InvalidToken);
                 }
                 await Handler.handleCustomError(err);

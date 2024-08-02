@@ -11,6 +11,8 @@ var signType;
 })(signType || (exports.signType = signType = {}));
 const userSchema = new mongoose_1.default.Schema({
     name: { type: String, default: null },
+    firstname: { type: String, default: null },
+    lastname: { type: String, default: null },
     email: { type: String, default: null },
     isAdmin: { type: Boolean, default: false },
     image: { type: String, default: null },

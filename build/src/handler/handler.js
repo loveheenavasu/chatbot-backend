@@ -43,4 +43,19 @@ Handler.handleSocketError = (error) => __awaiter(void 0, void 0, void 0, functio
     let { message, statusCode } = error;
     (_b = express_1.default === null || express_1.default === void 0 ? void 0 : express_1.default.response) === null || _b === void 0 ? void 0 : _b.status(statusCode).send({ message: message });
 });
+Handler.handleJoiError = (error) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    try {
+        console.log("error---", error);
+        let message = (_b = error === null || error === void 0 ? void 0 : error.details[0]) === null || _b === void 0 ? void 0 : _b.message;
+        let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
+        throw {
+            message: errorMessage,
+            statusCode: 400
+        };
+    }
+    catch (err) {
+        throw err;
+    }
+});
 exports.default = Handler;

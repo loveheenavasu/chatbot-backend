@@ -1,32 +1,20 @@
 import bcrypt from 'bcrypt';
 import { config } from 'dotenv';
 config();
-const { SALT_ROUND, SECRET_KEY, CLIENT_ID } = process.env;
-
-// console.log("salt round---", SALT_ROUND);
-// console.log("secret key----", SECRET_KEY);
 import * as jwt from 'jsonwebtoken';
 import moment from 'moment';
 import * as Models from '../models/index';
 import { Types } from 'mongoose';
-import axios from 'axios';
 import random from 'randomstring';
 import Handler from '../handler/handler';
 import { Unauthorized } from '../handler/error';
+const { SALT_ROUND, SECRET_KEY } = process.env;
+
 
 export default class CommonHelper {
 
     static setOptions = async (pagination: any, limit: any, sort?:any) => {
         try {
-            //     let setPagination = typeof(pagination) ?? 1;
-            //     let setLimit = typeof(limit) ?? 10;
-            //     let options = {
-            //         lean: true,
-            //         skip: parseInt(setPagination) * parseInt(setLimit),
-            //         limit: setLimit,
-            //         sort: { _id: -1 }
-            //     }
-            //     return options;
             const defaultLimit = 10
             let options: any = {
                 lean: true,
@@ -62,53 +50,6 @@ export default class CommonHelper {
             throw err;
         }
     }
-
-    // static setOptions = async (pagination: any, limit: any) => {
-    //     try {
-    //     //     let setPagination = typeof(pagination) ?? 1;
-    //     //     let setLimit = typeof(limit) ?? 10;
-    //     //     let options = {
-    //     //         lean: true,
-    //     //         skip: parseInt(setPagination) * parseInt(setLimit),
-    //     //         limit: setLimit,
-    //     //         sort: { _id: -1 }
-    //     //     }
-    //     //     return options;
-    //         const defaultLimit = 10
-    //         let options :any= {
-    //             lean: true,
-    //             sort:{_id:-1}
-    //         }
-    //         if (pagination == undefined && typeof limit != undefined) {
-    //             options = {
-    //                 lean: true,
-    //                 limit: parseInt(limit),
-    //                 sort: { _id: -1 }
-    //             }
-    //         }
-    //         else if (typeof pagination != undefined && typeof limit == undefined) {
-    //             options = {
-    //                 lean: true,
-    //                 skip: parseInt(pagination) * defaultLimit,
-    //                 limit:defaultLimit,
-    //                 sort: { _id: -1 }
-    //             }
-    //         }
-    //         else if (typeof pagination != undefined && typeof limit != undefined) {
-    //             options = {
-    //                 lean: true,
-    //                 skip: parseInt(pagination) * parseInt(limit),
-    //                 limit: parseInt(limit),
-    //                 sort: { _id: -1 }
-    //             }
-    //         }
-    //         return options;
-
-    //     }
-    //     catch (err) {
-    //         throw err;
-    //     }
-    // }
 
     static hashPass = async (password: string) => {
         try {
