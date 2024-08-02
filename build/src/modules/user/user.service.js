@@ -98,7 +98,6 @@ Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
             let saveData = yield Models.userModel.create(dataToSave);
             delete saveData._doc["password"];
             delete saveData._doc["otp"];
-            // console.log("save  data befor----", saveData)
             let data = {
                 _id: saveData === null || saveData === void 0 ? void 0 : saveData._id,
                 scope: SCOPE
@@ -180,7 +179,7 @@ Service.resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
             //     email: email,
             //     otp: otp
             // }
-            // await emailService.verificationCode(email, otp)
+            yield emailService_1.default.verificationCode(email, otp);
             // await sendEmail(emailData);
             let response = {
                 message: `Otp sent to ${email}`

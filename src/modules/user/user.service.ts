@@ -62,7 +62,6 @@ export default class Service {
                 let saveData: any = await Models.userModel.create(dataToSave);
                 delete saveData._doc["password"];
                 delete saveData._doc["otp"];
-                // console.log("save  data befor----", saveData)
                 let data = {
                     _id: saveData?._id,
                     scope: SCOPE
@@ -146,7 +145,7 @@ export default class Service {
                 //     email: email,
                 //     otp: otp
                 // }
-                // await emailService.verificationCode(email, otp)
+                await EmailService.verificationCode(email, otp)
 
                 // await sendEmail(emailData);
                 let response = {
