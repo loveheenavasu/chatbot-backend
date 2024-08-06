@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,7 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = require("dotenv");
-const handler_1 = __importDefault(require("../handler/handler"));
+const Handler = __importStar(require("../../handler/handler"));
 (0, dotenv_1.config)();
 const { NODEMAILER_EMAIL, NODEMAILER_PASSWORD } = process.env;
 const transporter = nodemailer_1.default.createTransport({
@@ -32,38 +55,12 @@ const sendEmail = (email, subject, html) => __awaiter(void 0, void 0, void 0, fu
             from: NODEMAILER_EMAIL,
             to: email,
             subject: subject,
-            // text: `${otp} is your verification code.`
             html: html
         };
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log("error---", error);
-            }
-            if (info) {
-                console.log("email sent", info === null || info === void 0 ? void 0 : info.response);
-            }
-        });
+        yield transporter.sendMail(mailOptions);
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
 exports.sendEmail = sendEmail;
-// export const sendEmail = async (data: any) => {
-//     try {
-//         let { email, otp } = data;
-//         const mailOptions = {
-//             from: NODEMAILER_EMAIL,
-//             to: email,
-//             subject: "Otp Verification",
-//             text: `${otp} is your verification code.`
-//         }
-//         transporter.sendMail(mailOptions, (error: any, info: any) => {
-//             if (error) { console.log("error---", error) }
-//             if (info) { console.log("email sent", info?.response) }
-//         })
-//     }
-//     catch (err) {
-//         await Handler.handleCustomError(err);
-//     }
-// }

@@ -36,13 +36,15 @@ var type;
 })(type || (exports.type = type = {}));
 const textSchema = new mongoose_1.default.Schema({
     text: { type: String, default: null },
-    type: { type: String, default: type.TEXT, enum: type },
+    type: { type: String, default: type.TEXT, enum: Object.values(type) },
     fileName: { type: String, default: null },
     documentId: { type: String, default: null },
     docNo: { type: Number, default: 1 },
-    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "users" },
-    createdAt: { type: Number, default: (0, moment_1.default)().utc().valueOf() },
+    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Users" },
+    createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
+}, {
+    timestamps: false
 });
-const textModel = mongoose_1.default.model("texts", textSchema);
+const textModel = mongoose_1.default.model("Texts", textSchema);
 exports.default = textModel;

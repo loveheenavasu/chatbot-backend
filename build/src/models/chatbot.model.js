@@ -29,11 +29,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = __importStar(require("mongoose"));
 const chatbotSchema = new mongoose_1.default.Schema({
-    textId: { type: mongoose_1.Types.ObjectId, default: null, ref: "texts" },
-    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "users" },
+    textId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Texts" },
+    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Users" },
     documentId: { type: String, default: null },
-    createdAt: { type: Number, default: (0, moment_1.default)().utc().valueOf() },
+    createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
+}, {
+    timestamps: false
 });
-const chatbotModel = mongoose_1.default.model("chatbots", chatbotSchema);
+const chatbotModel = mongoose_1.default.model("Chatbots", chatbotSchema);
 exports.default = chatbotModel;

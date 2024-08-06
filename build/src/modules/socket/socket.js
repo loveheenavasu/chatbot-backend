@@ -37,105 +37,73 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectSocket = void 0;
 const socket_io_1 = require("socket.io");
-const socket_service_1 = __importDefault(require("./socket.service"));
+const SocketService = __importStar(require("./socket.service"));
 const message_model_1 = require("../../models/message.model");
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const chat_session_model_1 = require("../../models/chat-session.model");
+const mongoose_1 = require("mongoose");
 const connectSocket = (server) => {
     try {
         const io = new socket_io_1.Server(server, {
             cors: { origin: "*" }
         });
-        // !! ---->>>   MIDDLEWARE FOR AUTH   <<<----
-        // io.use(async (socket: Socket | any, next) => {
-        //     try {
-        //         const token = socket?.handshake?.headers?.token;
-        //         let socketData = await SocketService.getData(token);
-        //         if (socketData?.type === 'error') {
-        //             return next(socketData?.data);
-        //         } else {
-        //             console.log('socket data - else---', socketData);
-        //             socket.user = socketData;
-        //             return next();zsxs
-        //         }
-        //     } catch (err) {
-        //         console.error('Error in middleware:', err);
-        //         return next(new Error('Internal server error'));
-        //     }
-        // });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
             socket.setMaxListeners(0);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c, _d;
                 try {
-                    // let { _id: userId } = socket?.user;
                     const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
-                    console.log("headers------", headers);
                     let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || ((_c = (_b = socket === null || socket === void 0 ? void 0 : socket.request) === null || _b === void 0 ? void 0 : _b.connection) === null || _c === void 0 ? void 0 : _c.remoteAddress) || ((_d = socket === null || socket === void 0 ? void 0 : socket.conn) === null || _d === void 0 ? void 0 : _d.remoteAddress);
                     if (ip && ip.includes(',')) {
                         ip = ip.split(',')[0].trim();
                     }
-                    console.log("ip-----", ip);
-                    let { text, connectId, documentId, chatSessionId } = payload;
+                    console.log("ip---", ip);
+                    let { text, documentId, chatSessionId } = payload;
                     console.log("payload----", payload);
                     let res = {
                         message: text,
-                        chatId: connectId !== null && connectId !== void 0 ? connectId : socket === null || socket === void 0 ? void 0 : socket.id,
                         sessionId: chatSessionId !== null && chatSessionId !== void 0 ? chatSessionId : null,
-                        type: message_model_1.Role.User
+                        type: message_model_1.role.User
                     };
                     socket.emit("searches", res);
-                    let chatId;
-                    // if (connectId) {
-                    //     chatId = connectId
-                    //     // let fetchData = await Models.messageModel.findOne({ chatId: chatId }, { __v: 0 }, { lean: true })
-                    //     // if (fetchData) {
-                    //     //     let { chatId } = fetchData
-                    //     //     chatId = chatId
-                    //     // }
-                    // }
-                    // else {
-                    //     chatId = socket.id
-                    // }
-                    let clientIpAddress = ip;
-                    let query = { ipAddress: clientIpAddress };
+                    let query = { ipAddress: ip, documentId: documentId };
                     let projection = { __v: 0 };
                     let option = { lean: true };
                     let fetchData = yield Models.ipAddressModel.findOne(query, projection, option);
                     let ipAddressId;
                     let sessionId;
+                    console.log("fetchData--", fetchData);
                     if (fetchData) {
                         let { _id } = fetchData;
                         ipAddressId = _id;
-                        let query = { _id: chatSessionId, sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.ONGOING };
+                        let query = { _id: new mongoose_1.Types.ObjectId(chatSessionId), sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.ONGOING };
                         let fetchSession = yield Models.chatSessionModel.findOne(query, projection, option);
                         if (fetchSession) {
                             let { _id } = fetchSession;
                             sessionId = _id;
                         }
                         else {
-                            let sessionSave = yield socket_service_1.default.saveChatSession(ipAddressId);
+                            let sessionSave = yield SocketService.saveChatSession(ipAddressId);
                             sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
                         }
                     }
                     else {
                         let dataToSave = {
-                            ipAddress: clientIpAddress,
+                            ipAddress: ip,
                             documentId: documentId,
                             createdAt: (0, moment_1.default)().utc().valueOf()
                         };
                         let saveData = yield Models.ipAddressModel.create(dataToSave);
                         ipAddressId = saveData === null || saveData === void 0 ? void 0 : saveData._id;
-                        let sessionSave = yield socket_service_1.default.saveChatSession(ipAddressId);
+                        let sessionSave = yield SocketService.saveChatSession(ipAddressId);
                         sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
                     }
-                    let data = yield socket_service_1.default.searchInput(text, chatId, documentId, ipAddressId, sessionId);
+                    let data = yield SocketService.searchInput(text, documentId, ipAddressId, sessionId);
                     let response = {
                         message: data,
-                        chatId: chatId,
                         sessionId: sessionId,
-                        type: message_model_1.Role.AI
+                        type: message_model_1.role.AI
                     };
                     socket.chatSessionId = sessionId;
                     socket.emit("searches", response);
@@ -146,9 +114,6 @@ const connectSocket = (server) => {
             }));
             socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
                 try {
-                    console.log("socket disconnected--------");
-                    // console.log("socket discconect----", socket);
-                    console.log("chatSessionId-----", socket === null || socket === void 0 ? void 0 : socket.chatSessionId);
                     let query = { _id: socket === null || socket === void 0 ? void 0 : socket.chatSessionId };
                     let update = {
                         sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.COMPLETED,

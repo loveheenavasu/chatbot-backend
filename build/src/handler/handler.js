@@ -1,30 +1,20 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-class Handler {
-}
-_a = Handler;
-Handler.handleSuccess = (res, data) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send(data);
-});
-Handler.handleCustomError = (error) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c;
+exports.handleJoiError = exports.handleCatchError = exports.handleCustomError = exports.handleSuccess = void 0;
+const handleSuccess = (res, data) => {
     try {
-        let message = (_b = error === null || error === void 0 ? void 0 : error.message) !== null && _b !== void 0 ? _b : 'Bad Request';
-        let statusCode = (_c = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _c !== void 0 ? _c : 400;
+        res.send(data);
+    }
+    catch (err) {
+        throw err;
+    }
+};
+exports.handleSuccess = handleSuccess;
+const handleCustomError = (error) => {
+    var _a, _b;
+    try {
+        let message = (_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : 'Bad Request';
+        let statusCode = (_b = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _b !== void 0 ? _b : 400;
         throw {
             message: message,
             statusCode: statusCode
@@ -33,21 +23,25 @@ Handler.handleCustomError = (error) => __awaiter(void 0, void 0, void 0, functio
     catch (err) {
         throw err;
     }
-});
-Handler.handleCatchError = (res, error) => __awaiter(void 0, void 0, void 0, function* () {
-    let { message, statusCode } = error;
-    res.status(statusCode).send({ message: message });
-});
-Handler.handleSocketError = (error) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    let { message, statusCode } = error;
-    (_b = express_1.default === null || express_1.default === void 0 ? void 0 : express_1.default.response) === null || _b === void 0 ? void 0 : _b.status(statusCode).send({ message: message });
-});
-Handler.handleJoiError = (error) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+};
+exports.handleCustomError = handleCustomError;
+const handleCatchError = (res, error) => {
+    var _a;
+    try {
+        let { message } = error;
+        let statusCode = (_a = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _a !== void 0 ? _a : 400;
+        res.status(statusCode).send({ message: message });
+    }
+    catch (err) {
+        throw err;
+    }
+};
+exports.handleCatchError = handleCatchError;
+const handleJoiError = (error) => {
+    var _a;
     try {
         console.log("error---", error);
-        let message = (_b = error === null || error === void 0 ? void 0 : error.details[0]) === null || _b === void 0 ? void 0 : _b.message;
+        let message = (_a = error === null || error === void 0 ? void 0 : error.details[0]) === null || _a === void 0 ? void 0 : _a.message;
         let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
         throw {
             message: errorMessage,
@@ -57,5 +51,5 @@ Handler.handleJoiError = (error) => __awaiter(void 0, void 0, void 0, function* 
     catch (err) {
         throw err;
     }
-});
-exports.default = Handler;
+};
+exports.handleJoiError = handleJoiError;

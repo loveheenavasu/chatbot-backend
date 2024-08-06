@@ -29,11 +29,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = __importStar(require("mongoose"));
 const sessionSchema = new mongoose_1.default.Schema({
-    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "users" },
+    userId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Users" },
     accessToken: { type: String, default: null },
     tokenGenAt: { type: Number, default: 0 },
-    createdAt: { type: Number, default: (0, moment_1.default)().utc().valueOf() },
+    createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
+}, {
+    timestamps: false
 });
-const sessionModel = mongoose_1.default.model("sessions", sessionSchema);
+const sessionModel = mongoose_1.default.model("Sessions", sessionSchema);
 exports.default = sessionModel;

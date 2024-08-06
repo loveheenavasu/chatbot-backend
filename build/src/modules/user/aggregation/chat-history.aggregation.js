@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,28 +31,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-const handler_1 = __importDefault(require("../../../handler/handler"));
-class ChatHistoryAggregation {
-}
-_a = ChatHistoryAggregation;
-ChatHistoryAggregation.matchData = (documentId) => __awaiter(void 0, void 0, void 0, function* () {
+exports.facetData = exports.groupData = exports.lookupMessages = exports.unwindChatSessions = exports.lookupChatSessions = exports.matchData = void 0;
+const Handler = __importStar(require("../../../handler/handler"));
+const matchData = (documentId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $match: {
-                documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString()
+                documentId: documentId
             }
         };
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-ChatHistoryAggregation.lookupChatSessions = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.matchData = matchData;
+const lookupChatSessions = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $lookup: {
@@ -39,10 +57,7 @@ ChatHistoryAggregation.lookupChatSessions = () => __awaiter(void 0, void 0, void
                     {
                         $match: {
                             $expr: {
-                                $and: [
-                                    { $eq: ["$ipAddressId", "$$ipAddressId"] },
-                                    // { $eq: ["$sessionType", sessionType?.COMPLETED] }
-                                ]
+                                $eq: ["$ipAddressId", "$$ipAddressId"]
                             }
                         }
                     }
@@ -52,10 +67,11 @@ ChatHistoryAggregation.lookupChatSessions = () => __awaiter(void 0, void 0, void
         };
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-ChatHistoryAggregation.unwindChatSessions = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.lookupChatSessions = lookupChatSessions;
+const unwindChatSessions = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $unwind: {
@@ -65,10 +81,11 @@ ChatHistoryAggregation.unwindChatSessions = () => __awaiter(void 0, void 0, void
         };
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-ChatHistoryAggregation.lookupMessages = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.unwindChatSessions = unwindChatSessions;
+const lookupMessages = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $lookup: {
@@ -101,23 +118,11 @@ ChatHistoryAggregation.lookupMessages = () => __awaiter(void 0, void 0, void 0, 
         };
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-// static unwindMessages = async () => {
-//     try {
-//         return {
-//             $unwind: {
-//                 path: "$messages",
-//                 preserveNullAndEmptyArrays: false
-//             }
-//         }
-//     }
-//     catch (err) {
-//         await Handler.handleCustomError(err);
-//     }
-// }
-ChatHistoryAggregation.groupData = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.lookupMessages = lookupMessages;
+const groupData = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $group: {
@@ -126,32 +131,29 @@ ChatHistoryAggregation.groupData = () => __awaiter(void 0, void 0, void 0, funct
                 documentId: { $first: "$documentId" },
                 sessionType: { $first: "$chatsessions.sessionType" },
                 message: { $first: "$messages" }
-                // messageType: { $first: "$messages.messageType" },
-                // createdAt: { $first:"$messages.createdAt"}
             }
         };
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-ChatHistoryAggregation.facetData = (pagination, limit) => __awaiter(void 0, void 0, void 0, function* () {
+exports.groupData = groupData;
+const facetData = (pagination, limit) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let setPagination = pagination !== null && pagination !== void 0 ? pagination : 0;
-        let setLimit = limit !== null && limit !== void 0 ? limit : 10;
         return {
             $facet: {
                 count: [{ $count: "count" }],
                 data: [
                     { $sort: { _id: -1 } },
-                    { $skip: parseInt(setPagination) * parseInt(setLimit) },
-                    { $limit: parseInt(setLimit) }
+                    { $skip: (pagination - 1) * limit },
+                    { $limit: limit }
                 ]
             }
         };
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-exports.default = ChatHistoryAggregation;
+exports.facetData = facetData;

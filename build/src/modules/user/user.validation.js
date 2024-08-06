@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -11,14 +34,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-const handler_1 = __importDefault(require("../../handler/handler"));
+exports.uploadFile = exports.updateText = exports.text = exports.deleteFile = exports.sessionIdWithPL = exports.documentIdWithPL = exports.textDetail = exports.documentId = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyForgot = exports.resendAndForgot = exports.verify = exports.signup = void 0;
+const Handler = __importStar(require("../../handler/handler"));
 const joi_1 = __importDefault(require("joi"));
-class Validation {
-}
-_a = Validation;
-Validation.signup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const signup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -28,42 +48,45 @@ Validation.signup = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.verify = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.signup = signup;
+const verify = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             otp: joi_1.default.string().required()
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.resendAndForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verify = verify;
+const resendAndForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required()
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.verifyForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.resendAndForgot = resendAndForgot;
+const verifyForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -71,14 +94,15 @@ Validation.verifyForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.resetPass = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verifyForgot = verifyForgot;
+const resetPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             uniqueCode: joi_1.default.string().trim().required(),
@@ -86,14 +110,15 @@ Validation.resetPass = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.login = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.resetPassword = resetPassword;
+const login = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -101,14 +126,15 @@ Validation.login = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.socialLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.login = login;
+const socialLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -121,42 +147,45 @@ Validation.socialLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.documentId = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.socialLogin = socialLogin;
+const documentId = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required()
         });
         let { error } = schema.validate(req.query);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.textDetail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.documentId = documentId;
+const textDetail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().optional()
         });
         let { error } = schema.validate(req.query);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.documentIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.textDetail = textDetail;
+const documentIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required(),
@@ -165,14 +194,15 @@ Validation.documentIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void
         });
         let { error } = schema.validate(req.query);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.sessionIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.documentIdWithPL = documentIdWithPL;
+const sessionIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             sessionId: joi_1.default.string().trim().required(),
@@ -181,14 +211,15 @@ Validation.sessionIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 
         });
         let { error } = schema.validate(req.query);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.deleteFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.sessionIdWithPL = sessionIdWithPL;
+const deleteFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required(),
@@ -196,14 +227,15 @@ Validation.deleteFile = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         });
         let { error } = schema.validate(req.query);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.text = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteFile = deleteFile;
+const text = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             text: joi_1.default.string().trim().required(),
@@ -211,15 +243,15 @@ Validation.text = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        console.log("catch--", err);
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.updateText = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.text = text;
+const updateText = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let schema = joi_1.default.object({
             text: joi_1.default.string().trim().required(),
@@ -227,15 +259,15 @@ Validation.updateText = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         });
         let { error } = schema.validate(req.body);
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        console.log("catch--", err);
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Validation.uploadFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateText = updateText;
+const uploadFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const schema = joi_1.default.object({
             documentId: joi_1.default.string().optional(),
@@ -246,11 +278,11 @@ Validation.uploadFile = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
             file: req.file
         });
         if (error)
-            yield handler_1.default.handleJoiError(error);
+            return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-exports.default = Validation;
+exports.uploadFile = uploadFile;

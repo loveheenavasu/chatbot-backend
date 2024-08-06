@@ -1,11 +1,9 @@
 import express from 'express';
-import Controller from './user.controller';
+import * as Controller from './user.controller';
 import { authorization } from '../../middleware/authorization';
-const router = express.Router();
-
 import multer from 'multer';
-import Validation from './user.validation';
-// const upload = multer({ dest: 'src/uploads/' });
+import * as Validation from './user.validation';
+const router = express.Router();
 const upload = multer();
 
 router.post('/signup', Validation.signup, Controller.signup)
@@ -13,9 +11,8 @@ router.post('/verify', Validation.verify, authorization, Controller.verifyEmail)
 router.post('/resend', Validation.resendAndForgot, Controller.resendOtp)
 router.post('/forgot', Validation.resendAndForgot, Controller.forgotPassword)
 router.post('/verify-otp', Validation.verifyForgot, Controller.verifyOtp)
-router.post('/reset', Validation.resetPass, Controller.resetPassword)
+router.post('/reset', Validation.resetPassword, Controller.resetPassword)
 router.post('/login', Validation.login, Controller.login)
-// router.get('/profile',authorization, Controller.profile)
 
 router.post('/social-login', Validation.socialLogin, Controller.socialLogin);
 router.get('/chatbot', authorization, Controller.chatbotLists)
@@ -30,5 +27,4 @@ router.delete('/logout', authorization, Controller.logout)
 
 router.get('/chat-history', Validation.documentIdWithPL, authorization, Controller.chatHistory)
 router.get('/chat', Validation.sessionIdWithPL, authorization, Controller.chatDetail)
-// router.post('/url', Controller.url)
 export default router;

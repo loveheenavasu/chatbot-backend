@@ -40,74 +40,75 @@ const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
 const Models = __importStar(require("../models/index"));
-const handler_1 = __importDefault(require("../handler/handler"));
+const Handler = __importStar(require("../handler/handler"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const error_1 = require("../handler/error");
-const common_1 = __importDefault(require("../common/common"));
+const CommonHelper = __importStar(require("../common/common"));
 const mongoose_1 = require("mongoose");
 const { SCOPE } = process.env;
 const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
         let { token } = req.headers;
         if (!token) {
-            yield handler_1.default.handleCustomError(error_1.ProvideToken);
+            return Handler.handleCustomError(error_1.ProvideToken);
         }
-        let splitToken = token.split(' ');
-        if (splitToken[0] != 'Bearer') {
-            yield handler_1.default.handleCustomError(error_1.BearerToken);
+        const [scheme, tokenValue] = token.split(' ');
+        if (scheme != 'Bearer') {
+            return Handler.handleCustomError(error_1.BearerToken);
         }
-        let decodeToken = yield jsonwebtoken_1.default.decode(splitToken[1]);
+        let decodeToken = yield jsonwebtoken_1.default.decode(tokenValue);
         if ((decodeToken === null || decodeToken === void 0 ? void 0 : decodeToken.scope) == SCOPE) {
-            let verifyData = yield common_1.default.verifyToken(splitToken[1]);
+            let verifyData = yield CommonHelper.verifyToken(tokenValue);
             if (verifyData) {
-                let { _id } = verifyData;
-                let query = { _id: new mongoose_1.Types.ObjectId(_id) };
-                let data = yield common_1.default.fetchUser(query);
-                if ((data === null || data === void 0 ? void 0 : data.otp) == null && (data === null || data === void 0 ? void 0 : data.isEmailVerified) != true) {
-                    yield handler_1.default.handleCustomError(error_1.Unauthorized);
+                let query = { _id: new mongoose_1.Types.ObjectId(verifyData === null || verifyData === void 0 ? void 0 : verifyData._id) };
+                let user = yield CommonHelper.fetchUser(query);
+                if (user) {
+                    if ((user === null || user === void 0 ? void 0 : user.otp) == null && (user === null || user === void 0 ? void 0 : user.isEmailVerified) != true) {
+                        return Handler.handleCustomError(error_1.Unauthorized);
+                    }
+                    user === null || user === void 0 ? true : delete user.otp;
+                    user.accessToken = tokenValue;
+                    req.userData = user;
+                    next();
                 }
-                delete data.otp;
-                data.accessToken = splitToken[1];
-                req.userData = data;
-                next();
+                else {
+                    return Handler.handleCustomError(error_1.Unauthorized);
+                }
             }
             else {
-                yield handler_1.default.handleCustomError(error_1.Unauthorized);
+                return Handler.handleCustomError(error_1.Unauthorized);
             }
         }
         else {
             try {
-                const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${splitToken[1]}`;
+                const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${tokenValue}`;
                 let response;
                 response = yield axios_1.default.get(url);
-                // let decodeToken: any = await jwt.decode(splitToken[1]);
-                // const currentTime = Math.floor(Date.now() / 1000);
-                // console.log("currentTime----", currentTime);
-                // console.log("tokenInfo?.exp", tokenInfo?.exp); // Current time in seconds
-                // if (decodeToken?.exp < currentTime) {
-                //     await Handler.handleCustomError(InvalidToken);
-                // }
                 const tokenInfo = response === null || response === void 0 ? void 0 : response.data;
                 let query = { email: (_a = tokenInfo === null || tokenInfo === void 0 ? void 0 : tokenInfo.email) === null || _a === void 0 ? void 0 : _a.toLowerCase() };
-                // let query = { email: decodeToken?.email?.toLowerCase() }
-                let data = yield common_1.default.fetchUser(query);
-                delete data.otp;
-                data.accessToken = splitToken[1];
-                req.userData = data;
-                next();
+                let data = yield CommonHelper.fetchUser(query);
+                if (data) {
+                    data === null || data === void 0 ? true : delete data.otp;
+                    data.accessToken = tokenValue;
+                    req.userData = data;
+                    next();
+                }
+                else {
+                    return Handler.handleCustomError(error_1.Unauthorized);
+                }
             }
             catch (err) {
-                if (((_b = err === null || err === void 0 ? void 0 : err.response) === null || _b === void 0 ? void 0 : _b.data.error) == "invalid_token") {
-                    yield Models.sessionModel.deleteOne({ accessToken: splitToken[1] });
-                    yield handler_1.default.handleCustomError(error_1.InvalidToken);
+                if (((_c = (_b = err === null || err === void 0 ? void 0 : err.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.error) == "invalid_token") {
+                    yield Models.sessionModel.deleteOne({ accessToken: tokenValue });
+                    return Handler.handleCustomError(error_1.InvalidToken);
                 }
-                yield handler_1.default.handleCustomError(err);
+                return Handler.handleCustomError(err);
             }
         }
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
 exports.authorization = authorization;

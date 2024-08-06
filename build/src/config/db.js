@@ -16,11 +16,9 @@ exports.dbConnect = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
-// const { DB_HOST, DB_NAME, DB_PORT } = process.env;
 const URI = process.env.URI;
 const dbConnect = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // const URI = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
         mongoose_1.default.connect(URI);
     }
     catch (err) {

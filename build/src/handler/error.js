@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProvideDocumentId = exports.UnsupportedFileType = exports.NotFound = exports.TokenMismatch = exports.InvalidToken = exports.BearerToken = exports.ProvideToken = exports.WrongOtp = exports.EmailAlreadyExists = exports.EmailNotRegistered = exports.SomethingWentWrong = exports.WrongPassword = exports.Unauthorized = void 0;
+exports.ProvideDocumentId = exports.UnsupportedFileType = exports.NotFound = exports.TokenMismatch = exports.InvalidToken = exports.BearerToken = exports.ProvideToken = exports.WrongOtp = exports.EmailAlreadyExists = exports.EmailNotRegistered = exports.RegisteredWithGoogle = exports.SomethingWentWrong = exports.WrongPassword = exports.Unauthorized = void 0;
 exports.Unauthorized = {
     message: "Sorry, you are not authorized to perform this action.",
     statusCode: 401
@@ -11,6 +11,10 @@ exports.WrongPassword = {
 };
 exports.SomethingWentWrong = {
     message: "Something went wrong",
+    statusCode: 400
+};
+exports.RegisteredWithGoogle = {
+    message: "You're registered with Google. Please log in using your Google account.",
     statusCode: 400
 };
 exports.EmailNotRegistered = {

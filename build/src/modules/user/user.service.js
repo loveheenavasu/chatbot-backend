@@ -34,14 +34,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
-const handler_1 = __importDefault(require("../../handler/handler"));
+const Handler = __importStar(require("../../handler/handler"));
 const error_1 = require("../../handler/error");
-const common_1 = __importDefault(require("../../common/common"));
+const CommonHelper = __importStar(require("../../common/common"));
 const openai_1 = require("@langchain/openai");
 const dotenv_1 = require("dotenv");
 const neo4j_1 = require("../../config/neo4j");
@@ -56,10 +56,14 @@ const word_extractor_1 = __importDefault(require("word-extractor"));
 const textsplitters_1 = require("@langchain/textsplitters");
 const text_model_1 = require("../../models/text.model");
 const user_model_1 = require("../../models/user.model");
-const chat_history_aggregation_1 = __importDefault(require("./aggregation/chat-history.aggregation"));
-const emailService_1 = __importDefault(require("../../common/emailService"));
+const ChatHistoryAggregation = __importStar(require("./aggregation/chat-history.aggregation"));
+const EmailService = __importStar(require("../../common/emailService"));
 const { v4: uuidv4 } = require('uuid');
-const { OPEN_API_KEY, NEO_URL, NEO_USERNAME, NEO_PASSWORD, SCOPE } = process.env;
+const OPEN_API_KEY = process.env.OPEN_API_KEY;
+const NEO_URL = process.env.NEO_URL;
+const NEO_USERNAME = process.env.NEO_USERNAME;
+const NEO_PASSWORD = process.env.NEO_PASSWORD;
+const SCOPE = process.env.SCOPE;
 const openai = new openai_1.OpenAIEmbeddings({
     model: "text-embedding-3-large",
     batchSize: 512,
@@ -70,53 +74,85 @@ let neoConfig = {
     username: NEO_USERNAME,
     password: NEO_PASSWORD
 };
-class Service {
-}
-_a = Service;
-Service.signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
+const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, password, firstname, lastname } = req.body;
-        console.log("req.body-------", req.body);
-        let query = { email: email.toLowerCase(), isEmailVerified: true };
+        let { email } = req.body;
+        let query = { email: email.toLowerCase() };
         let projection = { __v: 0 };
         let options = { lean: true };
         let fetchData = yield Models.userModel.findOne(query, projection, options);
         if (fetchData) {
-            yield handler_1.default.handleCustomError(error_1.EmailAlreadyExists);
+            let { _id, isEmailVerified } = fetchData;
+            if (isEmailVerified)
+                return Handler.handleCustomError(error_1.EmailAlreadyExists);
+            let query1 = { userId: _id };
+            yield Models.sessionModel.deleteMany(query1);
+            let data = yield signupData(req.body);
+            let options = { new: true };
+            let updateData = yield Models.userModel.findOneAndUpdate(query, data, options);
+            let accessToken = yield fetchToken(updateData === null || updateData === void 0 ? void 0 : updateData._id, SCOPE);
+            updateData._doc["accessToken"] = accessToken;
+            delete updateData._doc["password"];
+            delete updateData._doc["otp"];
+            yield EmailService.verificationCode(email, updateData === null || updateData === void 0 ? void 0 : updateData.otp);
+            let response = {
+                message: `Otp sent to ${updateData === null || updateData === void 0 ? void 0 : updateData.email}`,
+                data: updateData
+            };
+            return response;
         }
         else {
-            let bcryptPass = yield common_1.default.hashPass(password);
-            let otp = yield common_1.default.generateOtp();
-            let dataToSave = {
-                email: email.toLowerCase(),
-                password: bcryptPass,
-                otp: otp,
-                firstname: firstname,
-                lastname: lastname,
-                createdAt: (0, moment_1.default)().utc().valueOf()
-            };
-            let saveData = yield Models.userModel.create(dataToSave);
+            let data = yield signupData(req.body);
+            let saveData = yield Models.userModel.create(data);
+            let accessToken = yield fetchToken(saveData === null || saveData === void 0 ? void 0 : saveData._id, SCOPE);
+            saveData._doc["accessToken"] = accessToken;
             delete saveData._doc["password"];
             delete saveData._doc["otp"];
-            let data = {
-                _id: saveData === null || saveData === void 0 ? void 0 : saveData._id,
-                scope: SCOPE
-            };
-            let accessToken = yield common_1.default.signToken(data);
-            saveData._doc["accessToken"] = accessToken;
-            yield emailService_1.default.verificationCode(email, otp);
+            yield EmailService.verificationCode(email, saveData === null || saveData === void 0 ? void 0 : saveData.otp);
             let response = {
-                message: `Otp sent to ${email}`,
+                message: `Otp sent to ${saveData === null || saveData === void 0 ? void 0 : saveData.email}`,
                 data: saveData
             };
             return response;
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.signup = signup;
+const signupData = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let bcryptPass = yield CommonHelper.hashPassword(payload === null || payload === void 0 ? void 0 : payload.password);
+        let otp = yield CommonHelper.generateOtp();
+        let data = {
+            email: payload === null || payload === void 0 ? void 0 : payload.email.toLowerCase(),
+            password: bcryptPass,
+            otp: otp,
+            firstname: payload === null || payload === void 0 ? void 0 : payload.firstname,
+            lastname: payload === null || payload === void 0 ? void 0 : payload.lastname,
+            createdAt: (0, moment_1.default)().utc().valueOf()
+        };
+        return data;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+const fetchToken = (userId, scope) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let tokenData = {
+            _id: userId,
+            scope: scope
+        };
+        let accessToken = yield CommonHelper.signToken(tokenData);
+        return accessToken;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+const verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { otp: inputOtp } = req.body;
         let { _id } = req.userData;
@@ -124,7 +160,6 @@ Service.verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let projection = { otp: 1, email: 1 };
         let option = { lean: true };
         let fetchData = yield Models.userModel.findOne(query, projection, option);
-        console.log("fetchData---", fetchData);
         if (fetchData) {
             let { otp, email } = fetchData;
             if (inputOtp === otp) {
@@ -151,81 +186,74 @@ Service.verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 return response;
             }
             else {
-                yield handler_1.default.handleCustomError(error_1.WrongOtp);
+                return Handler.handleCustomError(error_1.WrongOtp);
             }
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.NotFound);
+            return Handler.handleCustomError(error_1.NotFound);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verifyEmail = verifyEmail;
+const resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email } = req.body;
         let query = { email: email === null || email === void 0 ? void 0 : email.toLowerCase() };
-        let fetchData = yield common_1.default.fetchUser(query);
+        let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
             let { email } = fetchData;
-            let otp = yield common_1.default.generateOtp();
+            let otp = yield CommonHelper.generateOtp();
             let update = {
                 otp: otp
             };
             let option = { new: true };
             yield Models.userModel.findOneAndUpdate(query, update, option);
-            // let emailData = {
-            //     email: email,
-            //     otp: otp
-            // }
-            yield emailService_1.default.verificationCode(email, otp);
-            // await sendEmail(emailData);
+            yield EmailService.verificationCode(email, otp);
             let response = {
                 message: `Otp sent to ${email}`
             };
             return response;
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.EmailNotRegistered);
+            return Handler.handleCustomError(error_1.EmailNotRegistered);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.resendOtp = resendOtp;
+const forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email } = req.body;
         let query = { email: email.toLowerCase() };
-        let fetchData = yield common_1.default.fetchUser(query);
+        let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
             let { _id, email } = fetchData;
-            let otp = yield common_1.default.generateOtp();
+            let otp = yield CommonHelper.generateOtp();
             let query = { _id: _id };
             let update = { otp: otp };
             let option = { new: true };
             yield Models.userModel.findOneAndUpdate(query, update, option);
-            // let emailData = {
-            //     email: email,
-            //     otp: otp
-            // }
-            yield emailService_1.default.verificationCode(email, otp);
-            // await sendEmail(emailData);
+            yield EmailService.verificationCode(email, otp);
             let response = {
                 message: `Otp sent to ${email}`
             };
             return response;
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.EmailNotRegistered);
+            return Handler.handleCustomError(error_1.EmailNotRegistered);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.forgotPassword = forgotPassword;
+const verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { otp: inputOtp, email } = req.body;
         let query = { email: email === null || email === void 0 ? void 0 : email.toLowerCase() };
@@ -235,7 +263,7 @@ Service.verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
         if (fetchData) {
             let { otp } = fetchData;
             if (inputOtp === otp) {
-                let uniqueCode = yield common_1.default.generateUniqueCode();
+                let uniqueCode = yield CommonHelper.generateUniqueCode();
                 let update = {
                     uniqueCode: uniqueCode,
                     otp: null
@@ -249,24 +277,25 @@ Service.verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 return response;
             }
             else {
-                yield handler_1.default.handleCustomError(error_1.WrongOtp);
+                return Handler.handleCustomError(error_1.WrongOtp);
             }
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.NotFound);
+            return Handler.handleCustomError(error_1.NotFound);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.resetPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verifyOtp = verifyOtp;
+const resetPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { uniqueCode, password } = req.body;
         let query = { uniqueCode: uniqueCode };
-        let fetchData = yield common_1.default.fetchUser(query);
+        let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let hashPass = yield common_1.default.hashPass(password);
+            let hashPass = yield CommonHelper.hashPassword(password);
             let update = {
                 uniqueCode: null,
                 password: hashPass
@@ -279,35 +308,39 @@ Service.resetPassword = (req) => __awaiter(void 0, void 0, void 0, function* () 
             return response;
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.NotFound);
+            return Handler.handleCustomError(error_1.NotFound);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.login = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.resetPassword = resetPassword;
+const login = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email, password } = req.body;
-        let query = { email: email.toLowerCase() };
+        let query = { email: email.toLowerCase(), isEmailVerified: true };
         let projection = { __v: 0 };
         let option = { lean: true };
         let fetchData = yield Models.userModel.findOne(query, projection, option);
         if (fetchData) {
             let { _id, password: oldPassword, type } = fetchData;
-            if (oldPassword == null) {
-                yield handler_1.default.handleCustomError(error_1.SomethingWentWrong);
+            if (oldPassword == null && type != null) {
+                return Handler.handleCustomError(error_1.RegisteredWithGoogle);
             }
-            let decryptPass = yield common_1.default.comparePass(oldPassword, password);
+            if (oldPassword == null) {
+                return Handler.handleCustomError(error_1.SomethingWentWrong);
+            }
+            let decryptPass = yield CommonHelper.comparePassword(oldPassword, password);
             if (!decryptPass) {
-                yield handler_1.default.handleCustomError(error_1.WrongPassword);
+                return Handler.handleCustomError(error_1.WrongPassword);
             }
             else {
                 let data = {
                     _id: _id,
                     scope: SCOPE
                 };
-                let accessToken = yield common_1.default.signToken(data);
+                let accessToken = yield CommonHelper.signToken(data);
                 let resData = {
                     _id: fetchData === null || fetchData === void 0 ? void 0 : fetchData._id,
                     email: fetchData === null || fetchData === void 0 ? void 0 : fetchData.email,
@@ -321,34 +354,21 @@ Service.login = (req) => __awaiter(void 0, void 0, void 0, function* () {
             }
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.EmailNotRegistered);
+            return Handler.handleCustomError(error_1.EmailNotRegistered);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-// static profile = async (req: any) => {
-//     try {
-//         let { _id } = req.userData;
-//         let query = { _id: _id }
-//         let projection = { __v: 0, password: 0, otp: 0, uniqueCode: 0 }
-//         let option = { lean: true }
-//         let fetchData = await Models.userModel.findOne(query, projection, option);
-//         return fetchData ?? {};
-//     }
-//     catch (err) {
-//         await Handler.handleCustomError(err);
-//     }
-// }
-Service.socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.login = login;
+const socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
         let query = { email: email.toLowerCase() };
-        let fetchData = yield common_1.default.fetchUser(query);
+        let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { _id } = fetchData;
-            let session = yield _a.createSession(_id, socialToken);
+            let session = yield createSession(fetchData === null || fetchData === void 0 ? void 0 : fetchData._id, socialToken);
             fetchData.accessToken = session === null || session === void 0 ? void 0 : session.accessToken;
             return fetchData;
         }
@@ -364,15 +384,16 @@ Service.socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
         let userData = yield Models.userModel.create(dataToSave);
-        let session = yield _a.createSession(userData === null || userData === void 0 ? void 0 : userData._id, socialToken);
+        let session = yield createSession(userData === null || userData === void 0 ? void 0 : userData._id, socialToken);
         userData._doc['accessToken'] = session === null || session === void 0 ? void 0 : session.accessToken;
         return userData;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.createSession = (user_id, accessToken) => __awaiter(void 0, void 0, void 0, function* () {
+exports.socialLogin = socialLogin;
+const createSession = (user_id, accessToken) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let dataToSession = {
             userId: user_id,
@@ -383,10 +404,11 @@ Service.createSession = (user_id, accessToken) => __awaiter(void 0, void 0, void
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.createSession = createSession;
+const saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { text, documentId } = req.body;
         let { _id } = req.userData;
@@ -398,8 +420,8 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let data;
         let fetchChatbot = yield Models.chatbotModel.findOne(query, projection, option);
         if (!fetchChatbot) {
-            data = yield _a.embedText(text, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT, _id, null, num, docId);
-            yield _a.createChatbot(data);
+            data = yield embedText(text, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT, _id, undefined, num, docId);
+            yield createChatbot(data);
         }
         else {
             let fetchData = yield Models.textModel.findOne(query, projection, option);
@@ -409,7 +431,7 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 num = docNo;
                 docId = documentId;
             }
-            data = yield _a.embedText(text, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT, _id, null, num, docId);
+            data = yield embedText(text, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT, _id, undefined, num, docId);
         }
         let response = {
             messgage: "Text Added Successfully",
@@ -418,10 +440,11 @@ Service.saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.createChatbot = (data) => __awaiter(void 0, void 0, void 0, function* () {
+exports.saveTexts = saveTexts;
+const createChatbot = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { _id, userId, documentId } = data;
         let dataToSave = {
@@ -434,14 +457,14 @@ Service.createChatbot = (data) => __awaiter(void 0, void 0, void 0, function* ()
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(void 0, void 0, void 0, function* () {
+const embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const textSplitter = new textsplitters_1.RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
         const docOutput = yield textSplitter.splitDocuments([
-            new documents_1.Document({ pageContent: text, metadata: { documentId: docId === null || docId === void 0 ? void 0 : docId.toString(), docNo: docNo } }), // Ensure id is converted to string
+            new documents_1.Document({ pageContent: text, metadata: { documentId: docId === null || docId === void 0 ? void 0 : docId.toString(), docNo: docNo } })
         ]);
         docOutput.forEach(doc => {
             if (doc.metadata.loc && typeof doc.metadata.loc === 'object') {
@@ -462,31 +485,30 @@ Service.embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(vo
         return saveData;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
+const updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { _id, text } = req.body;
-        let { _id: userId } = req.userData;
         let query = { _id: new mongoose_1.Types.ObjectId(_id) };
         let projection = { __v: 0 };
         let options = { lean: true };
         let fetchData = yield Models.textModel.findOne(query, projection, options);
         if (fetchData) {
             let { documentId, docNo } = fetchData;
-            const result = yield neo4j_1.session.run(`
+            yield neo4j_1.session.run(`
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
                     DELETE n
                     `, { documentId: documentId, docNo: docNo });
             const textSplitter = new textsplitters_1.RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
             const docOutput = yield textSplitter.splitDocuments([
-                new documents_1.Document({ pageContent: text, metadata: { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString(), docNo: docNo } }), // Ensure id is converted to string
+                new documents_1.Document({ pageContent: text, metadata: { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString(), docNo: docNo } }),
             ]);
             docOutput.forEach(doc => {
-                var _b, _c, _d, _e;
-                if (((_b = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _b === void 0 ? void 0 : _b.loc) && typeof ((_c = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _c === void 0 ? void 0 : _c.loc) === 'object') {
-                    doc.metadata.loc = (_e = (_d = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _d === void 0 ? void 0 : _d.loc) === null || _e === void 0 ? void 0 : _e.toString(); // Convert object to string representation
+                var _a, _b, _c, _d;
+                if (((_a = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _a === void 0 ? void 0 : _a.loc) && typeof ((_b = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _b === void 0 ? void 0 : _b.loc) === 'object') {
+                    doc.metadata.loc = (_d = (_c = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _c === void 0 ? void 0 : _c.loc) === null || _d === void 0 ? void 0 : _d.toString(); // Convert object to string representation
                 }
             });
             const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
@@ -495,32 +517,32 @@ Service.updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 docNo: docNo,
                 updatedAt: (0, moment_1.default)().utc().valueOf()
             };
-            let data = yield Models.textModel.updateOne(query, update);
+            yield Models.textModel.updateOne(query, update);
             let response = {
                 message: "Text updated successfully"
             };
             return response;
         }
         else {
-            yield handler_1.default.handleCustomError(error_1.NotFound);
+            return Handler.handleCustomError(error_1.NotFound);
         }
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateTexts = updateTexts;
+const fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     try {
         let { _id: userId } = req.userData;
-        let { pagination, limit, documentId } = req.query;
         let query = {
             userId: new mongoose_1.Types.ObjectId(userId),
             type: text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE,
-            documentId: documentId
+            documentId: (_a = req === null || req === void 0 ? void 0 : req.query) === null || _a === void 0 ? void 0 : _a.documentId
         };
         let projection = { __v: 0 };
-        // let option = { lean: true, sort: { _id: -1 } }
-        let option = yield common_1.default.setOptions(pagination, limit);
+        let option = yield CommonHelper.setOptions(+((_b = req === null || req === void 0 ? void 0 : req.query) === null || _b === void 0 ? void 0 : _b.pagination), +((_c = req === null || req === void 0 ? void 0 : req.query) === null || _c === void 0 ? void 0 : _c.limit));
         let fetchdata = yield Models.textModel.find(query, projection, option);
         let count = yield Models.textModel.countDocuments(query);
         let response = {
@@ -530,10 +552,11 @@ Service.fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.fileLists = fileLists;
+const textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { _id } = req.userData;
         let { documentId } = req.query;
@@ -549,15 +572,16 @@ Service.textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.deleteFile = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.textDetail = textDetail;
+const deleteFile = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { docNo, documentId } = req.query;
         let { _id: userId } = req.userData;
         let query = { documentId: documentId, docNo: Number(docNo) };
-        const result = yield neo4j_1.session.run(`
+        yield neo4j_1.session.run(`
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
                     DELETE n
                     `, { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString(), docNo: Number(docNo) });
@@ -585,12 +609,14 @@ Service.deleteFile = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteFile = deleteFile;
+const logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { accessToken } = req.userData;
+        console.log("accessToken---", accessToken);
         let query = { accessToken: accessToken };
         yield Models.sessionModel.deleteOne(query);
         let response = {
@@ -599,11 +625,11 @@ Service.logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        // console.log("err-------", err)
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.updateFileText = (text, type, documentId, userId, fileName, docNo) => __awaiter(void 0, void 0, void 0, function* () {
+exports.logout = logout;
+const updateFileText = (text, type, documentId, userId, fileName, docNo) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const textSplitter = new textsplitters_1.RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
         const docOutput = yield textSplitter.splitDocuments([
@@ -628,16 +654,15 @@ Service.updateFileText = (text, type, documentId, userId, fileName, docNo) => __
         return saveData;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.textExtract = (req) => __awaiter(void 0, void 0, void 0, function* () {
+const textExtract = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     try {
         let { documentId } = req.body;
-        console.log("req.body---", req.body);
-        let { originalname, buffer } = req === null || req === void 0 ? void 0 : req.file;
         let { _id: userId } = req.userData;
-        let textData = yield _a.extract(originalname, buffer);
+        let textData = yield extract((_a = req === null || req === void 0 ? void 0 : req.file) === null || _a === void 0 ? void 0 : _a.originalname, (_b = req === null || req === void 0 ? void 0 : req.file) === null || _b === void 0 ? void 0 : _b.buffer);
         let docId = uuidv4();
         let query = { userId: new mongoose_1.Types.ObjectId(userId), documentId: documentId };
         let projection = { __v: 0 };
@@ -645,15 +670,15 @@ Service.textExtract = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let data;
         let fetchChatbot = yield Models.chatbotModel.findOne(query, projection, option);
         if (!fetchChatbot) {
-            data = yield _a.embedText(textData, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE, userId, originalname, 1, docId);
-            yield _a.createChatbot(data);
+            data = yield embedText(textData, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE, userId, (_c = req === null || req === void 0 ? void 0 : req.file) === null || _c === void 0 ? void 0 : _c.originalname, 1, docId);
+            yield createChatbot(data);
         }
         else {
             let fetchData = yield Models.textModel.findOne(query, projection, option);
             if (fetchData) {
                 let { documentId, docNo } = fetchData;
                 docNo = docNo + 1;
-                data = yield _a.updateFileText(textData, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE, documentId, userId, originalname, docNo);
+                data = yield updateFileText(textData, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE, documentId, userId, (_d = req === null || req === void 0 ? void 0 : req.file) === null || _d === void 0 ? void 0 : _d.originalname, docNo);
             }
         }
         let response = {
@@ -663,40 +688,41 @@ Service.textExtract = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.extract = (originalname, buffer) => __awaiter(void 0, void 0, void 0, function* () {
+exports.textExtract = textExtract;
+const extract = (originalname, buffer) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const extension = path_1.default.extname(originalname).toLowerCase();
         let text;
         const blob = new Blob([buffer]);
         switch (extension) {
             case ".pdf":
-                text = yield _a.pdfLoad(blob);
+                text = yield pdfLoad(blob);
                 break;
             case ".txt":
-                text = yield _a.textLoad(buffer);
+                text = yield textLoad(buffer);
                 break;
             case ".csv":
-                text = yield _a.csvLoad(blob);
+                text = yield csvLoad(blob);
                 break;
             case ".docx":
-                text = yield _a.docxLoad(blob);
+                text = yield docxLoad(blob);
                 break;
             case ".doc":
-                text = yield _a.docLoad(buffer);
+                text = yield docLoad(buffer);
                 break;
-            default: yield handler_1.default.handleCustomError(error_1.UnsupportedFileType);
+            default: return Handler.handleCustomError(error_1.UnsupportedFileType);
         }
         let textData = text === null || text === void 0 ? void 0 : text.trim();
         return textData;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.pdfLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
+const pdfLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const loader = new pdf_1.PDFLoader(blob);
         const docs = yield loader.load();
@@ -704,19 +730,19 @@ Service.pdfLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
         return text;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.textLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
+const textLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const text = buffer === null || buffer === void 0 ? void 0 : buffer.toString();
         return text;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.csvLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
+const csvLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const loader = new csv_1.CSVLoader(blob);
         const docs = yield loader.load();
@@ -724,10 +750,10 @@ Service.csvLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
         return text;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.docxLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
+const docxLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const loader = new docx_1.DocxLoader(blob);
         const docs = yield loader.load();
@@ -735,10 +761,10 @@ Service.docxLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
         return text;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.docLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
+const docLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const extractor = new word_extractor_1.default();
         const extracted = yield (extractor === null || extractor === void 0 ? void 0 : extractor.extract(buffer));
@@ -746,10 +772,10 @@ Service.docLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
         return text;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
+const chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { _id: userId } = req.userData;
         let query = { userId: userId };
@@ -770,14 +796,15 @@ Service.chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.chatbotLists = chatbotLists;
+const deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { documentId } = req.query;
         let { _id: userId } = req.userData;
-        const result = yield neo4j_1.session.run(`
+        yield neo4j_1.session.run(`
                     MATCH (n:Chunk {documentId: $documentId})
                     DELETE n
                     `, { documentId: documentId });
@@ -788,17 +815,18 @@ Service.deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () 
         yield Models.textModel.deleteMany(query);
         yield Models.chatbotModel.deleteOne(query);
         let query1 = { documentId: documentId };
-        yield _a.deleteSessions(query1);
+        yield deleteSessions(query1);
         let response = {
             message: "Chatbot Deleted Successfully"
         };
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteChatbot = deleteChatbot;
+const deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let projection = { __v: 0 };
         let option = { lean: true };
@@ -812,61 +840,42 @@ Service.deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* 
         yield Models.messageModel.deleteMany(query);
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-// static url = async (req: any) => {
-//     try {
-//         let url = `https://www.zestgeek.com/about-us`;
-//         const loader = new PlaywrightWebBaseLoader(url);
-//         const docs = await loader.load();
-//         const htmlContent = docs[0]?.pageContent;
-//         const $ = cheerio.load(htmlContent);
-//         let textContent: string = '';
-//         $('*').each((i, elem) => {
-//             textContent += $(elem).text().trim() + ' ';
-//         });
-//         textContent = textContent.replace(/\s+/g, ' ').trim();
-//         console.log("textContent----------------", textContent);
-//         // const loader = YoutubeLoader.createFromUrl("https://youtu.be/vsWxs1tuwDk?feature=shared", {
-//         //     addVideoInfo: true,
-//         // });
-//         // const docs = await loader.load();
-//         return "text";
-//     }
-//     catch (err) {
-//         await Handler.handleCustomError(err);
-//     }
-// }
-Service.chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c, _d, _e, _f;
+exports.deleteSessions = deleteSessions;
+const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e;
     try {
         let { documentId, pagination, limit } = req.query;
+        let setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
+        let setLimit = limit !== null && limit !== void 0 ? limit : 10;
         let query = [
-            yield chat_history_aggregation_1.default.matchData(documentId),
-            yield chat_history_aggregation_1.default.lookupChatSessions(),
-            yield chat_history_aggregation_1.default.unwindChatSessions(),
-            yield chat_history_aggregation_1.default.lookupMessages(),
-            yield chat_history_aggregation_1.default.groupData(),
-            yield chat_history_aggregation_1.default.facetData(pagination, limit)
+            yield ChatHistoryAggregation.matchData(documentId === null || documentId === void 0 ? void 0 : documentId.toString()),
+            yield ChatHistoryAggregation.lookupChatSessions(),
+            yield ChatHistoryAggregation.unwindChatSessions(),
+            yield ChatHistoryAggregation.lookupMessages(),
+            yield ChatHistoryAggregation.groupData(),
+            yield ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];
         let fetchData = yield Models.ipAddressModel.aggregate(query);
         let response = {
-            count: (_d = (_c = (_b = fetchData[0]) === null || _b === void 0 ? void 0 : _b.count[0]) === null || _c === void 0 ? void 0 : _c.count) !== null && _d !== void 0 ? _d : 0,
-            data: (_f = (_e = fetchData[0]) === null || _e === void 0 ? void 0 : _e.data) !== null && _f !== void 0 ? _f : []
+            count: (_c = (_b = (_a = fetchData[0]) === null || _a === void 0 ? void 0 : _a.count[0]) === null || _b === void 0 ? void 0 : _b.count) !== null && _c !== void 0 ? _c : 0,
+            data: (_e = (_d = fetchData[0]) === null || _d === void 0 ? void 0 : _d.data) !== null && _e !== void 0 ? _e : []
         };
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-Service.chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+exports.chatHistory = chatHistory;
+const chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { sessionId, pagination, limit } = req.query;
         let query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
         let projection = { __v: 0 };
-        let options = yield common_1.default.setOptions(pagination, limit, { _id: 1 });
+        let options = yield CommonHelper.setOptions(+pagination, +limit, { _id: 1 });
         let fetchData = yield Models.messageModel.find(query, projection, options);
         let count = yield Models.messageModel.countDocuments(query);
         let response = {
@@ -876,7 +885,7 @@ Service.chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
         return response;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-exports.default = Service;
+exports.chatDetail = chatDetail;

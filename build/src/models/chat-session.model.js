@@ -35,10 +35,12 @@ var sessionType;
     sessionType["COMPLETED"] = "COMPLETED";
 })(sessionType || (exports.sessionType = sessionType = {}));
 const chatSessionSchema = new mongoose_1.default.Schema({
-    ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "ips" },
-    sessionType: { type: String, enum: sessionType, default: sessionType === null || sessionType === void 0 ? void 0 : sessionType.ONGOING },
-    createdAt: { type: Number, default: (0, moment_1.default)().utc().valueOf() },
+    ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Ips" },
+    sessionType: { type: String, enum: Object.values(sessionType), default: sessionType.ONGOING },
+    createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
+}, {
+    timestamps: false // Disable automatic timestamps
 });
-const chatSessionModel = mongoose_1.default.model("chatsessions", chatSessionSchema);
+const chatSessionModel = mongoose_1.default.model("ChatSessions", chatSessionSchema);
 exports.default = chatSessionModel;

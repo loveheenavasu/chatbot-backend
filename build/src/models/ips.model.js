@@ -8,7 +8,9 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const ipSchema = new mongoose_1.default.Schema({
     ipAddress: { type: String, default: null },
     documentId: { type: String, default: null },
-    createdAt: { type: Number, default: (0, moment_1.default)().utc().valueOf() }
+    createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() }
+}, {
+    timestamps: false
 });
-const ipAddressModel = mongoose_1.default.model("ips", ipSchema);
+const ipAddressModel = mongoose_1.default.model("Ips", ipSchema);
 exports.default = ipAddressModel;

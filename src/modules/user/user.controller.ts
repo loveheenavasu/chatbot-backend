@@ -1,224 +1,222 @@
-import express from 'express';
-import Service from './user.service';
-import Handler from '../../handler/handler';
+import { Request, Response} from 'express';
+import * as Service from './user.service';
+import * as Handler from '../../handler/handler';
+import { IErrorResponse } from '../../handler/error';
+import { CustomRequest } from '../../interfaces/common.interface';
 
-export default class Controller {
 
-    static signup = async (req: express.Request | any, res: express.Response) => {
-        try {
-            let response = await Service.signup(req);
-            await Handler.handleSuccess(res, response);
-        }
-        catch (err) {
-            await Handler.handleCatchError(res, err);
-        }
+const signup = async (req: Request, res: Response) => {
+    try {
+        let response = await Service.signup(req);
+        return Handler.handleSuccess(res, response);
     }
+    catch (err) {
+        return Handler.handleCatchError(res, err as IErrorResponse);
+    }
+}
 
-    static verifyEmail = async (req: express.Request | any, res: express.Response) => {
+const verifyEmail = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.verifyEmail(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static resendOtp = async (req: express.Request | any, res: express.Response) => {
+const resendOtp = async (req: Request, res: Response) => {
         try {
             let response = await Service.resendOtp(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static forgotPassword = async (req: express.Request | any, res: express.Response) => {
+const forgotPassword = async (req: Request, res: Response) => {
         try {
             let response = await Service.forgotPassword(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
-    } 
+    }
 
-    static verifyOtp = async (req: express.Request | any, res: express.Response) => {
+const verifyOtp = async (req: Request, res: Response) => {
         try {
             let response = await Service.verifyOtp(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static resetPassword = async (req: express.Request | any, res: express.Response) => {
+const resetPassword = async (req: Request, res: Response) => {
         try {
             let response = await Service.resetPassword(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    
 
-    static login = async (req: express.Request | any, res: express.Response) => {
+
+const login = async (req: Request, res: Response) => {
         try {
             let response = await Service.login(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    // static profile = async (req: express.Request | any, res: express.Response) => {
-    //     try {
-    //         let response = await Service.profile(req);
-    //         await Handler.handleSuccess(res, response);
-    //     }
-    //     catch (err) {
-    //         await Handler.handleCatchError(res, err);
-    //     }
-    // }
-
-    static socialLogin = async (req: express.Request | any, res: express.Response) => {
+const socialLogin = async (req: Request, res: Response) => {
         try {
             let response = await Service.socialLogin(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
-    
-    static chatbotLists = async (req: express.Request | any, res: express.Response) => {
+
+const chatbotLists = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.chatbotLists(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static deleteChatbot = async (req: express.Request | any, res: express.Response) => {
+const deleteChatbot = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.deleteChatbot(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static saveTexts = async (req: express.Request | any, res: express.Response) => {
+const saveTexts = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.saveTexts(req);
-            Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static updateTexts = async (req: express.Request | any, res: express.Response) => {
+const updateTexts = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.updateTexts(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static textDetail = async (req: express.Request | any, res: express.Response) => {
+const textDetail = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.textDetail(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static textExtract = async (req: express.Request | any, res: express.Response) => {
+const textExtract = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.textExtract(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err)
+            return Handler.handleCatchError(res, err as IErrorResponse)
         }
     }
 
-    static fileLists = async (req: express.Request | any, res: express.Response) => {
+const fileLists = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.fileLists(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static deleteFile = async (req: express.Request | any, res: express.Response) => {
+const deleteFile = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.deleteFile(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
 
-    static logout = async (req: express.Request | any, res: express.Response) => {
+const logout = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.logout(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static chatHistory = async (req: express.Request | any, res: express.Response) => {
+const chatHistory = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.chatHistory(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
-    static chatDetail = async (req: express.Request | any, res: express.Response) => {
+const chatDetail = async (req: CustomRequest, res: Response) => {
         try {
             let response = await Service.chatDetail(req);
-            await Handler.handleSuccess(res, response);
+            return Handler.handleSuccess(res, response);
         }
         catch (err) {
-            await Handler.handleCatchError(res, err);
+            return Handler.handleCatchError(res, err as IErrorResponse);
         }
     }
 
 
-
-
-    // static url = async (req: express.Request | any, res: express.Response) => {
-    //     try {
-    //         let response = await Service.url(req);
-    //         await Handler.handleSuccess(res, response);
-    //     }
-    //     catch (err) {
-    //         await Handler.handleCatchError(res, err);
-    //     }
-    // }
-
-    
+export {
+    signup,
+    verifyEmail,
+    resendOtp,
+    forgotPassword,
+    verifyOtp,
+    resetPassword,
+    login,
+    socialLogin,
+    chatbotLists,
+    deleteChatbot,
+    saveTexts,
+    updateTexts,
+    textDetail,
+    textExtract,
+    fileLists,
+    deleteFile,
+    logout,
+    chatHistory,
+    chatDetail
 }

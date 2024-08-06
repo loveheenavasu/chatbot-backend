@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,194 +31,197 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-const user_service_1 = __importDefault(require("./user.service"));
-const handler_1 = __importDefault(require("../../handler/handler"));
-class Controller {
-}
-_a = Controller;
-Controller.signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+const Service = __importStar(require("./user.service"));
+const Handler = __importStar(require("../../handler/handler"));
+const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.signup(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.signup(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.signup = signup;
+const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.verifyEmail(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.verifyEmail(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.resendOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verifyEmail = verifyEmail;
+const resendOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.resendOtp(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.resendOtp(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.resendOtp = resendOtp;
+const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.forgotPassword(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.forgotPassword(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.forgotPassword = forgotPassword;
+const verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.verifyOtp(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.verifyOtp(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verifyOtp = verifyOtp;
+const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.resetPassword(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.resetPassword(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.resetPassword = resetPassword;
+const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.login(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.login(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-// static profile = async (req: express.Request | any, res: express.Response) => {
-//     try {
-//         let response = await Service.profile(req);
-//         await Handler.handleSuccess(res, response);
-//     }
-//     catch (err) {
-//         await Handler.handleCatchError(res, err);
-//     }
-// }
-Controller.socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.login = login;
+const socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.socialLogin(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.socialLogin(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.chatbotLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.socialLogin = socialLogin;
+const chatbotLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.chatbotLists(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.chatbotLists(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.deleteChatbot = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.chatbotLists = chatbotLists;
+const deleteChatbot = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.deleteChatbot(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.deleteChatbot(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.saveTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteChatbot = deleteChatbot;
+const saveTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.saveTexts(req);
-        handler_1.default.handleSuccess(res, response);
+        let response = yield Service.saveTexts(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.updateTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.saveTexts = saveTexts;
+const updateTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.updateTexts(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.updateTexts(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.textDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateTexts = updateTexts;
+const textDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.textDetail(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.textDetail(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.textExtract = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.textDetail = textDetail;
+const textExtract = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.textExtract(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.textExtract(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.fileLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.textExtract = textExtract;
+const fileLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.fileLists(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.fileLists(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.fileLists = fileLists;
+const deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.deleteFile(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.deleteFile(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteFile = deleteFile;
+const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.logout(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.logout(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.chatHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.logout = logout;
+const chatHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.chatHistory(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.chatHistory(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-Controller.chatDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.chatHistory = chatHistory;
+const chatDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield user_service_1.default.chatDetail(req);
-        yield handler_1.default.handleSuccess(res, response);
+        let response = yield Service.chatDetail(req);
+        return Handler.handleSuccess(res, response);
     }
     catch (err) {
-        yield handler_1.default.handleCatchError(res, err);
+        return Handler.handleCatchError(res, err);
     }
 });
-exports.default = Controller;
+exports.chatDetail = chatDetail;

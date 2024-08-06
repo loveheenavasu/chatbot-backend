@@ -34,8 +34,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.fetchUser = exports.verifyToken = exports.signToken = exports.generateUniqueCode = exports.generateOtp = exports.comparePassword = exports.hashPassword = exports.setOptions = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
@@ -44,67 +44,45 @@ const moment_1 = __importDefault(require("moment"));
 const Models = __importStar(require("../models/index"));
 const mongoose_1 = require("mongoose");
 const randomstring_1 = __importDefault(require("randomstring"));
-const handler_1 = __importDefault(require("../handler/handler"));
+const Handler = __importStar(require("../handler/handler"));
 const error_1 = require("../handler/error");
 const { SALT_ROUND, SECRET_KEY } = process.env;
-class CommonHelper {
-}
-_a = CommonHelper;
-CommonHelper.setOptions = (pagination, limit, sort) => __awaiter(void 0, void 0, void 0, function* () {
+const setOptions = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (pagination = 1, limit = 10, sort = { _id: -1 }) {
     try {
-        const defaultLimit = 10;
-        let options = {
+        const options = {
             lean: true,
-            sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
+            skip: (pagination - 1) * limit,
+            limit: Number(limit),
+            sort,
         };
-        if (pagination == undefined && typeof limit != undefined) {
-            options = {
-                lean: true,
-                limit: parseInt(limit),
-                sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
-            };
-        }
-        else if (typeof pagination != undefined && typeof limit == undefined) {
-            options = {
-                lean: true,
-                skip: parseInt(pagination) * defaultLimit,
-                limit: defaultLimit,
-                sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
-            };
-        }
-        else if (typeof pagination != undefined && typeof limit != undefined) {
-            options = {
-                lean: true,
-                skip: parseInt(pagination) * parseInt(limit),
-                limit: parseInt(limit),
-                sort: sort !== null && sort !== void 0 ? sort : { _id: -1 }
-            };
-        }
         return options;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.hashPass = (password) => __awaiter(void 0, void 0, void 0, function* () {
+exports.setOptions = setOptions;
+const hashPassword = (password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let response = yield bcrypt_1.default.hash(password, Number(SALT_ROUND));
         return response;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.comparePass = (hashPass, password) => __awaiter(void 0, void 0, void 0, function* () {
+exports.hashPassword = hashPassword;
+const comparePassword = (hashPassword, password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield bcrypt_1.default.compare(password, hashPass);
+        let response = yield bcrypt_1.default.compare(password, hashPassword);
         return response;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.generateOtp = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.comparePassword = comparePassword;
+const generateOtp = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let options = {
             length: 4,
@@ -114,10 +92,11 @@ CommonHelper.generateOtp = () => __awaiter(void 0, void 0, void 0, function* () 
         return response;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.generateUniqueCode = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.generateOtp = generateOtp;
+const generateUniqueCode = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let options = {
             length: 6,
@@ -127,21 +106,23 @@ CommonHelper.generateUniqueCode = () => __awaiter(void 0, void 0, void 0, functi
         return response;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.signToken = (data) => __awaiter(void 0, void 0, void 0, function* () {
+exports.generateUniqueCode = generateUniqueCode;
+const signToken = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         data.tokenGenAt = (0, moment_1.default)().utc().valueOf();
         let token = yield jwt.sign(data, String(SECRET_KEY));
-        yield _a.saveSession(token, data);
+        yield saveSession(token, data);
         return token;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.saveSession = (token, data) => __awaiter(void 0, void 0, void 0, function* () {
+exports.signToken = signToken;
+const saveSession = (token, data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { _id, tokenGenAt } = data;
         let saveData = {
@@ -153,35 +134,35 @@ CommonHelper.saveSession = (token, data) => __awaiter(void 0, void 0, void 0, fu
         return response;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
+const verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let data = yield jwt.verify(token, String(SECRET_KEY));
-        let checkSession = yield _a.checkSessionData(data);
+        let checkSession = yield checkSessionData(data);
         if (!checkSession)
-            yield handler_1.default.handleCustomError(error_1.Unauthorized);
+            return Handler.handleCustomError(error_1.Unauthorized);
         return data;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.checkSessionData = (data) => __awaiter(void 0, void 0, void 0, function* () {
+exports.verifyToken = verifyToken;
+const checkSessionData = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { _id } = data;
-        let query = { userId: new mongoose_1.Types.ObjectId(_id) };
+        let query = { userId: new mongoose_1.Types.ObjectId(data === null || data === void 0 ? void 0 : data._id) };
         let projection = { __v: 0 };
         let option = { lean: true };
         let response = yield Models.sessionModel.findOne(query, projection, option);
         return response;
     }
     catch (err) {
-        throw err;
+        return Handler.handleCustomError(err);
     }
 });
-CommonHelper.fetchUser = (query) => __awaiter(void 0, void 0, void 0, function* () {
+const fetchUser = (query) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let projection = { __v: 0, password: 0 };
         let option = { lean: true };
@@ -189,7 +170,7 @@ CommonHelper.fetchUser = (query) => __awaiter(void 0, void 0, void 0, function* 
         return data;
     }
     catch (err) {
-        yield handler_1.default.handleCustomError(err);
+        return Handler.handleCustomError(err);
     }
 });
-exports.default = CommonHelper;
+exports.fetchUser = fetchUser;

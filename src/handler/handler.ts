@@ -1,12 +1,17 @@
-import express from 'express';
+import { Response } from 'express';
+import { IErrorResponse } from './error';
 
-export default class Handler {
 
-    static handleSuccess = async (res: any, data: any) => {
-       res.send(data)
+const handleSuccess = (res: Response, data: any) => {
+    try {
+        res.send(data);
+    }  
+    catch (err) {
+        throw err;
     }
+}
 
-    static handleCustomError = async (error: any) => {
+const handleCustomError = (error: IErrorResponse) => {
         try {
             let message = error?.message ?? 'Bad Request'
             let statusCode = error?.statusCode ?? 400
@@ -20,17 +25,19 @@ export default class Handler {
         }
     }
 
-    static handleCatchError = async (res: any, error: any) => {
-            let { message, statusCode } = error
-            res.status(statusCode).send({ message: message });
+const handleCatchError = (res: Response, error: IErrorResponse) => {
+    try {
+        let { message } = error
+        let statusCode = error?.statusCode ?? 400
+        res.status(statusCode).send({ message: message });
     }
-
-    static handleSocketError = async (error: any) => {
-        let { message, statusCode } = error
-        express?.response?.status(statusCode).send({ message: message });
+    catch (err) {
+        throw err;
     }
+}
 
-    static handleJoiError = async (error: any) => {
+
+const handleJoiError = (error: IErrorResponse | any) => {
         try {
             console.log("error---", error)
             let message = error?.details[0]?.message;
@@ -43,9 +50,12 @@ export default class Handler {
         catch (err) {
             throw err;
         }
-        
-    }
 
-
-
+}
+    
+export {
+    handleSuccess,
+    handleCustomError,
+    handleCatchError,
+    handleJoiError
 }

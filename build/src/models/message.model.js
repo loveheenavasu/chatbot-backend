@@ -22,22 +22,28 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Role = void 0;
+exports.role = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-var Role;
-(function (Role) {
-    Role["User"] = "USER";
-    Role["AI"] = "AI";
-})(Role || (exports.Role = Role = {}));
+const moment_1 = __importDefault(require("moment"));
+var role;
+(function (role) {
+    role["User"] = "USER";
+    role["AI"] = "AI";
+})(role || (exports.role = role = {}));
 const messageSchema = new mongoose_1.default.Schema({
     message: { type: String, default: null },
-    ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "ips" },
-    sessionId: { type: mongoose_1.Types.ObjectId, default: null, ref: "chatsessions" },
+    ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Ips" },
+    sessionId: { type: mongoose_1.Types.ObjectId, default: null, ref: "ChatSessions" },
     documentId: { type: String, default: null },
-    messageType: { type: String, default: null, enum: Role },
-    createdAt: { type: Number, default: 0 },
+    messageType: { type: String, default: null, enum: Object.values(role) },
+    createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 },
+}, {
+    timestamps: false
 });
-const messageModel = mongoose_1.default.model("messages", messageSchema);
+const messageModel = mongoose_1.default.model("Messages", messageSchema);
 exports.default = messageModel;

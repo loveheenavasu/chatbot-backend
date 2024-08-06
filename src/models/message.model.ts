@@ -1,17 +1,21 @@
 import mongoose, { Types } from 'mongoose';
-export enum Role {
+import moment from 'moment';
+import IMessage from '../interfaces/message.interface';
+export enum role {
     User = "USER",
     AI = "AI"
 }
-const messageSchema = new mongoose.Schema({
+const messageSchema = new mongoose.Schema<IMessage>({
     message: { type: String, default: null },
-    ipAddressId: { type: Types.ObjectId, default: null, ref: "ips" },
-    sessionId: { type: Types.ObjectId, default: null, ref: "chatsessions" },
+    ipAddressId: { type: Types.ObjectId, default: null, ref: "Ips" },
+    sessionId: { type: Types.ObjectId, default: null, ref: "ChatSessions" },
     documentId: { type: String, default: null },
-    messageType: { type: String, default: null, enum: Role },
-    createdAt: { type: Number, default: 0 },
+    messageType: { type: String, default: null, enum: Object.values(role) },
+    createdAt: { type: Number, default: () => moment().utc().valueOf() },
     updatedAt: { type: Number, default: 0 },
+}, {
+    timestamps: false
 })
 
-const messageModel = mongoose.model("messages", messageSchema);
+const messageModel = mongoose.model<IMessage>("Messages", messageSchema);
 export default messageModel;
