@@ -69,7 +69,7 @@ const signup = async (req: Request) => {
             updateData!._doc["accessToken"] = accessToken
             delete updateData!._doc["password"];
             delete updateData!._doc["otp"];
-            await EmailService.verificationCode(email, updateData?.otp!);
+            await EmailService.verificationCode(email, data.otp);
 
             let response = {
                 message: `Otp sent to ${updateData!?.email}`,
@@ -80,11 +80,12 @@ const signup = async (req: Request) => {
         else {
             let data = await signupData(req.body);
             let saveData: IUser = await Models.userModel.create(data);
+            console.log("saveData---", saveData)
             let accessToken = await fetchToken(saveData?._id!, SCOPE);
             saveData!._doc["accessToken"] = accessToken
             delete saveData!._doc["password"];
             delete saveData!._doc["otp"];
-            await EmailService.verificationCode(email, saveData?.otp!);
+            await EmailService.verificationCode(email, data.otp);
             let response = {
                 message: `Otp sent to ${saveData?.email}`,
                 data: saveData

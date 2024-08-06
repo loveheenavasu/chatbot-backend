@@ -94,7 +94,7 @@ const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
             updateData._doc["accessToken"] = accessToken;
             delete updateData._doc["password"];
             delete updateData._doc["otp"];
-            yield EmailService.verificationCode(email, updateData === null || updateData === void 0 ? void 0 : updateData.otp);
+            yield EmailService.verificationCode(email, data.otp);
             let response = {
                 message: `Otp sent to ${updateData === null || updateData === void 0 ? void 0 : updateData.email}`,
                 data: updateData
@@ -104,11 +104,12 @@ const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             let data = yield signupData(req.body);
             let saveData = yield Models.userModel.create(data);
+            console.log("saveData---", saveData);
             let accessToken = yield fetchToken(saveData === null || saveData === void 0 ? void 0 : saveData._id, SCOPE);
             saveData._doc["accessToken"] = accessToken;
             delete saveData._doc["password"];
             delete saveData._doc["otp"];
-            yield EmailService.verificationCode(email, saveData === null || saveData === void 0 ? void 0 : saveData.otp);
+            yield EmailService.verificationCode(email, data.otp);
             let response = {
                 message: `Otp sent to ${saveData === null || saveData === void 0 ? void 0 : saveData.email}`,
                 data: saveData
