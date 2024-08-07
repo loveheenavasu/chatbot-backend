@@ -47,7 +47,7 @@ const randomstring_1 = __importDefault(require("randomstring"));
 const Handler = __importStar(require("../handler/handler"));
 const error_1 = require("../handler/error");
 const { SALT_ROUND, SECRET_KEY } = process.env;
-const setOptions = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (pagination = 1, limit = 10, sort = { _id: -1 }) {
+const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) => {
     try {
         const options = {
             lean: true,
@@ -60,7 +60,7 @@ const setOptions = (...args_1) => __awaiter(void 0, [...args_1], void 0, functio
     catch (err) {
         return Handler.handleCustomError(err);
     }
-});
+};
 exports.setOptions = setOptions;
 const hashPassword = (password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -82,7 +82,7 @@ const comparePassword = (hashPassword, password) => __awaiter(void 0, void 0, vo
     }
 });
 exports.comparePassword = comparePassword;
-const generateOtp = () => __awaiter(void 0, void 0, void 0, function* () {
+const generateOtp = () => {
     try {
         let options = {
             length: 4,
@@ -94,9 +94,9 @@ const generateOtp = () => __awaiter(void 0, void 0, void 0, function* () {
     catch (err) {
         return Handler.handleCustomError(err);
     }
-});
+};
 exports.generateOtp = generateOtp;
-const generateUniqueCode = () => __awaiter(void 0, void 0, void 0, function* () {
+const generateUniqueCode = () => {
     try {
         let options = {
             length: 6,
@@ -108,12 +108,12 @@ const generateUniqueCode = () => __awaiter(void 0, void 0, void 0, function* () 
     catch (err) {
         return Handler.handleCustomError(err);
     }
-});
+};
 exports.generateUniqueCode = generateUniqueCode;
 const signToken = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         data.tokenGenAt = (0, moment_1.default)().utc().valueOf();
-        let token = yield jwt.sign(data, String(SECRET_KEY));
+        let token = jwt.sign(data, String(SECRET_KEY), { expiresIn: '30s' });
         yield saveSession(token, data);
         return token;
     }
@@ -139,13 +139,15 @@ const saveSession = (token, data) => __awaiter(void 0, void 0, void 0, function*
 });
 const verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let data = yield jwt.verify(token, String(SECRET_KEY));
+        let data = jwt.verify(token, String(SECRET_KEY));
+        console.log("data----", data);
         let checkSession = yield checkSessionData(data);
         if (!checkSession)
             return Handler.handleCustomError(error_1.Unauthorized);
         return data;
     }
     catch (err) {
+        console.log("error---", err);
         return Handler.handleCustomError(err);
     }
 });

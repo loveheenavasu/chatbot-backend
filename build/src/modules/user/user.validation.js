@@ -22,15 +22,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -38,7 +29,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadFile = exports.updateText = exports.text = exports.deleteFile = exports.sessionIdWithPL = exports.documentIdWithPL = exports.textDetail = exports.documentId = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyForgot = exports.resendAndForgot = exports.verify = exports.signup = void 0;
 const Handler = __importStar(require("../../handler/handler"));
 const joi_1 = __importDefault(require("joi"));
-const signup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const signup = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -54,9 +45,9 @@ const signup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.signup = signup;
-const verify = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const verify = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             otp: joi_1.default.string().required()
@@ -69,9 +60,9 @@ const verify = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.verify = verify;
-const resendAndForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const resendAndForgot = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required()
@@ -84,9 +75,9 @@ const resendAndForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.resendAndForgot = resendAndForgot;
-const verifyForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const verifyForgot = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -100,9 +91,9 @@ const verifyForgot = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.verifyForgot = verifyForgot;
-const resetPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const resetPassword = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             uniqueCode: joi_1.default.string().trim().required(),
@@ -116,9 +107,9 @@ const resetPassword = (req, res, next) => __awaiter(void 0, void 0, void 0, func
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.resetPassword = resetPassword;
-const login = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const login = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -132,9 +123,9 @@ const login = (req, res, next) => __awaiter(void 0, void 0, void 0, function* ()
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.login = login;
-const socialLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const socialLogin = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -153,9 +144,9 @@ const socialLogin = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.socialLogin = socialLogin;
-const documentId = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const documentId = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required()
@@ -168,9 +159,9 @@ const documentId = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.documentId = documentId;
-const textDetail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const textDetail = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().optional()
@@ -183,9 +174,9 @@ const textDetail = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.textDetail = textDetail;
-const documentIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const documentIdWithPL = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required(),
@@ -200,9 +191,9 @@ const documentIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.documentIdWithPL = documentIdWithPL;
-const sessionIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const sessionIdWithPL = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             sessionId: joi_1.default.string().trim().required(),
@@ -217,9 +208,9 @@ const sessionIdWithPL = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.sessionIdWithPL = sessionIdWithPL;
-const deleteFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteFile = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required(),
@@ -233,9 +224,9 @@ const deleteFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.deleteFile = deleteFile;
-const text = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const text = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             text: joi_1.default.string().trim().required(),
@@ -249,9 +240,9 @@ const text = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () 
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.text = text;
-const updateText = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const updateText = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
             text: joi_1.default.string().trim().required(),
@@ -265,9 +256,9 @@ const updateText = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.updateText = updateText;
-const uploadFile = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const uploadFile = (req, res, next) => {
     try {
         const schema = joi_1.default.object({
             documentId: joi_1.default.string().optional(),
@@ -284,5 +275,5 @@ const uploadFile = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     catch (err) {
         return Handler.handleCatchError(res, err);
     }
-});
+};
 exports.uploadFile = uploadFile;

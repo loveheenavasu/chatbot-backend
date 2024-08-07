@@ -3,7 +3,7 @@ import * as Handler from '../../handler/handler';
 import Joi from 'joi';
 import { IErrorResponse } from '../../handler/error';
 
-const signup = async (req: Request, res: Response, next: NextFunction) => {
+const signup = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -20,7 +20,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const verify = async (req: Request, res: Response, next: NextFunction) => {
+const verify = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             otp: Joi.string().required()
@@ -34,7 +34,7 @@ const verify = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const resendAndForgot = async (req: Request, res: Response, next: NextFunction) => {
+const resendAndForgot = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required()
@@ -48,7 +48,7 @@ const resendAndForgot = async (req: Request, res: Response, next: NextFunction) 
     }
 }
 
-const verifyForgot = async (req: Request, res: Response, next: NextFunction) => {
+const verifyForgot = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -63,7 +63,7 @@ const verifyForgot = async (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+const resetPassword = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             uniqueCode: Joi.string().trim().required(),
@@ -78,7 +78,7 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction) =>
     }
 }
 
-const login = async (req: Request, res: Response, next: NextFunction) => {
+const login = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -93,7 +93,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const socialLogin = async (req: Request, res: Response, next: NextFunction) => {
+const socialLogin = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
@@ -114,7 +114,7 @@ const socialLogin = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 
-const documentId = async (req: Request, res: Response, next: NextFunction) => {
+const documentId = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             documentId: Joi.string().trim().required()
@@ -128,7 +128,7 @@ const documentId = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const textDetail = async (req: Request, res: Response, next: NextFunction) => {
+const textDetail = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             documentId: Joi.string().trim().optional()
@@ -143,7 +143,7 @@ const textDetail = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 
-const documentIdWithPL = async (req: Request, res: Response, next: NextFunction) => {
+const documentIdWithPL = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             documentId: Joi.string().trim().required(),
@@ -159,7 +159,7 @@ const documentIdWithPL = async (req: Request, res: Response, next: NextFunction)
     }
 }
 
-const sessionIdWithPL = async (req: Request, res: Response, next: NextFunction) => {
+const sessionIdWithPL = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             sessionId: Joi.string().trim().required(),
@@ -175,7 +175,7 @@ const sessionIdWithPL = async (req: Request, res: Response, next: NextFunction) 
     }
 }
 
-const deleteFile = async (req: Request, res: Response, next: NextFunction) => {
+const deleteFile = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             documentId: Joi.string().trim().required(),
@@ -191,7 +191,7 @@ const deleteFile = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 
-const text = async (req: Request, res: Response, next: NextFunction) => {
+const text = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             text: Joi.string().trim().required(),
@@ -207,7 +207,7 @@ const text = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const updateText = async (req: Request, res: Response, next: NextFunction) => {
+const updateText = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
             text: Joi.string().trim().required(),
@@ -223,7 +223,7 @@ const updateText = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const uploadFile = async (req: Request, res: Response, next: NextFunction) => {
+const uploadFile = (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
             documentId: Joi.string().optional(),

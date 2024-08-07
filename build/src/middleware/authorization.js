@@ -57,7 +57,7 @@ const authorization = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         if (scheme != 'Bearer') {
             return Handler.handleCustomError(error_1.BearerToken);
         }
-        let decodeToken = yield jsonwebtoken_1.default.decode(tokenValue);
+        let decodeToken = jsonwebtoken_1.default.decode(tokenValue);
         if ((decodeToken === null || decodeToken === void 0 ? void 0 : decodeToken.scope) == SCOPE) {
             let verifyData = yield CommonHelper.verifyToken(tokenValue);
             if (verifyData) {

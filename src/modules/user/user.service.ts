@@ -80,7 +80,6 @@ const signup = async (req: Request) => {
         else {
             let data = await signupData(req.body);
             let saveData: IUser = await Models.userModel.create(data);
-            console.log("saveData---", saveData)
             let accessToken = await fetchToken(saveData?._id!, SCOPE);
             saveData!._doc["accessToken"] = accessToken
             delete saveData!._doc["password"];
@@ -101,7 +100,7 @@ const signup = async (req: Request) => {
 const signupData = async (payload: ISignupPayload) => {
     try {
         let bcryptPass: string = await CommonHelper.hashPassword(payload?.password);
-        let otp: string = await CommonHelper.generateOtp();
+        let otp: string = CommonHelper.generateOtp();
         let data = {
             email: payload?.email.toLowerCase(),
             password: bcryptPass,
@@ -180,21 +179,21 @@ const verifyEmail = async (req: CustomRequest) => {
 const resendOtp = async (req: Request) => {
     try {
         let { email } = req.body;
-        let query = { email: email?.toLowerCase() }
+        let query = { email: email?.toLowerCase() };
         let fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
             let { email } = fetchData;
-            let otp: string = await CommonHelper.generateOtp();
+            let otp: string = CommonHelper.generateOtp();
             let update = {
                 otp: otp
-            }
-            let option = { new: true }
+            };
+            let option = { new: true };
             await Models.userModel.findOneAndUpdate(query, update, option);
-            await EmailService.verificationCode(email!, otp)
+            await EmailService.verificationCode(email!, otp);
 
             let response = {
                 message: `Otp sent to ${email}`
-            }
+            };
             return response;
         }
         else {
@@ -209,19 +208,19 @@ const resendOtp = async (req: Request) => {
 const forgotPassword = async (req: Request) => {
     try {
         let { email } = req.body;
-        let query = { email: email.toLowerCase() }
+        let query = { email: email.toLowerCase() };
         let fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
             let { _id, email } = fetchData;
-            let otp: string = await CommonHelper.generateOtp();
-            let query = { _id: _id }
-            let update = { otp: otp }
-            let option = { new: true }
+            let otp: string = CommonHelper.generateOtp();
+            let query = { _id: _id };
+            let update = { otp: otp };
+            let option = { new: true };
             await Models.userModel.findOneAndUpdate(query, update, option);
-            await EmailService.verificationCode(email!, otp)
+            await EmailService.verificationCode(email!, otp);
             let response = {
                 message: `Otp sent to ${email}`
-            }
+            };
             return response;
         }
         else {
@@ -236,9 +235,9 @@ const forgotPassword = async (req: Request) => {
 const verifyOtp = async (req: Request) => {
     try {
         let { otp: inputOtp, email } = req.body;
-        let query = { email: email?.toLowerCase() }
-        let projection = { otp: 1 }
-        let option = { lean: true }
+        let query = { email: email?.toLowerCase() };
+        let projection = { otp: 1 };
+        let option = { lean: true };
         let fetchData: IUser | null = await Models.userModel.findOne(query, projection, option);
         if (fetchData) {
             let { otp } = fetchData;
@@ -280,7 +279,7 @@ const resetPassword = async (req: Request) => {
                 uniqueCode: null,
                 password: hashPass
             }
-            let options = { new: true }
+            let options = { new: true };
             await Models.userModel.findOneAndUpdate(query, update, options)
             let response = {
                 message: "Password Changed Successfully"
@@ -454,7 +453,7 @@ const embedText = async (text: string, type: string, userId: Types.ObjectId, fil
                 doc.metadata.loc = doc.metadata.loc.toString();
             }
         });
-        const vectorStore = await Neo4jVectorStore.fromDocuments(
+         await Neo4jVectorStore.fromDocuments(
             docOutput,
             openai,
             neoConfig
@@ -637,7 +636,7 @@ const updateFileText = async (text: string, type: string, documentId: string, us
                 doc.metadata.loc = doc.metadata.loc.toString();
             }
         });
-        const vectorStore = await Neo4jVectorStore.fromDocuments(
+        await Neo4jVectorStore.fromDocuments(
             docOutput,
             openai,
             neoConfig
@@ -736,7 +735,7 @@ const pdfLoad = async (blob: any) => {
     }
 }
 
-const textLoad = async (buffer: any) => {
+const textLoad = (buffer: any) => {
     try {
         const text = buffer?.toString();
         return text;
@@ -885,7 +884,7 @@ const chatDetail = async (req: CustomRequest) => {
         let { sessionId, pagination, limit } = req.query;
         let query = { sessionId: new Types.ObjectId(sessionId as string) }
         let projection = { __v: 0 }
-        let options = await CommonHelper.setOptions(+pagination!, +limit!, { _id: 1 });
+        let options = CommonHelper.setOptions(+pagination!, +limit!, { _id: 1 });
         let fetchData: IMessage[] = await Models.messageModel.find(query, projection, options);
         let count: number = await Models.messageModel.countDocuments(query);
         let response = {

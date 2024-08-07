@@ -38,7 +38,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.session = exports.driver = void 0;
 const neo4j_driver_1 = __importDefault(require("neo4j-driver"));
 const Handler = __importStar(require("../handler/handler"));
-const driver = neo4j_driver_1.default.driver('neo4j+s://b641f24a.databases.neo4j.io', neo4j_driver_1.default.auth.basic('neo4j', '8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20'));
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
+const NEO_URL = process.env.NEO_URL;
+const NEO_USERNAME = process.env.NEO_USERNAME;
+const NEO_PASSWORD = process.env.NEO_PASSWORD;
+const driver = neo4j_driver_1.default.driver(NEO_URL, neo4j_driver_1.default.auth.basic(NEO_USERNAME, NEO_PASSWORD));
 exports.driver = driver;
 const getServerInfo = () => __awaiter(void 0, void 0, void 0, function* () {
     try {

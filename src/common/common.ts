@@ -14,7 +14,7 @@ import IUser from '../interfaces/user.interface';
 
 const { SALT_ROUND, SECRET_KEY } = process.env;
 
-const setOptions = async(pagination = 1, limit = 10, sort = { _id: -1 }) =>{
+const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) =>{
     try {
         const options = {
             lean: true,
@@ -48,7 +48,7 @@ const comparePassword = async (hashPassword: string, password: string) => {
     }
 }
 
-const generateOtp = async () => {
+const generateOtp = () => {
     try {
         let options = {
             length: 4,
@@ -62,7 +62,7 @@ const generateOtp = async () => {
     }
 }
 
-const generateUniqueCode = async () => {
+const generateUniqueCode = () => {
     try {
         let options = {
             length: 6,
@@ -80,7 +80,7 @@ const generateUniqueCode = async () => {
 const signToken = async (data: IToken) => {
     try {
         data.tokenGenAt = moment().utc().valueOf();
-        let token: string = await jwt.sign(data, String(SECRET_KEY));
+        let token: string = jwt.sign(data, String(SECRET_KEY), { expiresIn: '30s' });
         await saveSession(token, data)
         return token;
     }
@@ -108,12 +108,14 @@ const saveSession = async (token: string, data: IToken) => {
 
 const verifyToken = async (token: string) => {
     try {
-        let data = await jwt.verify(token, String(SECRET_KEY)) as IToken;
+        let data = jwt.verify(token, String(SECRET_KEY)) as IToken;
+        console.log("data----", data)
         let checkSession = await checkSessionData(data);
         if (!checkSession) return Handler.handleCustomError(Unauthorized);
         return data;
     }
     catch (err) {
+        console.log("error---",err)
         return Handler.handleCustomError(err as IErrorResponse);
     }
 }

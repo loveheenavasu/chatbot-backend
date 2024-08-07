@@ -1,11 +1,14 @@
 import neo4j from 'neo4j-driver';
 import * as Handler from '../handler/handler';
 import { IErrorResponse } from '../handler/error';
+import { config } from 'dotenv';
+config();
+const NEO_URL = process.env.NEO_URL as string;
+const NEO_USERNAME = process.env.NEO_USERNAME as string;
+const NEO_PASSWORD = process.env.NEO_PASSWORD as string;
 
-const driver = neo4j.driver(
-    'neo4j+s://b641f24a.databases.neo4j.io',
-    neo4j.auth.basic('neo4j', '8n2HGgKPToBlAoVr1GlTD2ry4Ue9yH3kCH60fUgeO20')
-);
+const driver = neo4j.driver(NEO_URL, neo4j.auth.basic(NEO_USERNAME, NEO_PASSWORD));
+
 const getServerInfo = async () => {
     try {
         const serverInfo = await driver.getServerInfo();

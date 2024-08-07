@@ -23,7 +23,7 @@ const authorization = async (req: CustomRequest, res: Response, next: NextFuncti
             return Handler.handleCustomError(BearerToken)
         }
 
-        let decodeToken = await jwt.decode(tokenValue) as IToken | null;
+        let decodeToken = jwt.decode(tokenValue) as IToken | null;
         if (decodeToken?.scope == SCOPE) {
             let verifyData = await CommonHelper.verifyToken(tokenValue);
             if (verifyData) {

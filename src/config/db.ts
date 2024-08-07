@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 config();
 const URI = process.env.URI as string;
 
-const dbConnect = async () => {
+const dbConnect = () => {
     try {
         mongoose.connect(URI);
     }

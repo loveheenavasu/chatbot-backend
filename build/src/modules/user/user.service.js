@@ -104,7 +104,6 @@ const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             let data = yield signupData(req.body);
             let saveData = yield Models.userModel.create(data);
-            console.log("saveData---", saveData);
             let accessToken = yield fetchToken(saveData === null || saveData === void 0 ? void 0 : saveData._id, SCOPE);
             saveData._doc["accessToken"] = accessToken;
             delete saveData._doc["password"];
@@ -125,7 +124,7 @@ exports.signup = signup;
 const signupData = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let bcryptPass = yield CommonHelper.hashPassword(payload === null || payload === void 0 ? void 0 : payload.password);
-        let otp = yield CommonHelper.generateOtp();
+        let otp = CommonHelper.generateOtp();
         let data = {
             email: payload === null || payload === void 0 ? void 0 : payload.email.toLowerCase(),
             password: bcryptPass,
@@ -206,7 +205,7 @@ const resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
             let { email } = fetchData;
-            let otp = yield CommonHelper.generateOtp();
+            let otp = CommonHelper.generateOtp();
             let update = {
                 otp: otp
             };
@@ -234,7 +233,7 @@ const forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
             let { _id, email } = fetchData;
-            let otp = yield CommonHelper.generateOtp();
+            let otp = CommonHelper.generateOtp();
             let query = { _id: _id };
             let update = { otp: otp };
             let option = { new: true };
@@ -472,7 +471,7 @@ const embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(void
                 doc.metadata.loc = doc.metadata.loc.toString();
             }
         });
-        const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
+        yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
         let dataToSave = {
             text: text,
             userId: userId,
@@ -641,7 +640,7 @@ const updateFileText = (text, type, documentId, userId, fileName, docNo) => __aw
                 doc.metadata.loc = doc.metadata.loc.toString();
             }
         });
-        const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
+        yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
         let dataToSave = {
             text: text,
             userId: userId,
@@ -734,7 +733,7 @@ const pdfLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
         return Handler.handleCustomError(err);
     }
 });
-const textLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
+const textLoad = (buffer) => {
     try {
         const text = buffer === null || buffer === void 0 ? void 0 : buffer.toString();
         return text;
@@ -742,7 +741,7 @@ const textLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     catch (err) {
         return Handler.handleCustomError(err);
     }
-});
+};
 const csvLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const loader = new csv_1.CSVLoader(blob);
@@ -876,7 +875,7 @@ const chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
         let { sessionId, pagination, limit } = req.query;
         let query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
         let projection = { __v: 0 };
-        let options = yield CommonHelper.setOptions(+pagination, +limit, { _id: 1 });
+        let options = CommonHelper.setOptions(+pagination, +limit, { _id: 1 });
         let fetchData = yield Models.messageModel.find(query, projection, options);
         let count = yield Models.messageModel.countDocuments(query);
         let response = {
