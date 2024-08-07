@@ -73,7 +73,6 @@ const connectSocket = (server) => {
                     let fetchData = yield Models.ipAddressModel.findOne(query, projection, option);
                     let ipAddressId;
                     let sessionId;
-                    console.log("fetchData--", fetchData);
                     if (fetchData) {
                         let { _id } = fetchData;
                         ipAddressId = _id;

@@ -229,10 +229,13 @@ exports.resendOtp = resendOtp;
 const forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email } = req.body;
-        let query = { email: email.toLowerCase() };
+        let query = { email: email.toLowerCase(), isEmailVerified: true };
         let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { _id, email } = fetchData;
+            let { _id, email, type } = fetchData;
+            if (type != null) {
+                return Handler.handleCustomError(error_1.RegisteredWithGoogle);
+            }
             let otp = CommonHelper.generateOtp();
             let query = { _id: _id };
             let update = { otp: otp };
@@ -365,9 +368,13 @@ exports.login = login;
 const socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
-        let query = { email: email.toLowerCase() };
+        let query = { email: email.toLowerCase(), isEmailVerified: true };
         let fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
+            let { type } = fetchData;
+            if (!type) {
+                return Handler.handleCustomError(error_1.RegisteredWithPassword);
+            }
             let session = yield createSession(fetchData === null || fetchData === void 0 ? void 0 : fetchData._id, socialToken);
             fetchData.accessToken = session === null || session === void 0 ? void 0 : session.accessToken;
             return fetchData;

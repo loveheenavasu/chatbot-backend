@@ -4,14 +4,15 @@ export interface IErrorResponse {
 }
 
 export const Unauthorized: IErrorResponse = {
-    message: "Sorry, you are not authorized to perform this action.",
+    message: "You are not authorized to perform this action.",
     statusCode: 401
-}
+};
 
 export const WrongPassword: IErrorResponse = {
-    message: "Sorry, you entered wrong password",
+    message: "The password you entered is incorrect. Please try again.",
     statusCode: 400
-}
+};
+
 
 export const SomethingWentWrong: IErrorResponse = {
     message: "Something went wrong",
@@ -19,24 +20,31 @@ export const SomethingWentWrong: IErrorResponse = {
 }
 
 export const RegisteredWithGoogle: IErrorResponse = {
-    message: "You're registered with Google. Please log in using your Google account.",
+    message: "You are registered with Google. Please log in with your Google account.",
     statusCode: 400
 }
+
+export const RegisteredWithPassword: IErrorResponse = {
+    message: "You are registered using an email and password. Please log in using your password.",
+    statusCode: 400
+}
+
 
 export const EmailNotRegistered: IErrorResponse = {
-    message: "Sorry, this email is not registered with us",
+    message: "This email address is not registered with us. Please check and try again.",
     statusCode: 400
-}
+};
 
 export const EmailAlreadyExists: IErrorResponse = {
-    message: "Sorry, this email is already registered with us",
+    message: "This email address is already registered. Please use a different email or log in with the existing one.",
     statusCode: 400
-}
+};
 
 export const WrongOtp: IErrorResponse = {
-    message: "Wrong otp",
+    message: "The OTP you entered is incorrect. Please try again.",
     statusCode: 400
-}
+};
+
 export const ProvideToken: IErrorResponse = {
     message: "Please provide token",
     statusCode: 400
@@ -67,6 +75,6 @@ export const UnsupportedFileType: IErrorResponse = {
 }
 
 export const ProvideDocumentId: IErrorResponse = {
-    message: "Please documentId",
+    message: "Please provide documentId",
     statusCode: 400
 }

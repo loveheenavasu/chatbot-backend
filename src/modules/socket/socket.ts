@@ -49,7 +49,6 @@ const connectSocket = (server: any) => {
                     let fetchData: IIps | null = await Models.ipAddressModel.findOne(query, projection, option)
                     let ipAddressId: Types.ObjectId;
                     let sessionId: Types.ObjectId;
-                    console.log("fetchData--", fetchData)
                     if (fetchData) {
                         let { _id } = fetchData
                         ipAddressId = _id!

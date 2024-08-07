@@ -3,7 +3,7 @@ import * as Models from '../../models/index';
 import moment from 'moment';
 import { Types } from 'mongoose';
 import * as Handler from '../../handler/handler';
-import { EmailAlreadyExists, EmailNotRegistered, IErrorResponse, NotFound, RegisteredWithGoogle, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
+import { EmailAlreadyExists, EmailNotRegistered, IErrorResponse, NotFound, RegisteredWithGoogle, RegisteredWithPassword, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
 import * as CommonHelper from '../../common/common';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { config } from 'dotenv';
@@ -208,10 +208,13 @@ const resendOtp = async (req: Request) => {
 const forgotPassword = async (req: Request) => {
     try {
         let { email } = req.body;
-        let query = { email: email.toLowerCase() };
+        let query = { email: email.toLowerCase(), isEmailVerified: true };
         let fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { _id, email } = fetchData;
+            let { _id, email, type } = fetchData;
+            if (type != null) {
+                return Handler.handleCustomError(RegisteredWithGoogle);
+            }
             let otp: string = CommonHelper.generateOtp();
             let query = { _id: _id };
             let update = { otp: otp };
@@ -344,9 +347,13 @@ const login = async (req: Request) => {
 const socialLogin = async (req: Request) => {
     try {
         let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
-        let query = { email: email.toLowerCase() }
+        let query = { email: email.toLowerCase(), isEmailVerified: true }
         let fetchData: IUser | null = await CommonHelper.fetchUser(query);
         if (fetchData) {
+            let { type } = fetchData;
+            if (!type) {
+                return Handler.handleCustomError(RegisteredWithPassword);
+            }
             let session = await createSession(fetchData?._id!, socialToken)
             fetchData.accessToken = session?.accessToken;
             return fetchData;
@@ -453,7 +460,7 @@ const embedText = async (text: string, type: string, userId: Types.ObjectId, fil
                 doc.metadata.loc = doc.metadata.loc.toString();
             }
         });
-         await Neo4jVectorStore.fromDocuments(
+        await Neo4jVectorStore.fromDocuments(
             docOutput,
             openai,
             neoConfig

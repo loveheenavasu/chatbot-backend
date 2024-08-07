@@ -80,7 +80,7 @@ const generateUniqueCode = () => {
 const signToken = async (data: IToken) => {
     try {
         data.tokenGenAt = moment().utc().valueOf();
-        let token: string = jwt.sign(data, String(SECRET_KEY), { expiresIn: '30s' });
+        let token: string = jwt.sign(data, String(SECRET_KEY), { expiresIn: '60s' });
         await saveSession(token, data)
         return token;
     }

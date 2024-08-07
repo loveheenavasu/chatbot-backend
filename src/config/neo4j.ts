@@ -14,7 +14,8 @@ const getServerInfo = async () => {
         const serverInfo = await driver.getServerInfo();
         console.log("serverInfo----", serverInfo);
     } catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        console.log("err---", err)
+        //  Handler.handleCustomError(err as IErrorResponse);
     }
 };
 

@@ -113,7 +113,7 @@ exports.generateUniqueCode = generateUniqueCode;
 const signToken = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         data.tokenGenAt = (0, moment_1.default)().utc().valueOf();
-        let token = jwt.sign(data, String(SECRET_KEY), { expiresIn: '30s' });
+        let token = jwt.sign(data, String(SECRET_KEY), { expiresIn: '60s' });
         yield saveSession(token, data);
         return token;
     }
