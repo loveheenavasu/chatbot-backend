@@ -146,7 +146,7 @@ const textDetail = (req: Request, res: Response, next: NextFunction) => {
 const documentIdWithPL = (req: Request, res: Response, next: NextFunction) => {
     try {
         let schema = Joi.object({
-            documentId: Joi.string().trim().required(),
+            documentId: Joi.string().trim().optional(),
             pagination: Joi.number().optional(),
             limit: Joi.number().optional()
         });

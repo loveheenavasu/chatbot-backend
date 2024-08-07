@@ -179,7 +179,7 @@ exports.textDetail = textDetail;
 const documentIdWithPL = (req, res, next) => {
     try {
         let schema = joi_1.default.object({
-            documentId: joi_1.default.string().trim().required(),
+            documentId: joi_1.default.string().trim().optional(),
             pagination: joi_1.default.number().optional(),
             limit: joi_1.default.number().optional()
         });
