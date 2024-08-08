@@ -26,17 +26,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.type = void 0;
+exports.Type = void 0;
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = __importStar(require("mongoose"));
-var type;
-(function (type) {
-    type["TEXT"] = "TEXT";
-    type["FILE"] = "FILE";
-})(type || (exports.type = type = {}));
+var Type;
+(function (Type) {
+    Type["TEXT"] = "TEXT";
+    Type["FILE"] = "FILE";
+})(Type || (exports.Type = Type = {}));
 const textSchema = new mongoose_1.default.Schema({
     text: { type: String, default: null },
-    type: { type: String, default: type.TEXT, enum: Object.values(type) },
+    type: { type: String, default: Type.TEXT, enum: Object.values(Type) },
     fileName: { type: String, default: null },
     documentId: { type: String, default: null },
     docNo: { type: Number, default: 1 },
@@ -44,7 +44,7 @@ const textSchema = new mongoose_1.default.Schema({
     createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 }, {
-    timestamps: false
+    timestamps: false // Disable timestamp because we are handling createdAt and updatedAt manually, if we are setting this to true then it will create automatically createdAt and updatedAt with Date type.
 });
 const textModel = mongoose_1.default.model("Texts", textSchema);
 exports.default = textModel;

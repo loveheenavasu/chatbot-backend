@@ -1,13 +1,13 @@
 import { Server, Socket } from "socket.io";
 import * as SocketService from "./socket.service";
-import { role } from "../../models/message.model";
+import { Role } from "../../models/message.model";
 import * as Models from '../../models/index';
 import moment from "moment";
-import { sessionType } from "../../models/chat-session.model";
+import { SessionType } from "../../models/chat-session.model";
 import { Types } from "mongoose";
-import { ISocketResponse } from "../../interfaces/common.interface";
-import IIps from "../../interfaces/ips.interface";
-import IChatSession from "../../interfaces/chat-session.interface";
+import { SocketResponse } from "../../interfaces/common.interface";
+import Ips from "../../interfaces/ips.interface";
+import ChatSession from "../../interfaces/chat-session.interface";
 
 interface ISocketSearch {
     text: string;
@@ -15,8 +15,7 @@ interface ISocketSearch {
     chatSessionId?: string;
 }
 
-
-const connectSocket = (server: any) => {
+const connectSocket = (server: object) => {
     try {
         const io = new Server(server, {
             cors: { origin: "*" }
@@ -31,55 +30,55 @@ const connectSocket = (server: any) => {
                     let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket?.request?.connection?.remoteAddress || socket?.conn?.remoteAddress;
 
                     if (ip && ip.includes(',')) {
-                        ip = ip.split(',')[0].trim();
+                        ip = ip.split(',')[0].trim()
                     }
 
                     console.log("ip---",ip)
-                    let { text, documentId, chatSessionId } = payload
+                    const { text, documentId, chatSessionId } = payload
                     console.log("payload----", payload)
-                    let res: ISocketResponse = {
+                    const res: SocketResponse = {
                         message: text,
                         sessionId: chatSessionId ?? null,
-                        type: role.User
+                        type: Role.User
                     }
                     socket.emit("searches", res);
-                    let query = { ipAddress: ip, documentId: documentId }
-                    let projection = { __v: 0 }
-                    let option = { lean: true }
-                    let fetchData: IIps | null = await Models.ipAddressModel.findOne(query, projection, option)
+                    const query = { ipAddress: ip, documentId: documentId }
+                    const projection = { __v: 0 }
+                    const option = { lean: true }
+                    const fetchData: Ips | null = await Models.ipAddressModel.findOne(query, projection, option)
                     let ipAddressId: Types.ObjectId;
                     let sessionId: Types.ObjectId;
                     if (fetchData) {
-                        let { _id } = fetchData
+                        const { _id } = fetchData
                         ipAddressId = _id!
-                        let query = { _id: new Types.ObjectId(chatSessionId), sessionType: sessionType?.ONGOING }
-                        let fetchSession: IChatSession | null = await Models.chatSessionModel.findOne(query, projection, option);
+                        const query = { _id: new Types.ObjectId(chatSessionId), sessionType: SessionType.ONGOING }
+                        const fetchSession: ChatSession | null = await Models.chatSessionModel.findOne(query, projection, option);
                         if (fetchSession) {
-                            let { _id } = fetchSession;
+                            const { _id } = fetchSession;
                             sessionId = _id!;
                         }
                         else {
-                            let sessionSave = await SocketService.saveChatSession(ipAddressId);
+                            const sessionSave = await SocketService.saveChatSession(ipAddressId);
                             sessionId = sessionSave?._id!;
                         }
                     }
                     else {
-                        let dataToSave: IIps = {
+                        const dataToSave: Ips = {
                             ipAddress: ip,
                             documentId: documentId,
                             createdAt: moment().utc().valueOf()
                         }
-                        let saveData: IIps = await Models.ipAddressModel.create(dataToSave);
-                        ipAddressId = saveData?._id!;
-                        let sessionSave = await SocketService.saveChatSession(ipAddressId)
-                        sessionId = sessionSave?._id!;
+                        const saveData: Ips = await Models.ipAddressModel.create(dataToSave);
+                        ipAddressId = saveData._id!;
+                        const sessionSave = await SocketService.saveChatSession(ipAddressId)
+                        sessionId = sessionSave._id!;
                     }
 
-                    let data = await SocketService.searchInput(text, documentId, ipAddressId, sessionId);
-                    let response: ISocketResponse = {
+                    const data = await SocketService.searchInput(text, documentId, ipAddressId, sessionId);
+                    const response: SocketResponse = {
                         message: data,
                         sessionId: sessionId,
-                        type: role.AI
+                        type: Role.AI
                     }
                     socket.chatSessionId = sessionId
                     socket.emit("searches", response);
@@ -91,12 +90,12 @@ const connectSocket = (server: any) => {
 
             socket.on("disconnect", async () => {
                 try {
-                    let query = { _id: socket?.chatSessionId }
-                    let update = {
-                        sessionType: sessionType?.COMPLETED,
+                    const query = { _id: socket?.chatSessionId }
+                    const update = {
+                        sessionType: SessionType.COMPLETED,
                         updatedAt: moment().utc().valueOf()
                     }
-                    let options = { new: true }
+                    const options = { new: true }
                     await Models.chatSessionModel.findOneAndUpdate(query, update, options);
                 }
                 catch (err) {

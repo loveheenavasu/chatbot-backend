@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-export default interface IChatbot {
+export default interface Chatbot {
     _id?: Types.ObjectId;
     textId?: Types.ObjectId;
     userId?: Types.ObjectId;

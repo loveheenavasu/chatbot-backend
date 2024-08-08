@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-export default interface IChatSession {
+export default interface ChatSession {
     _id?: Types.ObjectId;
     ipAddressId?: Types.ObjectId;
     sessionType?: String;

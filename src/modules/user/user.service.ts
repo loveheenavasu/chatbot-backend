@@ -3,12 +3,10 @@ import * as Models from '../../models/index';
 import moment from 'moment';
 import { Types } from 'mongoose';
 import * as Handler from '../../handler/handler';
-import { EmailAlreadyExists, EmailNotRegistered, IErrorResponse, NotFound, RegisteredWithGoogle, RegisteredWithPassword, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
+import { EmailAlreadyExists, EmailNotRegistered, ErrorResponse, NotFound, RegisteredWithGoogle, RegisteredWithPassword, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
 import * as CommonHelper from '../../common/common';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { config } from 'dotenv';
 import { session } from '../../config/neo4j';
-config();
 import { Neo4jVectorStore } from "@langchain/community/vectorstores/neo4j_vector";
 import { Document } from "@langchain/core/documents";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
@@ -17,17 +15,20 @@ import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import path from 'path';
 import WordExtractor from 'word-extractor';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { type } from '../../models/text.model';
-import { signType } from '../../models/user.model';
+import { Type } from '../../models/text.model';
+import { SignType } from '../../models/user.model';
 import * as ChatHistoryAggregation from './aggregation/chat-history.aggregation';
 import * as EmailService from '../../common/emailService';
-import { INeoConfig, IToken, ISignupPayload, CustomRequest } from '../../interfaces/common.interface';
-import IUser from '../../interfaces/user.interface';
-import ISession from '../../interfaces/session.interface';
-import IText from '../../interfaces/text.interface';
-import IChatbot from '../../interfaces/chatbot.interface';
-import IIps from '../../interfaces/ips.interface';
-import IMessage from '../../interfaces/message.interface';
+import { NeoConfig, Token, SignupPayload, CustomRequest } from '../../interfaces/common.interface';
+import User from '../../interfaces/user.interface';
+import Session from '../../interfaces/session.interface';
+import Text from '../../interfaces/text.interface';
+import Chatbot from '../../interfaces/chatbot.interface';
+import Ips from '../../interfaces/ips.interface';
+import Message from '../../interfaces/message.interface';
+import { config } from 'dotenv';
+import ChatSession from '../../interfaces/chat-session.interface';
+config();
 const { v4: uuidv4 } = require('uuid');
 
 const OPEN_API_KEY = process.env.OPEN_API_KEY as string;
@@ -42,125 +43,153 @@ const openai = new OpenAIEmbeddings({
     apiKey: OPEN_API_KEY
 });
 
-
-let neoConfig: INeoConfig = {
+const neoConfig: NeoConfig = {
     url: NEO_URL,
     username: NEO_USERNAME,
     password: NEO_PASSWORD
 };
 
+const projection = { __v: 0 };
+const option = { lean: true };
+const options = { new: true };
+const optionWithSortDesc = { lean: true, sort: { _id: -1 } };
+const optionWithSortAsc = { lean: true, sort: { _id: 1 } };
 
-const signup = async (req: Request) => {
+interface UserResponse {
+    message?: string;
+    data: User
+}
+
+interface TextResponse {
+    message: string;
+    data: Text
+}
+
+interface MessageResponse {
+    message: string
+}
+
+interface VerifyResponse {
+    message: string;
+    uniqueCode: string
+}
+
+interface TextResponseList {
+    count: number;
+    data: Text[];
+}
+
+interface ChatbotResponse {
+    count: number;
+    data: Chatbot[];
+}
+
+interface MessageResponseList {
+    count: number;
+    data: Message[]
+}
+
+const signup = async (req: Request): Promise<UserResponse> => {
     try {
-        let { email } = req.body;
-        let query = { email: email.toLowerCase() }
-        let projection = { __v: 0 }
-        let options = { lean: true }
-        let fetchData: IUser | null = await Models.userModel.findOne(query, projection, options);
-        if (fetchData) {
-            let { _id, isEmailVerified } = fetchData
-            if (isEmailVerified) return Handler.handleCustomError(EmailAlreadyExists);
-            let query1 = { userId: _id }
-            await Models.sessionModel.deleteMany(query1);
-            let data = await signupData(req.body);
-            let options = { new: true }
-            let updateData = await Models.userModel.findOneAndUpdate(query, data, options);
-            let accessToken = await fetchToken(updateData?._id!, SCOPE);
-            updateData!._doc["accessToken"] = accessToken
-            delete updateData!._doc["password"];
-            delete updateData!._doc["otp"];
-            await EmailService.verificationCode(email, data.otp);
-
-            let response = {
-                message: `Otp sent to ${updateData!?.email}`,
-                data: updateData
+        const { email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail };
+        const user = await Models.userModel.findOne(query, projection, option);
+        if (user) {
+            if (user.isEmailVerified) return Handler.handleCustomError(EmailAlreadyExists);
+            await Models.sessionModel.deleteMany({ userId: user._id });
+            const updatedData = await updateUser(user._id, req.body);
+            await EmailService.verificationCode(email, updatedData?.otp!);
+            delete updatedData!._doc.otp;
+            const response: UserResponse = {
+                message: `Otp sent to ${updatedData!.email}`,
+                data: updatedData!
             }
             return response;
         }
         else {
-            let data = await signupData(req.body);
-            let saveData: IUser = await Models.userModel.create(data);
-            let accessToken = await fetchToken(saveData?._id!, SCOPE);
-            saveData!._doc["accessToken"] = accessToken
-            delete saveData!._doc["password"];
-            delete saveData!._doc["otp"];
-            await EmailService.verificationCode(email, data.otp);
-            let response = {
-                message: `Otp sent to ${saveData?.email}`,
-                data: saveData
+            const newUser = await createNewUser(req.body);
+            await EmailService.verificationCode(email, newUser?.otp!);
+            delete newUser?._doc.otp;
+            const response: UserResponse = {
+                message: `Otp sent to ${newUser?.email}`,
+                data: newUser
             }
             return response;
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const signupData = async (payload: ISignupPayload) => {
+const createNewUser = async (payload: SignupPayload): Promise<User> => {
     try {
-        let bcryptPass: string = await CommonHelper.hashPassword(payload?.password);
-        let otp: string = CommonHelper.generateOtp();
-        let data = {
+        const data = await signupData(payload);
+        const user = await Models.userModel.create(data);
+        user._doc.accessToken = await fetchToken(user._id, SCOPE);
+        delete user._doc.password;
+        return user;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+};
+
+const updateUser = async (userId: Types.ObjectId, payload: SignupPayload): Promise<User | null> => {
+    try {
+        const data = await signupData(payload);
+        const updatedUser = await Models.userModel.findOneAndUpdate({ _id: userId }, data, options);
+        updatedUser!._doc.accessToken = await fetchToken(updatedUser!._id, SCOPE);
+        delete updatedUser!._doc.password;
+        return updatedUser;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const signupData = async (payload: SignupPayload): Promise<User> => {
+    try {
+        const bcryptPass: string = await CommonHelper.hashPassword(payload?.password);
+        const otp: string = CommonHelper.generateOtp();
+        const data: User = {
             email: payload?.email.toLowerCase(),
             password: bcryptPass,
             otp: otp,
-            firstname: payload?.firstname!,
-            lastname: payload?.lastname!,
+            firstname: payload.firstname,
+            lastname: payload.lastname,
             createdAt: moment().utc().valueOf()
         }
         return data;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const fetchToken = async (userId: Types.ObjectId, scope: string) => {
+const fetchToken = async (userId: Types.ObjectId, scope: string): Promise<string> => {
     try {
-        let tokenData: IToken = {
-            _id: userId,
-            scope: scope
-        }
-        let accessToken: string = await CommonHelper.signToken(tokenData);
+        const tokenData: Token = { _id: userId, scope: scope };
+        const accessToken = await CommonHelper.signToken(tokenData);
         return accessToken;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const verifyEmail = async (req: CustomRequest) => {
+const verifyEmail = async (req: CustomRequest): Promise<MessageResponse> => {
     try {
-        let { otp: inputOtp } = req.body;
-        let { _id } = req.userData!;
-        let query = { _id: _id }
-        let projection = { otp: 1, email: 1 }
-        let option = { lean: true }
-        let fetchData: IUser | null = await Models.userModel.findOne(query, projection, option);
+        const { otp: inputOtp } = req.body;
+        const { _id } = req.userData!;
+        const query = { _id: _id };
+        const fetchData: User | null = await Models.userModel.findOne(query, projection, option);
         if (fetchData) {
-            let { otp, email } = fetchData;
-            if (inputOtp === otp) {
-                let update = {
-                    isEmailVerified: true,
-                    otp: null
-                }
-                let options = { new: true }
+            if (inputOtp === fetchData.otp) {
+                const update = { isEmailVerified: true, otp: null }
                 await Models.userModel.findOneAndUpdate(query, update, options);
-                let query1 = { email: email, isEmailVerified: false }
-                let projection = { _id: 1 }
-                let fetchUnverified: IUser[] = await Models.userModel.find(query1, projection, option);
-                if (fetchUnverified?.length) {
-                    await Models.userModel.deleteMany(query1);
-                    for (let i = 0; i < fetchUnverified?.length; i++) {
-                        let { _id } = fetchUnverified[i]
-                        let query = { userId: _id }
-                        await Models.sessionModel.deleteOne(query);
-                    }
-                }
-                let response = {
-                    message: "Otp verified successfully"
-                }
+                const response: MessageResponse = { message: "Otp verified successfully" }
                 return response;
             }
             else {
@@ -172,28 +201,22 @@ const verifyEmail = async (req: CustomRequest) => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const resendOtp = async (req: Request) => {
+const resendOtp = async (req: Request): Promise<MessageResponse> => {
     try {
-        let { email } = req.body;
-        let query = { email: email?.toLowerCase() };
-        let fetchData = await CommonHelper.fetchUser(query);
+        const { email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail };
+        const fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { email } = fetchData;
-            let otp: string = CommonHelper.generateOtp();
-            let update = {
-                otp: otp
-            };
-            let option = { new: true };
-            await Models.userModel.findOneAndUpdate(query, update, option);
-            await EmailService.verificationCode(email!, otp);
-
-            let response = {
-                message: `Otp sent to ${email}`
-            };
+            const otp = CommonHelper.generateOtp();
+            const update = { otp: otp };
+            await Models.userModel.findOneAndUpdate(query, update, options);
+            await EmailService.verificationCode(fetchData.email!, otp);
+            const response: MessageResponse = { message: `Otp sent to ${email}` };
             return response;
         }
         else {
@@ -201,29 +224,25 @@ const resendOtp = async (req: Request) => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const forgotPassword = async (req: Request) => {
+const forgotPassword = async (req: Request): Promise<MessageResponse> => {
     try {
-        let { email } = req.body;
-        let query = { email: email.toLowerCase(), isEmailVerified: true };
-        let fetchData = await CommonHelper.fetchUser(query);
+        const { email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail, isEmailVerified: true };
+        const fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { _id, email, type } = fetchData;
-            if (type != null) {
-                return Handler.handleCustomError(RegisteredWithGoogle);
-            }
-            let otp: string = CommonHelper.generateOtp();
-            let query = { _id: _id };
-            let update = { otp: otp };
-            let option = { new: true };
-            await Models.userModel.findOneAndUpdate(query, update, option);
+            const { _id, email, type } = fetchData;
+            if (type != null) return Handler.handleCustomError(RegisteredWithGoogle);
+            const otp = CommonHelper.generateOtp();
+            const query = { _id: _id };
+            const update = { otp: otp };
+            await Models.userModel.findOneAndUpdate(query, update, options);
             await EmailService.verificationCode(email!, otp);
-            let response = {
-                message: `Otp sent to ${email}`
-            };
+            const response: MessageResponse = { message: `Otp sent to ${email}` };
             return response;
         }
         else {
@@ -231,28 +250,23 @@ const forgotPassword = async (req: Request) => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const verifyOtp = async (req: Request) => {
+const verifyOtp = async (req: Request): Promise<VerifyResponse> => {
     try {
-        let { otp: inputOtp, email } = req.body;
-        let query = { email: email?.toLowerCase() };
-        let projection = { otp: 1 };
-        let option = { lean: true };
-        let fetchData: IUser | null = await Models.userModel.findOne(query, projection, option);
+        const { otp: inputOtp, email } = req.body;
+        const lowerCaseEmail = email.toLowerCase()
+        const query = { email: lowerCaseEmail };
+        const projection = { otp: 1 };
+        const fetchData: User | null = await Models.userModel.findOne(query, projection, option);
         if (fetchData) {
-            let { otp } = fetchData;
-            if (inputOtp === otp) {
-                let uniqueCode: string = await CommonHelper.generateUniqueCode();
-                let update = {
-                    uniqueCode: uniqueCode,
-                    otp: null
-                }
-                let options = { new: true }
+            if (inputOtp === fetchData.otp) {
+                const uniqueCode = CommonHelper.generateUniqueCode();
+                const update = { uniqueCode: uniqueCode, otp: null }
                 await Models.userModel.findOneAndUpdate(query, update, options)
-                let response = {
+                const response: VerifyResponse = {
                     message: "Otp verified successfully",
                     uniqueCode: uniqueCode
                 }
@@ -267,26 +281,20 @@ const verifyOtp = async (req: Request) => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const resetPassword = async (req: Request) => {
+const resetPassword = async (req: Request): Promise<MessageResponse> => {
     try {
-        let { uniqueCode, password } = req.body;
-        let query = { uniqueCode: uniqueCode }
-        let fetchData = await CommonHelper.fetchUser(query);
+        const { uniqueCode, password } = req.body;
+        const query = { uniqueCode: uniqueCode };
+        const fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
-            let hashPass = await CommonHelper.hashPassword(password);
-            let update = {
-                uniqueCode: null,
-                password: hashPass
-            }
-            let options = { new: true };
-            await Models.userModel.findOneAndUpdate(query, update, options)
-            let response = {
-                message: "Password Changed Successfully"
-            }
+            const hashPass = await CommonHelper.hashPassword(password);
+            const update = { uniqueCode: null, password: hashPass };
+            await Models.userModel.findOneAndUpdate(query, update, options);
+            const response: MessageResponse = { message: "Password Changed Successfully" };
             return response;
         }
         else {
@@ -294,164 +302,144 @@ const resetPassword = async (req: Request) => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const login = async (req: Request) => {
+const login = async (req: Request): Promise<UserResponse> => {
     try {
-        let { email, password } = req.body;
-        let query = { email: email.toLowerCase(), isEmailVerified: true }
-        let projection = { __v: 0 }
-        let option = { lean: true }
-        let fetchData: IUser | null = await Models.userModel.findOne(query, projection, option);
+        const { email, password } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail, isEmailVerified: true };
+        const fetchData = await Models.userModel.findOne(query, projection, option);
         if (fetchData) {
-            let { _id, password: oldPassword, type } = fetchData;
-            if (oldPassword == null && type != null) {
-                return Handler.handleCustomError(RegisteredWithGoogle);
-            }
-            if (oldPassword == null) {
-                return Handler.handleCustomError(SomethingWentWrong);
-            }
-            let decryptPass = await CommonHelper.comparePassword(oldPassword, password);
-            if (!decryptPass) {
-                return Handler.handleCustomError(WrongPassword);
-            }
-            else {
-                let data: IToken = {
-                    _id: _id,
-                    scope: SCOPE
-                }
-                let accessToken = await CommonHelper.signToken(data);
-                let resData = {
-                    _id: fetchData?._id,
-                    email: fetchData?.email,
-                    accessToken: accessToken
-                }
-                let response = {
-                    message: "Login successfully",
-                    data: resData
-                }
-                return response;
-            }
+            const { _id, password: oldPassword, type } = fetchData;
+            if (oldPassword == null && type != null) return Handler.handleCustomError(RegisteredWithGoogle);
+            if (oldPassword == null) return Handler.handleCustomError(SomethingWentWrong);
+            const decryptPass = await CommonHelper.comparePassword(oldPassword, password);
+            if (!decryptPass) return Handler.handleCustomError(WrongPassword);
+            const data: Token = { _id: _id, scope: SCOPE };
+            const accessToken = await CommonHelper.signToken(data);
+            const resData: User = {
+                _id: fetchData?._id,
+                email: fetchData?.email,
+                accessToken: accessToken
+            };
+            const response: UserResponse = {
+                message: "Login successfully",
+                data: resData
+            };
+            return response;
         }
         else {
             return Handler.handleCustomError(EmailNotRegistered);
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const socialLogin = async (req: Request) => {
+const socialLogin = async (req: Request): Promise<User> => {
     try {
-        let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
-        let query = { email: email.toLowerCase(), isEmailVerified: true }
-        let fetchData: IUser | null = await CommonHelper.fetchUser(query);
+        const { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
+        const query = { email: email.toLowerCase(), isEmailVerified: true }
+        const fetchData = await CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { type } = fetchData;
-            if (!type) {
-                return Handler.handleCustomError(RegisteredWithPassword);
-            }
-            let session = await createSession(fetchData?._id!, socialToken)
-            fetchData.accessToken = session?.accessToken;
+            if (!fetchData.type) return Handler.handleCustomError(RegisteredWithPassword);
+            const session = await createSession(fetchData._id!, socialToken)
+            fetchData.accessToken = session.accessToken;
             return fetchData;
-        }
-        let dataToSave: IUser = {
+        };
+        const dataToSave: User = {
             email: email.toLowerCase(),
-            name: name,
-            firstname: firstname,
-            lastname: lastname,
-            image: image,
-            isAdmin: isAdmin,
+            name,
+            firstname,
+            lastname,
+            image,
+            isAdmin,
             isEmailVerified: true,
-            type: signType?.GOOGLE,
+            type: SignType.GOOGLE,
             createdAt: moment().utc().valueOf()
         }
-        let userData: IUser = await Models.userModel.create(dataToSave);
-        let session = await createSession(userData?._id!, socialToken)
-        userData._doc['accessToken'] = session?.accessToken;
-        return userData;
+        const saveData = await Models.userModel.create(dataToSave);
+        const session = await createSession(saveData._id, socialToken)
+        saveData._doc['accessToken'] = session.accessToken;
+        return saveData;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const createSession = async (user_id: Types.ObjectId, accessToken: string) => {
+const createSession = async (user_id: Types.ObjectId, accessToken: string): Promise<Session> => {
     try {
-        let dataToSession: ISession = {
+        const dataToSession: Session = {
             userId: user_id,
             accessToken: accessToken,
             createdAt: moment().utc().valueOf()
         }
-        let response: ISession = await Models.sessionModel.create(dataToSession);
+        const response: Session = await Models.sessionModel.create(dataToSession);
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const saveTexts = async (req: CustomRequest) => {
+const saveTexts = async (req: CustomRequest): Promise<TextResponse> => {
     try {
         const { text, documentId } = req.body;
-        let { _id } = req.userData!;
-        let num = 1;
-        let docId = uuidv4();
-        let query = { userId: new Types.ObjectId(_id), documentId: documentId }
-        let projection = { __v: 0 }
-        let option = { lean: true, sort: { _id: -1 } }
-        let data: IText;
-        let fetchChatbot: IChatbot | null = await Models.chatbotModel.findOne(query, projection, option);
+        const { _id } = req.userData!;
+        let num = 1, docId = uuidv4(), data: Text;
+        const query = { userId: new Types.ObjectId(_id), documentId: documentId }
+        const fetchChatbot: Chatbot | null = await Models.chatbotModel.findOne(query, projection, optionWithSortDesc);
         if (!fetchChatbot) {
-            data = await embedText(text, type?.TEXT, _id!, undefined, num, docId);
+            data = await embedText(text, Type.TEXT, _id!, undefined, num, docId);
             await createChatbot(data)
         }
         else {
-            let fetchData: IText | null = await Models.textModel.findOne(query, projection, option);
+            const fetchData: Text | null = await Models.textModel.findOne(query, projection, optionWithSortDesc);
             if (fetchData) {
                 let { docNo, documentId } = fetchData;
                 docNo = docNo! + 1;
                 num = docNo;
                 docId = documentId
             }
-            data = await embedText(text, type?.TEXT, _id!, undefined, num, docId);
+            data = await embedText(text, Type.TEXT, _id!, undefined, num, docId);
         }
-        let response = {
-            messgage: "Text Added Successfully",
+        const response: TextResponse = {
+            message: "Text Added Successfully",
             data: data
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const createChatbot = async (data: IText) => {
+const createChatbot = async (data: Text): Promise<Chatbot> => {
     try {
-        let { _id, userId, documentId } = data;
-        let dataToSave: IChatbot = {
+        const { _id, userId, documentId } = data;
+        const dataToSave: Chatbot = {
             textId: _id,
             userId: userId,
             documentId: documentId,
             createdAt: moment().utc().valueOf()
         }
-        let response: IChatbot = await Models.chatbotModel.create(dataToSave);
+        const response: Chatbot = await Models.chatbotModel.create(dataToSave);
         return response;
 
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const embedText = async (text: string, type: string, userId: Types.ObjectId, fileName?: string | undefined, docNo?: number, docId?: string) => {
+const embedText = async (text: string, type: string, userId: Types.ObjectId, fileName?: string | undefined, docNo?: number, docId?: string): Promise<Text> => {
     try {
         const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
-
         const docOutput = await textSplitter.splitDocuments([
             new Document({ pageContent: text, metadata: { documentId: docId?.toString(), docNo: docNo } })
         ]);
@@ -465,33 +453,30 @@ const embedText = async (text: string, type: string, userId: Types.ObjectId, fil
             openai,
             neoConfig
         );
-
-        let dataToSave: IText = {
-            text: text,
-            userId: userId,
-            type: type,
-            fileName: fileName,
+        const dataToSave: Text = {
+            text,
+            userId,
+            type,
+            fileName,
+            docNo,
             documentId: docId,
-            docNo: docNo,
             createdAt: moment().utc().valueOf()
         }
-        let saveData: IText = await Models.textModel.create(dataToSave);
+        const saveData = await Models.textModel.create(dataToSave);
         return saveData;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const updateTexts = async (req: CustomRequest) => {
+const updateTexts = async (req: CustomRequest): Promise<MessageResponse> => {
     try {
         const { _id, text } = req.body;
-        let query = { _id: new Types.ObjectId(_id) }
-        let projection = { __v: 0 }
-        let options = { lean: true }
-        let fetchData: IText | null = await Models.textModel.findOne(query, projection, options)
+        const query = { _id: new Types.ObjectId(_id) }
+        const fetchData: Text | null = await Models.textModel.findOne(query, projection, option)
         if (fetchData) {
-            let { documentId, docNo } = fetchData;
+            const { documentId, docNo } = fetchData;
             await session.run(
                 `
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
@@ -508,20 +493,14 @@ const updateTexts = async (req: CustomRequest) => {
                     doc.metadata.loc = doc?.metadata?.loc?.toString(); // Convert object to string representation
                 }
             });
-            const vectorStore = await Neo4jVectorStore.fromDocuments(
-                docOutput,
-                openai,
-                neoConfig
-            );
-            let update: IText = {
+            await Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
+            const update: Text = {
                 text: text,
                 docNo: docNo,
                 updatedAt: moment().utc().valueOf()
             }
             await Models.textModel.updateOne(query, update);
-            let response = {
-                message: "Text updated successfully"
-            }
+            const response: MessageResponse = { message: "Text updated successfully" }
             return response;
         }
         else {
@@ -529,58 +508,55 @@ const updateTexts = async (req: CustomRequest) => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const fileLists = async (req: CustomRequest) => {
+const fileLists = async (req: CustomRequest): Promise<TextResponseList> => {
     try {
-        let { _id: userId } = req.userData!;
-        let query = {
+        const { documentId, pagination, limit } = req.query;
+        const { _id: userId } = req.userData!;
+        const query = {
             userId: new Types.ObjectId(userId),
-            type: type?.FILE,
-            documentId: req?.query?.documentId
+            type: Type.FILE,
+            documentId: documentId
         }
-        let projection = { __v: 0 }
-        let option = await CommonHelper.setOptions(+req?.query?.pagination!, +req?.query?.limit!);
-        let fetchdata: IText[] = await Models.textModel.find(query, projection, option);
-        let count: number = await Models.textModel.countDocuments(query);
-        let response = {
+        const option = CommonHelper.setOptions(+pagination!, +limit!);
+        const fetchdata: Text[] = await Models.textModel.find(query, projection, option);
+        const count = await Models.textModel.countDocuments(query);
+        const response: TextResponseList = {
             count: count,
             data: fetchdata
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const textDetail = async (req: CustomRequest) => {
+const textDetail = async (req: CustomRequest): Promise<Text> => {
     try {
-        let { _id } = req.userData!;
-        let { documentId } = req.query;
-        let query = {
+        const { _id } = req.userData!;
+        const { documentId } = req.query;
+        const query = {
             userId: new Types.ObjectId(_id),
-            type: type?.TEXT,
+            type: Type.TEXT,
             documentId: documentId
         }
-        let projection = { __v: 0 }
-        let options = { lean: true, sort: { _id: -1 } }
-        let data: IText | null = await Models.textModel.findOne(query, projection, options);
-        let response = data ?? {};
-        return response;
+        const response: Text | null = await Models.textModel.findOne(query, projection, optionWithSortDesc);
+        return response ?? {};
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const deleteFile = async (req: CustomRequest) => {
+const deleteFile = async (req: CustomRequest): Promise<MessageResponse> => {
     try {
-        let { docNo, documentId } = req.query;
-        let { _id: userId } = req.userData!;
-        let query = { documentId: documentId, docNo: Number(docNo) };
+        const { docNo, documentId } = req.query;
+        const { _id: userId } = req.userData!;
+        const query = { documentId: documentId, docNo: Number(docNo) };
         await session.run(
             `
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
@@ -589,49 +565,37 @@ const deleteFile = async (req: CustomRequest) => {
             { documentId: documentId?.toString(), docNo: Number(docNo) }
         );
         await Models.textModel.deleteOne(query);
-        let query1 = { documentId: documentId }
-        let projection = { __v: 0 }
-        let options = { lean: true, sort: { _id: 1 } }
-        let fetchData: IText | null = await Models.textModel.findOne(query1, projection, options);
+        const query1 = { documentId: documentId }
+        const fetchData: Text | null = await Models.textModel.findOne(query1, projection, optionWithSortAsc);
         if (fetchData) {
-            let { _id: textId } = fetchData
-            let query = {
-                documentId: documentId,
-                userId: userId
-            }
-            let update = { textId: textId }
-            let options = { new: true }
-            await Models.chatbotModel.findOneAndUpdate(query, update, options)
+            const { _id: textId } = fetchData;
+            const query = { documentId: documentId, userId: userId };
+            const update = { textId: textId };
+            await Models.chatbotModel.findOneAndUpdate(query, update, options);
         }
         else {
             await Models.chatbotModel.deleteOne(query1);
         }
-        let response = {
-            message: "Deleted Successfully"
-        }
+        const response: MessageResponse = { message: "Deleted Successfully" }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const logout = async (req: CustomRequest) => {
+const logout = async (req: CustomRequest): Promise<MessageResponse> => {
     try {
-        let { accessToken } = req.userData!;
-        let query = { accessToken: accessToken }
-        await Models.sessionModel.deleteOne(query);
-        let response = {
-            message: "Logout Successfully"
-        }
+        await Models.sessionModel.deleteOne({ accessToken: req.userData!.accessToken });
+        const response: MessageResponse = { message: "Logout Successfully" }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const updateFileText = async (text: string, type: string, documentId: string, userId: Types.ObjectId, fileName: string, docNo: number) => {
+const updateFileText = async (text: string, type: string, documentId: string, userId: Types.ObjectId, fileName: string, docNo: number): Promise<Text> => {
     try {
         const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 200, chunkOverlap: 1 });
         const docOutput = await textSplitter.splitDocuments([
@@ -647,58 +611,56 @@ const updateFileText = async (text: string, type: string, documentId: string, us
             openai,
             neoConfig
         );
-        let dataToSave: IText = {
-            text: text,
-            userId: userId,
-            type: type,
-            fileName: fileName,
-            documentId: documentId,
-            docNo: docNo,
+        const dataToSave: Text = {
+            text,
+            userId,
+            type,
+            fileName,
+            documentId,
+            docNo,
             createdAt: moment().utc().valueOf()
         }
-        let saveData: IText = await Models.textModel.create(dataToSave);
+        const saveData = await Models.textModel.create(dataToSave);
         return saveData;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const textExtract = async (req: CustomRequest) => {
+const textExtract = async (req: CustomRequest): Promise<TextResponse> => {
     try {
-        let { documentId } = req.body
-        let { _id: userId } = req.userData!;
-        let textData = await extract(req?.file?.originalname!, req?.file?.buffer)
+        const { documentId } = req.body
+        const { _id: userId } = req.userData!;
+        const textData = await extract(req.file!.originalname, req.file!.buffer)
         let docId = uuidv4();
-        let query = { userId: new Types.ObjectId(userId), documentId: documentId }
-        let projection = { __v: 0 }
-        let option = { lean: true, sort: { _id: -1 } }
+        const query = { userId: new Types.ObjectId(userId), documentId: documentId }
+        const fetchChatbot: Chatbot | null = await Models.chatbotModel.findOne(query, projection, optionWithSortDesc);
         let data;
-        let fetchChatbot: IChatbot | null = await Models.chatbotModel.findOne(query, projection, option);
         if (!fetchChatbot) {
-            data = await embedText(textData, type?.FILE, userId!, req?.file?.originalname!, 1, docId);
+            data = await embedText(textData, Type.FILE, userId!, req?.file?.originalname!, 1, docId);
             await createChatbot(data);
         }
         else {
-            let fetchData: IText | null = await Models.textModel.findOne(query, projection, option);
+            const fetchData: Text | null = await Models.textModel.findOne(query, projection, option);
             if (fetchData) {
                 let { documentId, docNo } = fetchData;
                 docNo = docNo! + 1;
-                data = await updateFileText(textData, type?.FILE, documentId!, userId!, req?.file?.originalname!, docNo)
+                data = await updateFileText(textData, Type.FILE, documentId!, userId!, req?.file?.originalname!, docNo)
             }
         }
-        let response = {
+        const response: TextResponse = {
             message: "File Added Successfully",
-            data: data
+            data: data!
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const extract = async (originalname: string, buffer: any) => {
+const extract = async (originalname: string, buffer: any): Promise<string> => {
     try {
         const extension = path.extname(originalname).toLowerCase();
         let text: string;
@@ -721,15 +683,15 @@ const extract = async (originalname: string, buffer: any) => {
                 break;
             default: return Handler.handleCustomError(UnsupportedFileType);
         }
-        let textData = text?.trim();
+        const textData = text.trim();
         return textData;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const pdfLoad = async (blob: any) => {
+const pdfLoad = async (blob: any): Promise<string> => {
     try {
         const loader = new PDFLoader(blob);
         const docs = await loader.load();
@@ -737,21 +699,21 @@ const pdfLoad = async (blob: any) => {
         return text;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const textLoad = (buffer: any) => {
+const textLoad = (buffer: any): Promise<string> => {
     try {
-        const text = buffer?.toString();
+        const text = buffer.toString();
         return text;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const csvLoad = async (blob: any) => {
+const csvLoad = async (blob: any): Promise<string> => {
     try {
         const loader = new CSVLoader(blob);
         const docs = await loader.load();
@@ -759,11 +721,11 @@ const csvLoad = async (blob: any) => {
         return text;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const docxLoad = async (blob: any) => {
+const docxLoad = async (blob: any): Promise<string> => {
     try {
         const loader = new DocxLoader(blob);
         const docs = await loader.load();
@@ -771,52 +733,49 @@ const docxLoad = async (blob: any) => {
         return text;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const docLoad = async (buffer: any) => {
+const docLoad = async (buffer: any): Promise<string> => {
     try {
         const extractor = new WordExtractor();
-        const extracted = await extractor?.extract(buffer);
-        const text = extracted?.getBody();
+        const extracted = await extractor.extract(buffer);
+        const text = extracted.getBody();
         return text;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const chatbotLists = async (req: CustomRequest) => {
+const chatbotLists = async (req: CustomRequest): Promise<ChatbotResponse> => {
     try {
-        let { _id: userId } = req.userData!;
-        let query = { userId: userId }
-        let projection = { __v: 0 }
-        let options = { lean: true, sort: { _id: -1 } }
-        let populate = [
+        const { _id: userId } = req.userData!;
+        const query = { userId: userId }
+        const populate = [
             {
                 path: "textId",
                 select: "text type fileName documentId"
             }
         ]
-
-        let data: IChatbot[] = await Models.chatbotModel.find(query, projection, options).populate(populate);
-        let count: number = await Models.chatbotModel.countDocuments(query);
-        let response = {
+        const data: Chatbot[] = await Models.chatbotModel.find(query, projection, optionWithSortDesc).populate(populate);
+        const count = await Models.chatbotModel.countDocuments(query);
+        const response: ChatbotResponse = {
             count: count,
             data: data
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const deleteChatbot = async (req: CustomRequest) => {
+const deleteChatbot = async (req: CustomRequest): Promise<MessageResponse> => {
     try {
-        let { documentId } = req.query;
-        let { _id: userId } = req.userData!;
+        const { documentId } = req.query;
+        const { _id: userId } = req.userData!;
         await session.run(
             `
                     MATCH (n:Chunk {documentId: $documentId})
@@ -824,48 +783,55 @@ const deleteChatbot = async (req: CustomRequest) => {
                     `,
             { documentId: documentId }
         );
-        let query = {
-            userId: userId,
-            documentId: documentId
-        }
+        const query = { userId: userId, documentId: documentId }
         await Models.textModel.deleteMany(query);
         await Models.chatbotModel.deleteOne(query);
-        let query1 = { documentId: documentId }
+        const query1 = { documentId: documentId }
         await deleteSessions(query1);
-        let response = {
+        const response: MessageResponse = {
             message: "Chatbot Deleted Successfully"
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
 const deleteSessions = async (query: object) => {
     try {
-        let projection = { __v: 0 }
-        let option = { lean: true }
-        let fetchIps: IIps[] = await Models.ipAddressModel.find(query, projection, option)
+        const fetchIps: Ips[] = await Models.ipAddressModel.find(query, projection, option)
         if (fetchIps?.length) {
-            let ids = fetchIps.map((item) => item?._id);
-            let query1 = { ipAddressId: { $in: ids } }
-            await Models.chatSessionModel.deleteMany(query1);
+            const ids = fetchIps.map((item) => item?._id);
+            await Models.chatSessionModel.deleteMany({ ipAddressId: { $in: ids } });
         }
         await Models.ipAddressModel.deleteMany(query)
         await Models.messageModel.deleteMany(query);
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const chatHistory = async (req: CustomRequest) => {
+interface List {
+    _id: string;
+    ipAddress: string;
+    documentId: string;
+    sessionType: string;
+    message: Message[]
+}
+
+interface ChatHistory {
+    count: number;
+    data: List[]
+}
+
+const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
-        let { documentId, pagination, limit } = req.query;
-        let setPagination = pagination ?? 1;
-        let setLimit = limit ?? 10
-        let query: any = [
+        const { documentId, pagination, limit } = req.query;
+        const setPagination = pagination ?? 1;
+        const setLimit = limit ?? 10
+        const query: any = [
             await ChatHistoryAggregation.matchData(documentId?.toString()!),
             await ChatHistoryAggregation.lookupChatSessions(),
             await ChatHistoryAggregation.unwindChatSessions(),
@@ -873,34 +839,33 @@ const chatHistory = async (req: CustomRequest) => {
             await ChatHistoryAggregation.groupData(),
             await ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];
-        let fetchData = await Models.ipAddressModel.aggregate(query);
-        let response = {
+        const fetchData = await Models.ipAddressModel.aggregate(query);
+        const response: ChatHistory = {
             count: fetchData[0]?.count[0]?.count ?? 0,
             data: fetchData[0]?.data ?? []
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const chatDetail = async (req: CustomRequest) => {
+const chatDetail = async (req: CustomRequest): Promise<MessageResponseList> => {
     try {
-        let { sessionId, pagination, limit } = req.query;
-        let query = { sessionId: new Types.ObjectId(sessionId as string) }
-        let projection = { __v: 0 }
-        let options = CommonHelper.setOptions(+pagination!, +limit!, { _id: 1 });
-        let fetchData: IMessage[] = await Models.messageModel.find(query, projection, options);
-        let count: number = await Models.messageModel.countDocuments(query);
-        let response = {
+        const { sessionId, pagination, limit } = req.query;
+        const query = { sessionId: new Types.ObjectId(sessionId as string) }
+        const options = CommonHelper.setOptions(+pagination!, +limit!, { _id: 1 });
+        const fetchData: Message[] = await Models.messageModel.find(query, projection, options);
+        const count = await Models.messageModel.countDocuments(query);
+        const response: MessageResponseList = {
             count: count,
             data: fetchData
         }
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
@@ -927,6 +892,3 @@ export {
     chatHistory,
     chatDetail
 }
-
-
-

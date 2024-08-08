@@ -26,24 +26,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.role = void 0;
+exports.Role = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const moment_1 = __importDefault(require("moment"));
-var role;
-(function (role) {
-    role["User"] = "USER";
-    role["AI"] = "AI";
-})(role || (exports.role = role = {}));
+var Role;
+(function (Role) {
+    Role["User"] = "USER";
+    Role["AI"] = "AI";
+})(Role || (exports.Role = Role = {}));
 const messageSchema = new mongoose_1.default.Schema({
     message: { type: String, default: null },
     ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Ips" },
     sessionId: { type: mongoose_1.Types.ObjectId, default: null, ref: "ChatSessions" },
     documentId: { type: String, default: null },
-    messageType: { type: String, default: null, enum: Object.values(role) },
+    messageType: { type: String, default: null, enum: Object.values(Role) },
     createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 },
 }, {
-    timestamps: false
+    timestamps: false // Disable timestamp because we are handling createdAt and updatedAt manually, if we are setting this to true then it will create automatically createdAt and updatedAt with Date type.
 });
 const messageModel = mongoose_1.default.model("Messages", messageSchema);
 exports.default = messageModel;

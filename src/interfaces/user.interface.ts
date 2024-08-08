@@ -1,6 +1,6 @@
-import { Types, Document } from "mongoose";
+import { Types } from "mongoose";
 
-export default interface IUser {
+export default interface User {
     _id?: Types.ObjectId;
     name?: string;
     firstname?: string;

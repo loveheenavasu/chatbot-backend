@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 
 
-export default interface IText {
+export default interface Text {
     _id?: Types.ObjectId;
     text?: string;
     type?: string;

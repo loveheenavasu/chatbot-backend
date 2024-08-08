@@ -1,6 +1,7 @@
 import neo4j from 'neo4j-driver';
 import { config } from 'dotenv';
 config();
+
 const NEO_URL = process.env.NEO_URL as string;
 const NEO_USERNAME = process.env.NEO_USERNAME as string;
 const NEO_PASSWORD = process.env.NEO_PASSWORD as string;

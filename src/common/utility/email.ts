@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
-import { config } from 'dotenv';
 import * as Handler from '../../handler/handler';
-import { IErrorResponse } from '../../handler/error';
+import { ErrorResponse } from '../../handler/error';
+import { config } from 'dotenv';
 config();
 const { NODEMAILER_EMAIL, NODEMAILER_PASSWORD } = process.env;
 
@@ -25,6 +25,6 @@ export const sendEmail = async (email: string, subject: string, html: any) => {
         await transporter.sendMail(mailOptions);
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }

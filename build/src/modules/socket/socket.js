@@ -59,50 +59,50 @@ const connectSocket = (server) => {
                         ip = ip.split(',')[0].trim();
                     }
                     console.log("ip---", ip);
-                    let { text, documentId, chatSessionId } = payload;
+                    const { text, documentId, chatSessionId } = payload;
                     console.log("payload----", payload);
-                    let res = {
+                    const res = {
                         message: text,
                         sessionId: chatSessionId !== null && chatSessionId !== void 0 ? chatSessionId : null,
-                        type: message_model_1.role.User
+                        type: message_model_1.Role.User
                     };
                     socket.emit("searches", res);
-                    let query = { ipAddress: ip, documentId: documentId };
-                    let projection = { __v: 0 };
-                    let option = { lean: true };
-                    let fetchData = yield Models.ipAddressModel.findOne(query, projection, option);
+                    const query = { ipAddress: ip, documentId: documentId };
+                    const projection = { __v: 0 };
+                    const option = { lean: true };
+                    const fetchData = yield Models.ipAddressModel.findOne(query, projection, option);
                     let ipAddressId;
                     let sessionId;
                     if (fetchData) {
-                        let { _id } = fetchData;
+                        const { _id } = fetchData;
                         ipAddressId = _id;
-                        let query = { _id: new mongoose_1.Types.ObjectId(chatSessionId), sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.ONGOING };
-                        let fetchSession = yield Models.chatSessionModel.findOne(query, projection, option);
+                        const query = { _id: new mongoose_1.Types.ObjectId(chatSessionId), sessionType: chat_session_model_1.SessionType.ONGOING };
+                        const fetchSession = yield Models.chatSessionModel.findOne(query, projection, option);
                         if (fetchSession) {
-                            let { _id } = fetchSession;
+                            const { _id } = fetchSession;
                             sessionId = _id;
                         }
                         else {
-                            let sessionSave = yield SocketService.saveChatSession(ipAddressId);
+                            const sessionSave = yield SocketService.saveChatSession(ipAddressId);
                             sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
                         }
                     }
                     else {
-                        let dataToSave = {
+                        const dataToSave = {
                             ipAddress: ip,
                             documentId: documentId,
                             createdAt: (0, moment_1.default)().utc().valueOf()
                         };
-                        let saveData = yield Models.ipAddressModel.create(dataToSave);
-                        ipAddressId = saveData === null || saveData === void 0 ? void 0 : saveData._id;
-                        let sessionSave = yield SocketService.saveChatSession(ipAddressId);
-                        sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
+                        const saveData = yield Models.ipAddressModel.create(dataToSave);
+                        ipAddressId = saveData._id;
+                        const sessionSave = yield SocketService.saveChatSession(ipAddressId);
+                        sessionId = sessionSave._id;
                     }
-                    let data = yield SocketService.searchInput(text, documentId, ipAddressId, sessionId);
-                    let response = {
+                    const data = yield SocketService.searchInput(text, documentId, ipAddressId, sessionId);
+                    const response = {
                         message: data,
                         sessionId: sessionId,
-                        type: message_model_1.role.AI
+                        type: message_model_1.Role.AI
                     };
                     socket.chatSessionId = sessionId;
                     socket.emit("searches", response);
@@ -113,12 +113,12 @@ const connectSocket = (server) => {
             }));
             socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
                 try {
-                    let query = { _id: socket === null || socket === void 0 ? void 0 : socket.chatSessionId };
-                    let update = {
-                        sessionType: chat_session_model_1.sessionType === null || chat_session_model_1.sessionType === void 0 ? void 0 : chat_session_model_1.sessionType.COMPLETED,
+                    const query = { _id: socket === null || socket === void 0 ? void 0 : socket.chatSessionId };
+                    const update = {
+                        sessionType: chat_session_model_1.SessionType.COMPLETED,
                         updatedAt: (0, moment_1.default)().utc().valueOf()
                     };
-                    let options = { new: true };
+                    const options = { new: true };
                     yield Models.chatSessionModel.findOneAndUpdate(query, update, options);
                 }
                 catch (err) {

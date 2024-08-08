@@ -6,26 +6,26 @@ export interface CustomRequest extends Request {
     userData?: IUser;
 }
 
-export interface IToken {
+export interface Token {
     _id?: string | Types.ObjectId;
     scope?: string;
     tokenGenAt?: number;
     iat?: number;
 }
 
-export interface INeoConfig {
+export interface NeoConfig {
     url: string;
     username: string;
     password: string;
 }
 
-export interface ISocketResponse {
+export interface SocketResponse {
     message?: string | null,
     sessionId?: Types.ObjectId | string | null,
     type?: string
 }
 
-export interface ISignupPayload {
+export interface SignupPayload {
     email: string;
     password: string;
     firstname: string;

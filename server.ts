@@ -16,7 +16,7 @@ const { PORT } = process.env;
     app.use(cors({ origin: "*" }));
     app.use('/user', user);
 
-    let server = http.createServer(app);
+    const server = http.createServer(app);
     server.listen(PORT, () => {
         console.log(`Server is listening on port ${PORT}`);
     })

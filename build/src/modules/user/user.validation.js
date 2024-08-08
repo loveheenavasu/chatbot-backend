@@ -31,13 +31,13 @@ const Handler = __importStar(require("../../handler/handler"));
 const joi_1 = __importDefault(require("joi"));
 const signup = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             password: joi_1.default.string().min(8).required(),
             firstname: joi_1.default.string().trim().required(),
             lastname: joi_1.default.string().trim().optional()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -49,10 +49,10 @@ const signup = (req, res, next) => {
 exports.signup = signup;
 const verify = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             otp: joi_1.default.string().required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -64,10 +64,10 @@ const verify = (req, res, next) => {
 exports.verify = verify;
 const resendAndForgot = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -79,11 +79,11 @@ const resendAndForgot = (req, res, next) => {
 exports.resendAndForgot = resendAndForgot;
 const verifyForgot = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             otp: joi_1.default.string().required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -95,11 +95,11 @@ const verifyForgot = (req, res, next) => {
 exports.verifyForgot = verifyForgot;
 const resetPassword = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             uniqueCode: joi_1.default.string().trim().required(),
             password: joi_1.default.string().min(8).required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -111,11 +111,11 @@ const resetPassword = (req, res, next) => {
 exports.resetPassword = resetPassword;
 const login = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             password: joi_1.default.string().min(8).required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -127,7 +127,7 @@ const login = (req, res, next) => {
 exports.login = login;
 const socialLogin = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             email: joi_1.default.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             firstname: joi_1.default.string().trim().required(),
             lastname: joi_1.default.string().trim().optional(),
@@ -136,7 +136,7 @@ const socialLogin = (req, res, next) => {
             isAdmin: joi_1.default.boolean().optional(),
             socialToken: joi_1.default.string().trim().optional()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -148,10 +148,10 @@ const socialLogin = (req, res, next) => {
 exports.socialLogin = socialLogin;
 const documentId = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -163,10 +163,10 @@ const documentId = (req, res, next) => {
 exports.documentId = documentId;
 const textDetail = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().optional()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -178,12 +178,12 @@ const textDetail = (req, res, next) => {
 exports.textDetail = textDetail;
 const documentIdWithPL = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().optional(),
             pagination: joi_1.default.number().optional(),
             limit: joi_1.default.number().optional()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -195,12 +195,12 @@ const documentIdWithPL = (req, res, next) => {
 exports.documentIdWithPL = documentIdWithPL;
 const sessionIdWithPL = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             sessionId: joi_1.default.string().trim().required(),
             pagination: joi_1.default.number().optional(),
             limit: joi_1.default.number().optional()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -212,11 +212,11 @@ const sessionIdWithPL = (req, res, next) => {
 exports.sessionIdWithPL = sessionIdWithPL;
 const deleteFile = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required(),
             docNo: joi_1.default.number().required()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -228,11 +228,11 @@ const deleteFile = (req, res, next) => {
 exports.deleteFile = deleteFile;
 const text = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             text: joi_1.default.string().trim().required(),
             documentId: joi_1.default.string().trim().optional()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -244,11 +244,11 @@ const text = (req, res, next) => {
 exports.text = text;
 const updateText = (req, res, next) => {
     try {
-        let schema = joi_1.default.object({
+        const schema = joi_1.default.object({
             text: joi_1.default.string().trim().required(),
             _id: joi_1.default.string().trim().required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error)
             return Handler.handleJoiError(error);
         next();
@@ -264,7 +264,7 @@ const uploadFile = (req, res, next) => {
             documentId: joi_1.default.string().optional(),
             file: joi_1.default.object().required()
         });
-        let { error } = schema.validate({
+        const { error } = schema.validate({
             documentId: req.body.documentId,
             file: req.file
         });

@@ -1,16 +1,16 @@
-import { IErrorResponse } from "../../../handler/error";
+import { ErrorResponse } from "../../../handler/error";
 import * as Handler from "../../../handler/handler";
 
 const matchData = async (documentId: string) => {
     try {
         return {
-            $match: {
+            $match: { // match the documentId with the aggregate collection
                 documentId: documentId
             }
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
@@ -18,7 +18,7 @@ const lookupChatSessions = async () => {
     try {
         return {
             $lookup: {
-                from: "chatsessions",
+                from: "chatsessions", // collection where to find the result based on match condition
                 let: { ipAddressId: "$_id" },
                 pipeline: [
                     {
@@ -34,21 +34,21 @@ const lookupChatSessions = async () => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
 const unwindChatSessions = async () => {
     try {
         return {
-            $unwind: {
-                path: "$chatsessions",
+            $unwind: { // array convert into objects with unwind (split into individual documents)
+                path: "$chatsessions", 
                 preserveNullAndEmptyArrays: false
             }
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
@@ -56,26 +56,26 @@ const lookupMessages = async () => {
     try {
         return {
             $lookup: {
-                from: "messages",
+                from: "messages", // collection from which we find the documents 
                 let: { sessionId: "$chatsessions._id" },
                 pipeline: [
                     {
-                        $match: {
+                        $match: { // match the documents based on the condition
                             $expr: {
                                 $eq: ["$sessionId", "$$sessionId"]
                             }
                         }
                     },
                     {
-                        $sort: {
+                        $sort: { // sorting in descending order based on _id
                             _id: -1
                         }
                     },
                     {
-                        $limit: 2
+                        $limit: 2 // limit the result with only 2 documents 
                     },
                     {
-                        $sort: {
+                        $sort: { // sorting in ascending order based on _id
                             _id: 1
                         }
                     }
@@ -85,7 +85,7 @@ const lookupMessages = async () => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
@@ -93,7 +93,7 @@ const groupData = async () => {
     try {
         return {
             $group: {
-                _id: "$chatsessions._id",
+                _id: "$chatsessions._id", // Group documents by the _id field
                 ipAddress: { $first: "$ipAddress" },
                 documentId: { $first: "$documentId" },
                 sessionType: { $first: "$chatsessions.sessionType" },
@@ -102,25 +102,25 @@ const groupData = async () => {
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
 const facetData = async (pagination: number, limit: number) => {
     try {
         return {
-            $facet: {
-                count: [{ $count: "count" }],
+            $facet: {  // $facet allows you to perform multiple separate aggregations on the same set of input documents.
+                count: [{ $count: "count" }], // counts the total number of documents
                 data: [
-                    { $sort: { _id: -1 } },
-                    { $skip: (pagination - 1) * limit },
-                    { $limit: limit }
+                    { $sort: { _id: -1 } }, // Sort documents by _id in descending order
+                    { $skip: (pagination - 1) * limit }, // Skip documents based on the current page
+                    { $limit: limit } // Limit the number of documents
                 ]
             }
         }
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 

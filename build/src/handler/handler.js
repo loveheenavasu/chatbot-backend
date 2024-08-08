@@ -13,8 +13,8 @@ exports.handleSuccess = handleSuccess;
 const handleCustomError = (error) => {
     var _a, _b;
     try {
-        let message = (_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : 'Bad Request';
-        let statusCode = (_b = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _b !== void 0 ? _b : 400;
+        const message = (_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : 'Bad Request';
+        const statusCode = (_b = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _b !== void 0 ? _b : 400;
         throw {
             message: message,
             statusCode: statusCode
@@ -28,8 +28,8 @@ exports.handleCustomError = handleCustomError;
 const handleCatchError = (res, error) => {
     var _a;
     try {
-        let { message } = error;
-        let statusCode = (_a = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _a !== void 0 ? _a : 400;
+        const { message } = error;
+        const statusCode = (_a = error === null || error === void 0 ? void 0 : error.statusCode) !== null && _a !== void 0 ? _a : 400;
         res.status(statusCode).send({ message: message });
     }
     catch (err) {
@@ -40,8 +40,8 @@ exports.handleCatchError = handleCatchError;
 const handleJoiError = (error) => {
     var _a;
     try {
-        let message = (_a = error === null || error === void 0 ? void 0 : error.details[0]) === null || _a === void 0 ? void 0 : _a.message;
-        let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
+        const message = (_a = error === null || error === void 0 ? void 0 : error.details[0]) === null || _a === void 0 ? void 0 : _a.message;
+        const errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
         throw {
             message: errorMessage,
             statusCode: 400

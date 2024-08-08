@@ -51,7 +51,7 @@ const lookupChatSessions = () => __awaiter(void 0, void 0, void 0, function* () 
     try {
         return {
             $lookup: {
-                from: "chatsessions",
+                from: "chatsessions", // collection where to find the result based on match condition
                 let: { ipAddressId: "$_id" },
                 pipeline: [
                     {
@@ -89,7 +89,7 @@ const lookupMessages = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $lookup: {
-                from: "messages",
+                from: "messages", // collection from which we find the documents 
                 let: { sessionId: "$chatsessions._id" },
                 pipeline: [
                     {
@@ -105,7 +105,7 @@ const lookupMessages = () => __awaiter(void 0, void 0, void 0, function* () {
                         }
                     },
                     {
-                        $limit: 2
+                        $limit: 2 // limit the result with only 2 documents 
                     },
                     {
                         $sort: {
@@ -126,7 +126,7 @@ const groupData = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {
             $group: {
-                _id: "$chatsessions._id",
+                _id: "$chatsessions._id", // Group documents by the _id field
                 ipAddress: { $first: "$ipAddress" },
                 documentId: { $first: "$documentId" },
                 sessionType: { $first: "$chatsessions.sessionType" },
@@ -143,11 +143,11 @@ const facetData = (pagination, limit) => __awaiter(void 0, void 0, void 0, funct
     try {
         return {
             $facet: {
-                count: [{ $count: "count" }],
+                count: [{ $count: "count" }], // counts the total number of documents
                 data: [
-                    { $sort: { _id: -1 } },
-                    { $skip: (pagination - 1) * limit },
-                    { $limit: limit }
+                    { $sort: { _id: -1 } }, // Sort documents by _id in descending order
+                    { $skip: (pagination - 1) * limit }, // Skip documents based on the current page
+                    { $limit: limit } // Limit the number of documents
                 ]
             }
         };

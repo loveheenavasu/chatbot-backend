@@ -1,6 +1,5 @@
 import { Response } from 'express';
-import { IErrorResponse } from './error';
-
+import { ErrorResponse } from './error';
 
 const handleSuccess = (res: Response, data: any) => {
     try {
@@ -11,10 +10,10 @@ const handleSuccess = (res: Response, data: any) => {
     }
 }
 
-const handleCustomError = (error: IErrorResponse) => {
+const handleCustomError = (error: ErrorResponse) => {
         try {
-            let message = error?.message ?? 'Bad Request'
-            let statusCode = error?.statusCode ?? 400
+            const message = error?.message ?? 'Bad Request'
+            const statusCode = error?.statusCode ?? 400
             throw {
                 message: message,
                 statusCode: statusCode
@@ -25,10 +24,10 @@ const handleCustomError = (error: IErrorResponse) => {
         }
     }
 
-const handleCatchError = (res: Response, error: IErrorResponse) => {
+const handleCatchError = (res: Response, error: ErrorResponse) => {
     try {
-        let { message } = error
-        let statusCode = error?.statusCode ?? 400
+        const { message } = error
+        const statusCode = error?.statusCode ?? 400
         res.status(statusCode).send({ message: message });
     }
     catch (err) {
@@ -37,10 +36,10 @@ const handleCatchError = (res: Response, error: IErrorResponse) => {
 }
 
 
-const handleJoiError = (error: IErrorResponse | any) => {
+const handleJoiError = (error: ErrorResponse | any) => {
         try {
-            let message = error?.details[0]?.message;
-            let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
+            const message = error?.details[0]?.message;
+            const errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
             throw {
                 message: errorMessage,
                 statusCode: 400

@@ -42,8 +42,8 @@ const fs_1 = __importDefault(require("fs"));
 const email_1 = require("./utility/email");
 const verificationCode = (email, otp) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let subject = "OTP Verification";
-        let filepath = path_1.default.join(__dirname, '../email-templates/verify-code.html');
+        const subject = "OTP Verification";
+        const filepath = path_1.default.join(__dirname, '../email-templates/verify-code.html');
         let html = fs_1.default.readFileSync(filepath, { encoding: 'utf-8' });
         html = html.replace('VERIFICATION_CODE', otp === null || otp === void 0 ? void 0 : otp.toString());
         yield (0, email_1.sendEmail)(email, subject, html);

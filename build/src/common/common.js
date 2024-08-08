@@ -37,8 +37,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchUser = exports.verifyToken = exports.signToken = exports.generateUniqueCode = exports.generateOtp = exports.comparePassword = exports.hashPassword = exports.setOptions = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const dotenv_1 = require("dotenv");
-(0, dotenv_1.config)();
 const jwt = __importStar(require("jsonwebtoken"));
 const moment_1 = __importDefault(require("moment"));
 const Models = __importStar(require("../models/index"));
@@ -46,7 +44,11 @@ const mongoose_1 = require("mongoose");
 const randomstring_1 = __importDefault(require("randomstring"));
 const Handler = __importStar(require("../handler/handler"));
 const error_1 = require("../handler/error");
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
 const { SALT_ROUND, SECRET_KEY } = process.env;
+const projection = { __v: 0 };
+const option = { lean: true };
 const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) => {
     try {
         const options = {
@@ -64,7 +66,7 @@ const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) => {
 exports.setOptions = setOptions;
 const hashPassword = (password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield bcrypt_1.default.hash(password, Number(SALT_ROUND));
+        const response = yield bcrypt_1.default.hash(password, Number(SALT_ROUND));
         return response;
     }
     catch (err) {
@@ -74,7 +76,7 @@ const hashPassword = (password) => __awaiter(void 0, void 0, void 0, function* (
 exports.hashPassword = hashPassword;
 const comparePassword = (hashPassword, password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield bcrypt_1.default.compare(password, hashPassword);
+        const response = yield bcrypt_1.default.compare(password, hashPassword);
         return response;
     }
     catch (err) {
@@ -84,11 +86,11 @@ const comparePassword = (hashPassword, password) => __awaiter(void 0, void 0, vo
 exports.comparePassword = comparePassword;
 const generateOtp = () => {
     try {
-        let options = {
+        const options = {
             length: 4,
             charset: 'numeric'
         };
-        let response = randomstring_1.default.generate(options);
+        const response = randomstring_1.default.generate(options);
         return response;
     }
     catch (err) {
@@ -98,11 +100,11 @@ const generateOtp = () => {
 exports.generateOtp = generateOtp;
 const generateUniqueCode = () => {
     try {
-        let options = {
+        const options = {
             length: 6,
             charset: 'alphabetic'
         };
-        let response = randomstring_1.default.generate(options);
+        const response = randomstring_1.default.generate(options);
         return response;
     }
     catch (err) {
@@ -113,7 +115,7 @@ exports.generateUniqueCode = generateUniqueCode;
 const signToken = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         data.tokenGenAt = (0, moment_1.default)().utc().valueOf();
-        let token = jwt.sign(data, String(SECRET_KEY), { expiresIn: '60s' });
+        const token = jwt.sign(data, String(SECRET_KEY), { expiresIn: '30m' });
         yield saveSession(token, data);
         return token;
     }
@@ -124,13 +126,13 @@ const signToken = (data) => __awaiter(void 0, void 0, void 0, function* () {
 exports.signToken = signToken;
 const saveSession = (token, data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { _id, tokenGenAt } = data;
-        let saveData = {
+        const { _id, tokenGenAt } = data;
+        const saveData = {
             accessToken: token,
             tokenGenAt: tokenGenAt,
             userId: _id
         };
-        let response = yield Models.sessionModel.create(saveData);
+        const response = yield Models.sessionModel.create(saveData);
         return response;
     }
     catch (err) {
@@ -139,8 +141,8 @@ const saveSession = (token, data) => __awaiter(void 0, void 0, void 0, function*
 });
 const verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let data = jwt.verify(token, String(SECRET_KEY));
-        let checkSession = yield checkSessionData(data);
+        const data = jwt.verify(token, String(SECRET_KEY));
+        const checkSession = yield checkSessionData(data);
         if (!checkSession)
             return Handler.handleCustomError(error_1.Unauthorized);
         return data;
@@ -156,10 +158,8 @@ const verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
 exports.verifyToken = verifyToken;
 const checkSessionData = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let query = { userId: new mongoose_1.Types.ObjectId(data === null || data === void 0 ? void 0 : data._id) };
-        let projection = { __v: 0 };
-        let option = { lean: true };
-        let response = yield Models.sessionModel.findOne(query, projection, option);
+        const query = { userId: new mongoose_1.Types.ObjectId(data._id) };
+        const response = yield Models.sessionModel.findOne(query, projection, option);
         return response;
     }
     catch (err) {
@@ -168,9 +168,8 @@ const checkSessionData = (data) => __awaiter(void 0, void 0, void 0, function* (
 });
 const fetchUser = (query) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let projection = { __v: 0, password: 0 };
-        let option = { lean: true };
-        let data = yield Models.userModel.findOne(query, projection, option);
+        const projection = { __v: 0, password: 0 };
+        const data = yield Models.userModel.findOne(query, projection, option);
         return data;
     }
     catch (err) {

@@ -1,101 +1,101 @@
 import { Response, Request, NextFunction } from 'express';
 import * as Handler from '../../handler/handler';
 import Joi from 'joi';
-import { IErrorResponse } from '../../handler/error';
+import { ErrorResponse } from '../../handler/error';
 
 const signup = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             password: Joi.string().min(8).required(),
             firstname: Joi.string().trim().required(),
             lastname: Joi.string().trim().optional()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const verify = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             otp: Joi.string().required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const resendAndForgot = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const verifyForgot = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             otp: Joi.string().required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const resetPassword = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             uniqueCode: Joi.string().trim().required(),
             password: Joi.string().min(8).required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const login = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             password: Joi.string().min(8).required()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const socialLogin = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             email: Joi.string().email().trim().messages({ "string.email": "Please enter valid email address" }).required(),
             firstname: Joi.string().trim().required(),
             lastname: Joi.string().trim().optional(),
@@ -104,122 +104,120 @@ const socialLogin = (req: Request, res: Response, next: NextFunction) => {
             isAdmin: Joi.boolean().optional(),
             socialToken: Joi.string().trim().optional()
         });
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 
 const documentId = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             documentId: Joi.string().trim().required()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const textDetail = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             documentId: Joi.string().trim().optional()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 
 const documentIdWithPL = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             documentId: Joi.string().trim().optional(),
             pagination: Joi.number().optional(),
             limit: Joi.number().optional()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const sessionIdWithPL = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             sessionId: Joi.string().trim().required(),
             pagination: Joi.number().optional(),
             limit: Joi.number().optional()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const deleteFile = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             documentId: Joi.string().trim().required(),
             docNo: Joi.number().required()
         });
-        let { error } = schema.validate(req.query);
+        const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 
 const text = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             text: Joi.string().trim().required(),
             documentId: Joi.string().trim().optional()
         });
-
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
 const updateText = (req: Request, res: Response, next: NextFunction) => {
     try {
-        let schema = Joi.object({
+        const schema = Joi.object({
             text: Joi.string().trim().required(),
             _id: Joi.string().trim().required()
         });
-
-        let { error } = schema.validate(req.body);
+        const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 
@@ -229,7 +227,7 @@ const uploadFile = (req: Request, res: Response, next: NextFunction) => {
             documentId: Joi.string().optional(),
             file: Joi.object().required()
         });
-        let { error } = schema.validate({
+        const { error } = schema.validate({
             documentId: req.body.documentId,
             file: req.file
         });
@@ -237,7 +235,7 @@ const uploadFile = (req: Request, res: Response, next: NextFunction) => {
         next();
     }
     catch (err) {
-        return Handler.handleCatchError(res, err as IErrorResponse);
+        return Handler.handleCatchError(res, err as ErrorResponse);
     }
 }
 

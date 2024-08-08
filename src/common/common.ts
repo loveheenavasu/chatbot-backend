@@ -1,20 +1,22 @@
 import bcrypt from 'bcrypt';
-import { config } from 'dotenv';
-config();
 import * as jwt from 'jsonwebtoken';
 import moment from 'moment';
 import * as Models from '../models/index';
 import { Types } from 'mongoose';
 import random from 'randomstring';
 import * as Handler from '../handler/handler';
-import { IErrorResponse, InvalidToken, Unauthorized } from '../handler/error';
-import { IToken } from '../interfaces/common.interface';
-import ISession from '../interfaces/session.interface';
-import IUser from '../interfaces/user.interface';
+import { ErrorResponse, InvalidToken, Unauthorized } from '../handler/error';
+import { Token } from '../interfaces/common.interface';
+import Session from '../interfaces/session.interface';
+import User from '../interfaces/user.interface';
+import { config } from 'dotenv';
+config();
 
 const { SALT_ROUND, SECRET_KEY } = process.env;
+const projection = { __v: 0 };
+const option = { lean: true };
 
-const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) => {
+const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }): object => {
     try {
         const options = {
             lean: true,
@@ -25,96 +27,96 @@ const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) => {
         return options;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const hashPassword = async (password: string) => {
+const hashPassword = async (password: string): Promise<string> => {
     try {
-        let response = await bcrypt.hash(password, Number(SALT_ROUND));
+        const response = await bcrypt.hash(password, Number(SALT_ROUND));
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const comparePassword = async (hashPassword: string, password: string) => {
+const comparePassword = async (hashPassword: string, password: string): Promise<boolean> => {
     try {
-        let response = await bcrypt.compare(password, hashPassword);
+        const response = await bcrypt.compare(password, hashPassword);
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const generateOtp = () => {
+const generateOtp = (): string => {
     try {
-        let options = {
+        const options = {
             length: 4,
             charset: 'numeric'
         }
-        let response = random.generate(options);
+        const response = random.generate(options);
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const generateUniqueCode = () => {
+const generateUniqueCode = (): string => {
     try {
-        let options = {
+        const options = {
             length: 6,
             charset: 'alphabetic'
         }
-        let response = random.generate(options);
+        const response = random.generate(options);
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
 
-const signToken = async (data: IToken) => {
+const signToken = async (data: Token): Promise<string> => {
     try {
         data.tokenGenAt = moment().utc().valueOf();
-        let token: string = jwt.sign(data, String(SECRET_KEY), { expiresIn: '60s' });
+        const token: string = jwt.sign(data, String(SECRET_KEY), { expiresIn: '30m' });
         await saveSession(token, data)
         return token;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const saveSession = async (token: string, data: IToken) => {
+const saveSession = async (token: string, data: Token): Promise<Session> => {
     try {
-        let { _id, tokenGenAt } = data
-        let saveData: ISession = {
+        const { _id, tokenGenAt } = data
+        const saveData: Session = {
             accessToken: token,
             tokenGenAt: tokenGenAt,
             userId: _id
         }
-        let response: ISession = await Models.sessionModel.create(saveData);
+        const response = await Models.sessionModel.create(saveData);
         return response;
 
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const verifyToken = async (token: string) => {
+const verifyToken = async (token: string): Promise<Token> => {
     try {
-        let data = jwt.verify(token, String(SECRET_KEY)) as IToken;
-        let checkSession = await checkSessionData(data);
+        const data = jwt.verify(token, String(SECRET_KEY)) as Token;
+        const checkSession = await checkSessionData(data);
         if (!checkSession) return Handler.handleCustomError(Unauthorized);
         return data;
     }
-    catch (err: IErrorResponse | any) {
+    catch (err: ErrorResponse | any) {
         if (err?.message == "jwt expired") {
             await Models.sessionModel.deleteOne({ accessToken: token });
             return Handler.handleCustomError(InvalidToken);
@@ -123,28 +125,25 @@ const verifyToken = async (token: string) => {
     }
 }
 
-const checkSessionData = async (data: IToken) => {
+const checkSessionData = async (data: Token): Promise<Session | null> => {
     try {
-        let query = { userId: new Types.ObjectId(data?._id!) };
-        let projection = { __v: 0 }
-        let option = { lean: true }
-        let response: ISession | null = await Models.sessionModel.findOne(query, projection, option);
+        const query = { userId: new Types.ObjectId(data._id) };
+        const response = await Models.sessionModel.findOne(query, projection, option);
         return response;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 
-const fetchUser = async (query: object) => {
+const fetchUser = async (query: object): Promise<User | null> => {
     try {
-        let projection = { __v: 0, password: 0 }
-        let option = { lean: true }
-        let data: IUser | null = await Models.userModel.findOne(query, projection, option);
+        const projection = { __v: 0, password: 0 }
+        const data = await Models.userModel.findOne(query, projection, option);
         return data;
     }
     catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+        return Handler.handleCustomError(err as ErrorResponse);
     }
 }
 

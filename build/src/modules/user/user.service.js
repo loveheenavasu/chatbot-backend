@@ -43,9 +43,7 @@ const Handler = __importStar(require("../../handler/handler"));
 const error_1 = require("../../handler/error");
 const CommonHelper = __importStar(require("../../common/common"));
 const openai_1 = require("@langchain/openai");
-const dotenv_1 = require("dotenv");
 const neo4j_1 = require("../../config/neo4j");
-(0, dotenv_1.config)();
 const neo4j_vector_1 = require("@langchain/community/vectorstores/neo4j_vector");
 const documents_1 = require("@langchain/core/documents");
 const pdf_1 = require("@langchain/community/document_loaders/fs/pdf");
@@ -58,6 +56,8 @@ const text_model_1 = require("../../models/text.model");
 const user_model_1 = require("../../models/user.model");
 const ChatHistoryAggregation = __importStar(require("./aggregation/chat-history.aggregation"));
 const EmailService = __importStar(require("../../common/emailService"));
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
 const { v4: uuidv4 } = require('uuid');
 const OPEN_API_KEY = process.env.OPEN_API_KEY;
 const NEO_URL = process.env.NEO_URL;
@@ -69,49 +69,42 @@ const openai = new openai_1.OpenAIEmbeddings({
     batchSize: 512,
     apiKey: OPEN_API_KEY
 });
-let neoConfig = {
+const neoConfig = {
     url: NEO_URL,
     username: NEO_USERNAME,
     password: NEO_PASSWORD
 };
+const projection = { __v: 0 };
+const option = { lean: true };
+const options = { new: true };
+const optionWithSortDesc = { lean: true, sort: { _id: -1 } };
+const optionWithSortAsc = { lean: true, sort: { _id: 1 } };
 const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email } = req.body;
-        let query = { email: email.toLowerCase() };
-        let projection = { __v: 0 };
-        let options = { lean: true };
-        let fetchData = yield Models.userModel.findOne(query, projection, options);
-        if (fetchData) {
-            let { _id, isEmailVerified } = fetchData;
-            if (isEmailVerified)
+        const { email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail };
+        const user = yield Models.userModel.findOne(query, projection, option);
+        if (user) {
+            if (user.isEmailVerified)
                 return Handler.handleCustomError(error_1.EmailAlreadyExists);
-            let query1 = { userId: _id };
-            yield Models.sessionModel.deleteMany(query1);
-            let data = yield signupData(req.body);
-            let options = { new: true };
-            let updateData = yield Models.userModel.findOneAndUpdate(query, data, options);
-            let accessToken = yield fetchToken(updateData === null || updateData === void 0 ? void 0 : updateData._id, SCOPE);
-            updateData._doc["accessToken"] = accessToken;
-            delete updateData._doc["password"];
-            delete updateData._doc["otp"];
-            yield EmailService.verificationCode(email, data.otp);
-            let response = {
-                message: `Otp sent to ${updateData === null || updateData === void 0 ? void 0 : updateData.email}`,
-                data: updateData
+            yield Models.sessionModel.deleteMany({ userId: user._id });
+            const updatedData = yield updateUser(user._id, req.body);
+            yield EmailService.verificationCode(email, updatedData === null || updatedData === void 0 ? void 0 : updatedData.otp);
+            delete updatedData._doc.otp;
+            const response = {
+                message: `Otp sent to ${updatedData.email}`,
+                data: updatedData
             };
             return response;
         }
         else {
-            let data = yield signupData(req.body);
-            let saveData = yield Models.userModel.create(data);
-            let accessToken = yield fetchToken(saveData === null || saveData === void 0 ? void 0 : saveData._id, SCOPE);
-            saveData._doc["accessToken"] = accessToken;
-            delete saveData._doc["password"];
-            delete saveData._doc["otp"];
-            yield EmailService.verificationCode(email, data.otp);
-            let response = {
-                message: `Otp sent to ${saveData === null || saveData === void 0 ? void 0 : saveData.email}`,
-                data: saveData
+            const newUser = yield createNewUser(req.body);
+            yield EmailService.verificationCode(email, newUser === null || newUser === void 0 ? void 0 : newUser.otp);
+            newUser === null || newUser === void 0 ? true : delete newUser._doc.otp;
+            const response = {
+                message: `Otp sent to ${newUser === null || newUser === void 0 ? void 0 : newUser.email}`,
+                data: newUser
             };
             return response;
         }
@@ -121,16 +114,40 @@ const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.signup = signup;
+const createNewUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield signupData(payload);
+        const user = yield Models.userModel.create(data);
+        user._doc.accessToken = yield fetchToken(user._id, SCOPE);
+        delete user._doc.password;
+        return user;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+const updateUser = (userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield signupData(payload);
+        const updatedUser = yield Models.userModel.findOneAndUpdate({ _id: userId }, data, options);
+        updatedUser._doc.accessToken = yield fetchToken(updatedUser._id, SCOPE);
+        delete updatedUser._doc.password;
+        return updatedUser;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
 const signupData = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let bcryptPass = yield CommonHelper.hashPassword(payload === null || payload === void 0 ? void 0 : payload.password);
-        let otp = CommonHelper.generateOtp();
-        let data = {
+        const bcryptPass = yield CommonHelper.hashPassword(payload === null || payload === void 0 ? void 0 : payload.password);
+        const otp = CommonHelper.generateOtp();
+        const data = {
             email: payload === null || payload === void 0 ? void 0 : payload.email.toLowerCase(),
             password: bcryptPass,
             otp: otp,
-            firstname: payload === null || payload === void 0 ? void 0 : payload.firstname,
-            lastname: payload === null || payload === void 0 ? void 0 : payload.lastname,
+            firstname: payload.firstname,
+            lastname: payload.lastname,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
         return data;
@@ -141,11 +158,8 @@ const signupData = (payload) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const fetchToken = (userId, scope) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let tokenData = {
-            _id: userId,
-            scope: scope
-        };
-        let accessToken = yield CommonHelper.signToken(tokenData);
+        const tokenData = { _id: userId, scope: scope };
+        const accessToken = yield CommonHelper.signToken(tokenData);
         return accessToken;
     }
     catch (err) {
@@ -154,35 +168,15 @@ const fetchToken = (userId, scope) => __awaiter(void 0, void 0, void 0, function
 });
 const verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { otp: inputOtp } = req.body;
-        let { _id } = req.userData;
-        let query = { _id: _id };
-        let projection = { otp: 1, email: 1 };
-        let option = { lean: true };
-        let fetchData = yield Models.userModel.findOne(query, projection, option);
+        const { otp: inputOtp } = req.body;
+        const { _id } = req.userData;
+        const query = { _id: _id };
+        const fetchData = yield Models.userModel.findOne(query, projection, option);
         if (fetchData) {
-            let { otp, email } = fetchData;
-            if (inputOtp === otp) {
-                let update = {
-                    isEmailVerified: true,
-                    otp: null
-                };
-                let options = { new: true };
+            if (inputOtp === fetchData.otp) {
+                const update = { isEmailVerified: true, otp: null };
                 yield Models.userModel.findOneAndUpdate(query, update, options);
-                let query1 = { email: email, isEmailVerified: false };
-                let projection = { _id: 1 };
-                let fetchUnverified = yield Models.userModel.find(query1, projection, option);
-                if (fetchUnverified === null || fetchUnverified === void 0 ? void 0 : fetchUnverified.length) {
-                    yield Models.userModel.deleteMany(query1);
-                    for (let i = 0; i < (fetchUnverified === null || fetchUnverified === void 0 ? void 0 : fetchUnverified.length); i++) {
-                        let { _id } = fetchUnverified[i];
-                        let query = { userId: _id };
-                        yield Models.sessionModel.deleteOne(query);
-                    }
-                }
-                let response = {
-                    message: "Otp verified successfully"
-                };
+                const response = { message: "Otp verified successfully" };
                 return response;
             }
             else {
@@ -200,21 +194,16 @@ const verifyEmail = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.verifyEmail = verifyEmail;
 const resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email } = req.body;
-        let query = { email: email === null || email === void 0 ? void 0 : email.toLowerCase() };
-        let fetchData = yield CommonHelper.fetchUser(query);
+        const { email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail };
+        const fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { email } = fetchData;
-            let otp = CommonHelper.generateOtp();
-            let update = {
-                otp: otp
-            };
-            let option = { new: true };
-            yield Models.userModel.findOneAndUpdate(query, update, option);
-            yield EmailService.verificationCode(email, otp);
-            let response = {
-                message: `Otp sent to ${email}`
-            };
+            const otp = CommonHelper.generateOtp();
+            const update = { otp: otp };
+            yield Models.userModel.findOneAndUpdate(query, update, options);
+            yield EmailService.verificationCode(fetchData.email, otp);
+            const response = { message: `Otp sent to ${email}` };
             return response;
         }
         else {
@@ -228,23 +217,20 @@ const resendOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.resendOtp = resendOtp;
 const forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email } = req.body;
-        let query = { email: email.toLowerCase(), isEmailVerified: true };
-        let fetchData = yield CommonHelper.fetchUser(query);
+        const { email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail, isEmailVerified: true };
+        const fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { _id, email, type } = fetchData;
-            if (type != null) {
+            const { _id, email, type } = fetchData;
+            if (type != null)
                 return Handler.handleCustomError(error_1.RegisteredWithGoogle);
-            }
-            let otp = CommonHelper.generateOtp();
-            let query = { _id: _id };
-            let update = { otp: otp };
-            let option = { new: true };
-            yield Models.userModel.findOneAndUpdate(query, update, option);
+            const otp = CommonHelper.generateOtp();
+            const query = { _id: _id };
+            const update = { otp: otp };
+            yield Models.userModel.findOneAndUpdate(query, update, options);
             yield EmailService.verificationCode(email, otp);
-            let response = {
-                message: `Otp sent to ${email}`
-            };
+            const response = { message: `Otp sent to ${email}` };
             return response;
         }
         else {
@@ -258,22 +244,17 @@ const forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.forgotPassword = forgotPassword;
 const verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { otp: inputOtp, email } = req.body;
-        let query = { email: email === null || email === void 0 ? void 0 : email.toLowerCase() };
-        let projection = { otp: 1 };
-        let option = { lean: true };
-        let fetchData = yield Models.userModel.findOne(query, projection, option);
+        const { otp: inputOtp, email } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail };
+        const projection = { otp: 1 };
+        const fetchData = yield Models.userModel.findOne(query, projection, option);
         if (fetchData) {
-            let { otp } = fetchData;
-            if (inputOtp === otp) {
-                let uniqueCode = yield CommonHelper.generateUniqueCode();
-                let update = {
-                    uniqueCode: uniqueCode,
-                    otp: null
-                };
-                let options = { new: true };
+            if (inputOtp === fetchData.otp) {
+                const uniqueCode = CommonHelper.generateUniqueCode();
+                const update = { uniqueCode: uniqueCode, otp: null };
                 yield Models.userModel.findOneAndUpdate(query, update, options);
-                let response = {
+                const response = {
                     message: "Otp verified successfully",
                     uniqueCode: uniqueCode
                 };
@@ -294,20 +275,14 @@ const verifyOtp = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.verifyOtp = verifyOtp;
 const resetPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { uniqueCode, password } = req.body;
-        let query = { uniqueCode: uniqueCode };
-        let fetchData = yield CommonHelper.fetchUser(query);
+        const { uniqueCode, password } = req.body;
+        const query = { uniqueCode: uniqueCode };
+        const fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let hashPass = yield CommonHelper.hashPassword(password);
-            let update = {
-                uniqueCode: null,
-                password: hashPass
-            };
-            let options = { new: true };
+            const hashPass = yield CommonHelper.hashPassword(password);
+            const update = { uniqueCode: null, password: hashPass };
             yield Models.userModel.findOneAndUpdate(query, update, options);
-            let response = {
-                message: "Password Changed Successfully"
-            };
+            const response = { message: "Password Changed Successfully" };
             return response;
         }
         else {
@@ -321,40 +296,31 @@ const resetPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.resetPassword = resetPassword;
 const login = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, password } = req.body;
-        let query = { email: email.toLowerCase(), isEmailVerified: true };
-        let projection = { __v: 0 };
-        let option = { lean: true };
-        let fetchData = yield Models.userModel.findOne(query, projection, option);
+        const { email, password } = req.body;
+        const lowerCaseEmail = email.toLowerCase();
+        const query = { email: lowerCaseEmail, isEmailVerified: true };
+        const fetchData = yield Models.userModel.findOne(query, projection, option);
         if (fetchData) {
-            let { _id, password: oldPassword, type } = fetchData;
-            if (oldPassword == null && type != null) {
+            const { _id, password: oldPassword, type } = fetchData;
+            if (oldPassword == null && type != null)
                 return Handler.handleCustomError(error_1.RegisteredWithGoogle);
-            }
-            if (oldPassword == null) {
+            if (oldPassword == null)
                 return Handler.handleCustomError(error_1.SomethingWentWrong);
-            }
-            let decryptPass = yield CommonHelper.comparePassword(oldPassword, password);
-            if (!decryptPass) {
+            const decryptPass = yield CommonHelper.comparePassword(oldPassword, password);
+            if (!decryptPass)
                 return Handler.handleCustomError(error_1.WrongPassword);
-            }
-            else {
-                let data = {
-                    _id: _id,
-                    scope: SCOPE
-                };
-                let accessToken = yield CommonHelper.signToken(data);
-                let resData = {
-                    _id: fetchData === null || fetchData === void 0 ? void 0 : fetchData._id,
-                    email: fetchData === null || fetchData === void 0 ? void 0 : fetchData.email,
-                    accessToken: accessToken
-                };
-                let response = {
-                    message: "Login successfully",
-                    data: resData
-                };
-                return response;
-            }
+            const data = { _id: _id, scope: SCOPE };
+            const accessToken = yield CommonHelper.signToken(data);
+            const resData = {
+                _id: fetchData === null || fetchData === void 0 ? void 0 : fetchData._id,
+                email: fetchData === null || fetchData === void 0 ? void 0 : fetchData.email,
+                accessToken: accessToken
+            };
+            const response = {
+                message: "Login successfully",
+                data: resData
+            };
+            return response;
         }
         else {
             return Handler.handleCustomError(error_1.EmailNotRegistered);
@@ -367,33 +333,32 @@ const login = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.login = login;
 const socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
-        let query = { email: email.toLowerCase(), isEmailVerified: true };
-        let fetchData = yield CommonHelper.fetchUser(query);
+        const { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
+        const query = { email: email.toLowerCase(), isEmailVerified: true };
+        const fetchData = yield CommonHelper.fetchUser(query);
         if (fetchData) {
-            let { type } = fetchData;
-            if (!type) {
+            if (!fetchData.type)
                 return Handler.handleCustomError(error_1.RegisteredWithPassword);
-            }
-            let session = yield createSession(fetchData === null || fetchData === void 0 ? void 0 : fetchData._id, socialToken);
-            fetchData.accessToken = session === null || session === void 0 ? void 0 : session.accessToken;
+            const session = yield createSession(fetchData._id, socialToken);
+            fetchData.accessToken = session.accessToken;
             return fetchData;
         }
-        let dataToSave = {
+        ;
+        const dataToSave = {
             email: email.toLowerCase(),
-            name: name,
-            firstname: firstname,
-            lastname: lastname,
-            image: image,
-            isAdmin: isAdmin,
+            name,
+            firstname,
+            lastname,
+            image,
+            isAdmin,
             isEmailVerified: true,
-            type: user_model_1.signType === null || user_model_1.signType === void 0 ? void 0 : user_model_1.signType.GOOGLE,
+            type: user_model_1.SignType.GOOGLE,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
-        let userData = yield Models.userModel.create(dataToSave);
-        let session = yield createSession(userData === null || userData === void 0 ? void 0 : userData._id, socialToken);
-        userData._doc['accessToken'] = session === null || session === void 0 ? void 0 : session.accessToken;
-        return userData;
+        const saveData = yield Models.userModel.create(dataToSave);
+        const session = yield createSession(saveData._id, socialToken);
+        saveData._doc['accessToken'] = session.accessToken;
+        return saveData;
     }
     catch (err) {
         return Handler.handleCustomError(err);
@@ -402,12 +367,12 @@ const socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.socialLogin = socialLogin;
 const createSession = (user_id, accessToken) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let dataToSession = {
+        const dataToSession = {
             userId: user_id,
             accessToken: accessToken,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
-        let response = yield Models.sessionModel.create(dataToSession);
+        const response = yield Models.sessionModel.create(dataToSession);
         return response;
     }
     catch (err) {
@@ -418,30 +383,26 @@ exports.createSession = createSession;
 const saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { text, documentId } = req.body;
-        let { _id } = req.userData;
-        let num = 1;
-        let docId = uuidv4();
-        let query = { userId: new mongoose_1.Types.ObjectId(_id), documentId: documentId };
-        let projection = { __v: 0 };
-        let option = { lean: true, sort: { _id: -1 } };
-        let data;
-        let fetchChatbot = yield Models.chatbotModel.findOne(query, projection, option);
+        const { _id } = req.userData;
+        let num = 1, docId = uuidv4(), data;
+        const query = { userId: new mongoose_1.Types.ObjectId(_id), documentId: documentId };
+        const fetchChatbot = yield Models.chatbotModel.findOne(query, projection, optionWithSortDesc);
         if (!fetchChatbot) {
-            data = yield embedText(text, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT, _id, undefined, num, docId);
+            data = yield embedText(text, text_model_1.Type.TEXT, _id, undefined, num, docId);
             yield createChatbot(data);
         }
         else {
-            let fetchData = yield Models.textModel.findOne(query, projection, option);
+            const fetchData = yield Models.textModel.findOne(query, projection, optionWithSortDesc);
             if (fetchData) {
                 let { docNo, documentId } = fetchData;
                 docNo = docNo + 1;
                 num = docNo;
                 docId = documentId;
             }
-            data = yield embedText(text, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT, _id, undefined, num, docId);
+            data = yield embedText(text, text_model_1.Type.TEXT, _id, undefined, num, docId);
         }
-        let response = {
-            messgage: "Text Added Successfully",
+        const response = {
+            message: "Text Added Successfully",
             data: data
         };
         return response;
@@ -453,14 +414,14 @@ const saveTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.saveTexts = saveTexts;
 const createChatbot = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { _id, userId, documentId } = data;
-        let dataToSave = {
+        const { _id, userId, documentId } = data;
+        const dataToSave = {
             textId: _id,
             userId: userId,
             documentId: documentId,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
-        let response = yield Models.chatbotModel.create(dataToSave);
+        const response = yield Models.chatbotModel.create(dataToSave);
         return response;
     }
     catch (err) {
@@ -479,16 +440,16 @@ const embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(void
             }
         });
         yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
-        let dataToSave = {
-            text: text,
-            userId: userId,
-            type: type,
-            fileName: fileName,
+        const dataToSave = {
+            text,
+            userId,
+            type,
+            fileName,
+            docNo,
             documentId: docId,
-            docNo: docNo,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
-        let saveData = yield Models.textModel.create(dataToSave);
+        const saveData = yield Models.textModel.create(dataToSave);
         return saveData;
     }
     catch (err) {
@@ -498,12 +459,10 @@ const embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(void
 const updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { _id, text } = req.body;
-        let query = { _id: new mongoose_1.Types.ObjectId(_id) };
-        let projection = { __v: 0 };
-        let options = { lean: true };
-        let fetchData = yield Models.textModel.findOne(query, projection, options);
+        const query = { _id: new mongoose_1.Types.ObjectId(_id) };
+        const fetchData = yield Models.textModel.findOne(query, projection, option);
         if (fetchData) {
-            let { documentId, docNo } = fetchData;
+            const { documentId, docNo } = fetchData;
             yield neo4j_1.session.run(`
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
                     DELETE n
@@ -518,16 +477,14 @@ const updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
                     doc.metadata.loc = (_d = (_c = doc === null || doc === void 0 ? void 0 : doc.metadata) === null || _c === void 0 ? void 0 : _c.loc) === null || _d === void 0 ? void 0 : _d.toString(); // Convert object to string representation
                 }
             });
-            const vectorStore = yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
-            let update = {
+            yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
+            const update = {
                 text: text,
                 docNo: docNo,
                 updatedAt: (0, moment_1.default)().utc().valueOf()
             };
             yield Models.textModel.updateOne(query, update);
-            let response = {
-                message: "Text updated successfully"
-            };
+            const response = { message: "Text updated successfully" };
             return response;
         }
         else {
@@ -540,19 +497,18 @@ const updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.updateTexts = updateTexts;
 const fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
     try {
-        let { _id: userId } = req.userData;
-        let query = {
+        const { documentId, pagination, limit } = req.query;
+        const { _id: userId } = req.userData;
+        const query = {
             userId: new mongoose_1.Types.ObjectId(userId),
-            type: text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE,
-            documentId: (_a = req === null || req === void 0 ? void 0 : req.query) === null || _a === void 0 ? void 0 : _a.documentId
+            type: text_model_1.Type.FILE,
+            documentId: documentId
         };
-        let projection = { __v: 0 };
-        let option = yield CommonHelper.setOptions(+((_b = req === null || req === void 0 ? void 0 : req.query) === null || _b === void 0 ? void 0 : _b.pagination), +((_c = req === null || req === void 0 ? void 0 : req.query) === null || _c === void 0 ? void 0 : _c.limit));
-        let fetchdata = yield Models.textModel.find(query, projection, option);
-        let count = yield Models.textModel.countDocuments(query);
-        let response = {
+        const option = CommonHelper.setOptions(+pagination, +limit);
+        const fetchdata = yield Models.textModel.find(query, projection, option);
+        const count = yield Models.textModel.countDocuments(query);
+        const response = {
             count: count,
             data: fetchdata
         };
@@ -565,18 +521,15 @@ const fileLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.fileLists = fileLists;
 const textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { _id } = req.userData;
-        let { documentId } = req.query;
-        let query = {
+        const { _id } = req.userData;
+        const { documentId } = req.query;
+        const query = {
             userId: new mongoose_1.Types.ObjectId(_id),
-            type: text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.TEXT,
+            type: text_model_1.Type.TEXT,
             documentId: documentId
         };
-        let projection = { __v: 0 };
-        let options = { lean: true, sort: { _id: -1 } };
-        let data = yield Models.textModel.findOne(query, projection, options);
-        let response = data !== null && data !== void 0 ? data : {};
-        return response;
+        const response = yield Models.textModel.findOne(query, projection, optionWithSortDesc);
+        return response !== null && response !== void 0 ? response : {};
     }
     catch (err) {
         return Handler.handleCustomError(err);
@@ -585,34 +538,26 @@ const textDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.textDetail = textDetail;
 const deleteFile = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { docNo, documentId } = req.query;
-        let { _id: userId } = req.userData;
-        let query = { documentId: documentId, docNo: Number(docNo) };
+        const { docNo, documentId } = req.query;
+        const { _id: userId } = req.userData;
+        const query = { documentId: documentId, docNo: Number(docNo) };
         yield neo4j_1.session.run(`
                     MATCH (n:Chunk {documentId: $documentId, docNo: $docNo})
                     DELETE n
                     `, { documentId: documentId === null || documentId === void 0 ? void 0 : documentId.toString(), docNo: Number(docNo) });
         yield Models.textModel.deleteOne(query);
-        let query1 = { documentId: documentId };
-        let projection = { __v: 0 };
-        let options = { lean: true, sort: { _id: 1 } };
-        let fetchData = yield Models.textModel.findOne(query1, projection, options);
+        const query1 = { documentId: documentId };
+        const fetchData = yield Models.textModel.findOne(query1, projection, optionWithSortAsc);
         if (fetchData) {
-            let { _id: textId } = fetchData;
-            let query = {
-                documentId: documentId,
-                userId: userId
-            };
-            let update = { textId: textId };
-            let options = { new: true };
+            const { _id: textId } = fetchData;
+            const query = { documentId: documentId, userId: userId };
+            const update = { textId: textId };
             yield Models.chatbotModel.findOneAndUpdate(query, update, options);
         }
         else {
             yield Models.chatbotModel.deleteOne(query1);
         }
-        let response = {
-            message: "Deleted Successfully"
-        };
+        const response = { message: "Deleted Successfully" };
         return response;
     }
     catch (err) {
@@ -622,12 +567,8 @@ const deleteFile = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.deleteFile = deleteFile;
 const logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { accessToken } = req.userData;
-        let query = { accessToken: accessToken };
-        yield Models.sessionModel.deleteOne(query);
-        let response = {
-            message: "Logout Successfully"
-        };
+        yield Models.sessionModel.deleteOne({ accessToken: req.userData.accessToken });
+        const response = { message: "Logout Successfully" };
         return response;
     }
     catch (err) {
@@ -647,16 +588,16 @@ const updateFileText = (text, type, documentId, userId, fileName, docNo) => __aw
             }
         });
         yield neo4j_vector_1.Neo4jVectorStore.fromDocuments(docOutput, openai, neoConfig);
-        let dataToSave = {
-            text: text,
-            userId: userId,
-            type: type,
-            fileName: fileName,
-            documentId: documentId,
-            docNo: docNo,
+        const dataToSave = {
+            text,
+            userId,
+            type,
+            fileName,
+            documentId,
+            docNo,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
-        let saveData = yield Models.textModel.create(dataToSave);
+        const saveData = yield Models.textModel.create(dataToSave);
         return saveData;
     }
     catch (err) {
@@ -664,30 +605,28 @@ const updateFileText = (text, type, documentId, userId, fileName, docNo) => __aw
     }
 });
 const textExtract = (req) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b;
     try {
-        let { documentId } = req.body;
-        let { _id: userId } = req.userData;
-        let textData = yield extract((_a = req === null || req === void 0 ? void 0 : req.file) === null || _a === void 0 ? void 0 : _a.originalname, (_b = req === null || req === void 0 ? void 0 : req.file) === null || _b === void 0 ? void 0 : _b.buffer);
+        const { documentId } = req.body;
+        const { _id: userId } = req.userData;
+        const textData = yield extract(req.file.originalname, req.file.buffer);
         let docId = uuidv4();
-        let query = { userId: new mongoose_1.Types.ObjectId(userId), documentId: documentId };
-        let projection = { __v: 0 };
-        let option = { lean: true, sort: { _id: -1 } };
+        const query = { userId: new mongoose_1.Types.ObjectId(userId), documentId: documentId };
+        const fetchChatbot = yield Models.chatbotModel.findOne(query, projection, optionWithSortDesc);
         let data;
-        let fetchChatbot = yield Models.chatbotModel.findOne(query, projection, option);
         if (!fetchChatbot) {
-            data = yield embedText(textData, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE, userId, (_c = req === null || req === void 0 ? void 0 : req.file) === null || _c === void 0 ? void 0 : _c.originalname, 1, docId);
+            data = yield embedText(textData, text_model_1.Type.FILE, userId, (_a = req === null || req === void 0 ? void 0 : req.file) === null || _a === void 0 ? void 0 : _a.originalname, 1, docId);
             yield createChatbot(data);
         }
         else {
-            let fetchData = yield Models.textModel.findOne(query, projection, option);
+            const fetchData = yield Models.textModel.findOne(query, projection, option);
             if (fetchData) {
                 let { documentId, docNo } = fetchData;
                 docNo = docNo + 1;
-                data = yield updateFileText(textData, text_model_1.type === null || text_model_1.type === void 0 ? void 0 : text_model_1.type.FILE, documentId, userId, (_d = req === null || req === void 0 ? void 0 : req.file) === null || _d === void 0 ? void 0 : _d.originalname, docNo);
+                data = yield updateFileText(textData, text_model_1.Type.FILE, documentId, userId, (_b = req === null || req === void 0 ? void 0 : req.file) === null || _b === void 0 ? void 0 : _b.originalname, docNo);
             }
         }
-        let response = {
+        const response = {
             message: "File Added Successfully",
             data: data
         };
@@ -721,7 +660,7 @@ const extract = (originalname, buffer) => __awaiter(void 0, void 0, void 0, func
                 break;
             default: return Handler.handleCustomError(error_1.UnsupportedFileType);
         }
-        let textData = text === null || text === void 0 ? void 0 : text.trim();
+        const textData = text.trim();
         return textData;
     }
     catch (err) {
@@ -741,7 +680,7 @@ const pdfLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const textLoad = (buffer) => {
     try {
-        const text = buffer === null || buffer === void 0 ? void 0 : buffer.toString();
+        const text = buffer.toString();
         return text;
     }
     catch (err) {
@@ -773,8 +712,8 @@ const docxLoad = (blob) => __awaiter(void 0, void 0, void 0, function* () {
 const docLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const extractor = new word_extractor_1.default();
-        const extracted = yield (extractor === null || extractor === void 0 ? void 0 : extractor.extract(buffer));
-        const text = extracted === null || extracted === void 0 ? void 0 : extracted.getBody();
+        const extracted = yield extractor.extract(buffer);
+        const text = extracted.getBody();
         return text;
     }
     catch (err) {
@@ -783,19 +722,17 @@ const docLoad = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { _id: userId } = req.userData;
-        let query = { userId: userId };
-        let projection = { __v: 0 };
-        let options = { lean: true, sort: { _id: -1 } };
-        let populate = [
+        const { _id: userId } = req.userData;
+        const query = { userId: userId };
+        const populate = [
             {
                 path: "textId",
                 select: "text type fileName documentId"
             }
         ];
-        let data = yield Models.chatbotModel.find(query, projection, options).populate(populate);
-        let count = yield Models.chatbotModel.countDocuments(query);
-        let response = {
+        const data = yield Models.chatbotModel.find(query, projection, optionWithSortDesc).populate(populate);
+        const count = yield Models.chatbotModel.countDocuments(query);
+        const response = {
             count: count,
             data: data
         };
@@ -808,21 +745,18 @@ const chatbotLists = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.chatbotLists = chatbotLists;
 const deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { documentId } = req.query;
-        let { _id: userId } = req.userData;
+        const { documentId } = req.query;
+        const { _id: userId } = req.userData;
         yield neo4j_1.session.run(`
                     MATCH (n:Chunk {documentId: $documentId})
                     DELETE n
                     `, { documentId: documentId });
-        let query = {
-            userId: userId,
-            documentId: documentId
-        };
+        const query = { userId: userId, documentId: documentId };
         yield Models.textModel.deleteMany(query);
         yield Models.chatbotModel.deleteOne(query);
-        let query1 = { documentId: documentId };
+        const query1 = { documentId: documentId };
         yield deleteSessions(query1);
-        let response = {
+        const response = {
             message: "Chatbot Deleted Successfully"
         };
         return response;
@@ -834,13 +768,10 @@ const deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.deleteChatbot = deleteChatbot;
 const deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let projection = { __v: 0 };
-        let option = { lean: true };
-        let fetchIps = yield Models.ipAddressModel.find(query, projection, option);
+        const fetchIps = yield Models.ipAddressModel.find(query, projection, option);
         if (fetchIps === null || fetchIps === void 0 ? void 0 : fetchIps.length) {
-            let ids = fetchIps.map((item) => item === null || item === void 0 ? void 0 : item._id);
-            let query1 = { ipAddressId: { $in: ids } };
-            yield Models.chatSessionModel.deleteMany(query1);
+            const ids = fetchIps.map((item) => item === null || item === void 0 ? void 0 : item._id);
+            yield Models.chatSessionModel.deleteMany({ ipAddressId: { $in: ids } });
         }
         yield Models.ipAddressModel.deleteMany(query);
         yield Models.messageModel.deleteMany(query);
@@ -853,10 +784,10 @@ exports.deleteSessions = deleteSessions;
 const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        let { documentId, pagination, limit } = req.query;
-        let setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
-        let setLimit = limit !== null && limit !== void 0 ? limit : 10;
-        let query = [
+        const { documentId, pagination, limit } = req.query;
+        const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
+        const setLimit = limit !== null && limit !== void 0 ? limit : 10;
+        const query = [
             yield ChatHistoryAggregation.matchData(documentId === null || documentId === void 0 ? void 0 : documentId.toString()),
             yield ChatHistoryAggregation.lookupChatSessions(),
             yield ChatHistoryAggregation.unwindChatSessions(),
@@ -864,8 +795,8 @@ const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
             yield ChatHistoryAggregation.groupData(),
             yield ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];
-        let fetchData = yield Models.ipAddressModel.aggregate(query);
-        let response = {
+        const fetchData = yield Models.ipAddressModel.aggregate(query);
+        const response = {
             count: (_c = (_b = (_a = fetchData[0]) === null || _a === void 0 ? void 0 : _a.count[0]) === null || _b === void 0 ? void 0 : _b.count) !== null && _c !== void 0 ? _c : 0,
             data: (_e = (_d = fetchData[0]) === null || _d === void 0 ? void 0 : _d.data) !== null && _e !== void 0 ? _e : []
         };
@@ -878,13 +809,12 @@ const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.chatHistory = chatHistory;
 const chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { sessionId, pagination, limit } = req.query;
-        let query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
-        let projection = { __v: 0 };
-        let options = CommonHelper.setOptions(+pagination, +limit, { _id: 1 });
-        let fetchData = yield Models.messageModel.find(query, projection, options);
-        let count = yield Models.messageModel.countDocuments(query);
-        let response = {
+        const { sessionId, pagination, limit } = req.query;
+        const query = { sessionId: new mongoose_1.Types.ObjectId(sessionId) };
+        const options = CommonHelper.setOptions(+pagination, +limit, { _id: 1 });
+        const fetchData = yield Models.messageModel.find(query, projection, options);
+        const count = yield Models.messageModel.countDocuments(query);
+        const response = {
             count: count,
             data: fetchData
         };

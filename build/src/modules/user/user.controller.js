@@ -37,7 +37,7 @@ const Service = __importStar(require("./user.service"));
 const Handler = __importStar(require("../../handler/handler"));
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.signup(req);
+        const response = yield Service.signup(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -47,7 +47,7 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.signup = signup;
 const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.verifyEmail(req);
+        const response = yield Service.verifyEmail(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -57,7 +57,7 @@ const verifyEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.verifyEmail = verifyEmail;
 const resendOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.resendOtp(req);
+        const response = yield Service.resendOtp(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -67,7 +67,7 @@ const resendOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.resendOtp = resendOtp;
 const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.forgotPassword(req);
+        const response = yield Service.forgotPassword(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -77,7 +77,7 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
 exports.forgotPassword = forgotPassword;
 const verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.verifyOtp(req);
+        const response = yield Service.verifyOtp(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -87,7 +87,7 @@ const verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.verifyOtp = verifyOtp;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.resetPassword(req);
+        const response = yield Service.resetPassword(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -97,7 +97,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.resetPassword = resetPassword;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.login(req);
+        const response = yield Service.login(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -107,7 +107,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.login = login;
 const socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.socialLogin(req);
+        const response = yield Service.socialLogin(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -117,7 +117,7 @@ const socialLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.socialLogin = socialLogin;
 const chatbotLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.chatbotLists(req);
+        const response = yield Service.chatbotLists(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -127,7 +127,7 @@ const chatbotLists = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.chatbotLists = chatbotLists;
 const deleteChatbot = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.deleteChatbot(req);
+        const response = yield Service.deleteChatbot(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -137,7 +137,7 @@ const deleteChatbot = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.deleteChatbot = deleteChatbot;
 const saveTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.saveTexts(req);
+        const response = yield Service.saveTexts(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -147,7 +147,7 @@ const saveTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.saveTexts = saveTexts;
 const updateTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.updateTexts(req);
+        const response = yield Service.updateTexts(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -157,7 +157,7 @@ const updateTexts = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.updateTexts = updateTexts;
 const textDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.textDetail(req);
+        const response = yield Service.textDetail(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -167,7 +167,7 @@ const textDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.textDetail = textDetail;
 const textExtract = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.textExtract(req);
+        const response = yield Service.textExtract(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -177,7 +177,7 @@ const textExtract = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.textExtract = textExtract;
 const fileLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.fileLists(req);
+        const response = yield Service.fileLists(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -187,7 +187,7 @@ const fileLists = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.fileLists = fileLists;
 const deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.deleteFile(req);
+        const response = yield Service.deleteFile(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -197,7 +197,7 @@ const deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.deleteFile = deleteFile;
 const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.logout(req);
+        const response = yield Service.logout(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -207,7 +207,7 @@ const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.logout = logout;
 const chatHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.chatHistory(req);
+        const response = yield Service.chatHistory(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -217,7 +217,7 @@ const chatHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.chatHistory = chatHistory;
 const chatDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let response = yield Service.chatDetail(req);
+        const response = yield Service.chatDetail(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {

@@ -28,7 +28,7 @@ const { PORT } = process.env;
     app.use(express_1.default.urlencoded({ extended: true }));
     app.use((0, cors_1.default)({ origin: "*" }));
     app.use('/user', user_routes_1.default);
-    let server = http_1.default.createServer(app);
+    const server = http_1.default.createServer(app);
     server.listen(PORT, () => {
         console.log(`Server is listening on port ${PORT}`);
     });
