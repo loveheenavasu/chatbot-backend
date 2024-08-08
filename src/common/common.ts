@@ -7,14 +7,14 @@ import * as Models from '../models/index';
 import { Types } from 'mongoose';
 import random from 'randomstring';
 import * as Handler from '../handler/handler';
-import { IErrorResponse, Unauthorized } from '../handler/error';
+import { IErrorResponse, InvalidToken, Unauthorized } from '../handler/error';
 import { IToken } from '../interfaces/common.interface';
 import ISession from '../interfaces/session.interface';
 import IUser from '../interfaces/user.interface';
 
 const { SALT_ROUND, SECRET_KEY } = process.env;
 
-const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) =>{
+const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) => {
     try {
         const options = {
             lean: true,
@@ -23,7 +23,8 @@ const setOptions = (pagination = 1, limit = 10, sort = { _id: -1 }) =>{
             sort,
         };
         return options;
-    } catch (err) {
+    }
+    catch (err) {
         return Handler.handleCustomError(err as IErrorResponse);
     }
 }
@@ -113,8 +114,12 @@ const verifyToken = async (token: string) => {
         if (!checkSession) return Handler.handleCustomError(Unauthorized);
         return data;
     }
-    catch (err) {
-        return Handler.handleCustomError(err as IErrorResponse);
+    catch (err: IErrorResponse | any) {
+        if (err?.message == "jwt expired") {
+            await Models.sessionModel.deleteOne({ accessToken: token });
+            return Handler.handleCustomError(InvalidToken);
+        }
+        return Handler.handleCustomError(err);
     }
 }
 

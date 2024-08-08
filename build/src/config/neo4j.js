@@ -28,7 +28,6 @@ const getServerInfo = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (err) {
         console.log("err---", err);
-        //  Handler.handleCustomError(err as IErrorResponse);
     }
 });
 getServerInfo();

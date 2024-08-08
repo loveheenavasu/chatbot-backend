@@ -1,6 +1,4 @@
 import neo4j from 'neo4j-driver';
-import * as Handler from '../handler/handler';
-import { IErrorResponse } from '../handler/error';
 import { config } from 'dotenv';
 config();
 const NEO_URL = process.env.NEO_URL as string;
@@ -13,9 +11,9 @@ const getServerInfo = async () => {
     try {
         const serverInfo = await driver.getServerInfo();
         console.log("serverInfo----", serverInfo);
-    } catch (err) {
+    }
+    catch (err) {
         console.log("err---", err)
-        //  Handler.handleCustomError(err as IErrorResponse);
     }
 };
 

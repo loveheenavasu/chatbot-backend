@@ -22,7 +22,7 @@ const { PORT } = process.env;
     })
 
     await dbConnect();
-   connectSocket(server);
+    connectSocket(server);
 
 })();
 

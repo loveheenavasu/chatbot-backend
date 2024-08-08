@@ -146,6 +146,10 @@ const verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
         return data;
     }
     catch (err) {
+        if ((err === null || err === void 0 ? void 0 : err.message) == "jwt expired") {
+            yield Models.sessionModel.deleteOne({ accessToken: token });
+            return Handler.handleCustomError(error_1.InvalidToken);
+        }
         return Handler.handleCustomError(err);
     }
 });
