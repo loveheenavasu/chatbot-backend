@@ -619,7 +619,6 @@ const deleteFile = async (req: CustomRequest) => {
 const logout = async (req: CustomRequest) => {
     try {
         let { accessToken } = req.userData!;
-        console.log("accessToken---", accessToken)
         let query = { accessToken: accessToken }
         await Models.sessionModel.deleteOne(query);
         let response = {

@@ -2,7 +2,6 @@ import moment from 'moment';
 import mongoose, { Types } from 'mongoose';
 import IText from '../interfaces/text.interface';
 
-
 export enum type {
     TEXT = "TEXT",
     FILE = "FILE"

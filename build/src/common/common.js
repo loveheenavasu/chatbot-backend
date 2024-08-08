@@ -140,14 +140,12 @@ const saveSession = (token, data) => __awaiter(void 0, void 0, void 0, function*
 const verifyToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let data = jwt.verify(token, String(SECRET_KEY));
-        console.log("data----", data);
         let checkSession = yield checkSessionData(data);
         if (!checkSession)
             return Handler.handleCustomError(error_1.Unauthorized);
         return data;
     }
     catch (err) {
-        console.log("error---", err);
         return Handler.handleCustomError(err);
     }
 });

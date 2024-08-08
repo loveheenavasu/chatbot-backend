@@ -623,7 +623,6 @@ exports.deleteFile = deleteFile;
 const logout = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { accessToken } = req.userData;
-        console.log("accessToken---", accessToken);
         let query = { accessToken: accessToken };
         yield Models.sessionModel.deleteOne(query);
         let response = {

@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import moment from 'moment';
 import IUser from '../interfaces/user.interface';
 
-
 export enum signType {
     GOOGLE = "GOOGLE"
 }

@@ -29,7 +29,6 @@ export const RegisteredWithPassword: IErrorResponse = {
     statusCode: 400
 }
 
-
 export const EmailNotRegistered: IErrorResponse = {
     message: "This email address is not registered with us. Please check and try again.",
     statusCode: 400
@@ -57,7 +56,7 @@ export const BearerToken: IErrorResponse = {
 
 export const InvalidToken: IErrorResponse = {
     message: "Invalid token",
-    statusCode: 400
+    statusCode: 401
 }
 
 export const TokenMismatch: IErrorResponse = {

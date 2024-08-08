@@ -39,7 +39,6 @@ const handleCatchError = (res: Response, error: IErrorResponse) => {
 
 const handleJoiError = (error: IErrorResponse | any) => {
         try {
-            console.log("error---", error)
             let message = error?.details[0]?.message;
             let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
             throw {

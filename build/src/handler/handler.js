@@ -40,7 +40,6 @@ exports.handleCatchError = handleCatchError;
 const handleJoiError = (error) => {
     var _a;
     try {
-        console.log("error---", error);
         let message = (_a = error === null || error === void 0 ? void 0 : error.details[0]) === null || _a === void 0 ? void 0 : _a.message;
         let errorMessage = message.replace(/"/g, ''); // replaces all double quote character with an empty string;
         throw {

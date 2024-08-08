@@ -109,13 +109,11 @@ const saveSession = async (token: string, data: IToken) => {
 const verifyToken = async (token: string) => {
     try {
         let data = jwt.verify(token, String(SECRET_KEY)) as IToken;
-        console.log("data----", data)
         let checkSession = await checkSessionData(data);
         if (!checkSession) return Handler.handleCustomError(Unauthorized);
         return data;
     }
     catch (err) {
-        console.log("error---",err)
         return Handler.handleCustomError(err as IErrorResponse);
     }
 }

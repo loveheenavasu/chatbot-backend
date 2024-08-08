@@ -43,7 +43,7 @@ exports.BearerToken = {
 };
 exports.InvalidToken = {
     message: "Invalid token",
-    statusCode: 400
+    statusCode: 401
 };
 exports.TokenMismatch = {
     message: "Token mismatch",
