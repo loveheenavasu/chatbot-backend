@@ -90,7 +90,7 @@ const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 return Handler.handleCustomError(error_1.EmailAlreadyExists);
             yield Models.sessionModel.deleteMany({ userId: user._id });
             const updatedData = yield updateUser(user._id, req.body);
-            yield EmailService.verificationCode(email, updatedData === null || updatedData === void 0 ? void 0 : updatedData.otp);
+            yield EmailService.verificationCode(updatedData === null || updatedData === void 0 ? void 0 : updatedData.email, updatedData === null || updatedData === void 0 ? void 0 : updatedData.otp);
             delete updatedData._doc.otp;
             const response = {
                 message: `Otp sent to ${updatedData.email}`,
@@ -100,7 +100,7 @@ const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
         }
         else {
             const newUser = yield createNewUser(req.body);
-            yield EmailService.verificationCode(email, newUser === null || newUser === void 0 ? void 0 : newUser.otp);
+            yield EmailService.verificationCode(newUser === null || newUser === void 0 ? void 0 : newUser.email, newUser === null || newUser === void 0 ? void 0 : newUser.otp);
             newUser === null || newUser === void 0 ? true : delete newUser._doc.otp;
             const response = {
                 message: `Otp sent to ${newUser === null || newUser === void 0 ? void 0 : newUser.email}`,
@@ -229,7 +229,7 @@ const forgotPassword = (req) => __awaiter(void 0, void 0, void 0, function* () {
             const query = { _id: _id };
             const update = { otp: otp };
             yield Models.userModel.findOneAndUpdate(query, update, options);
-            yield EmailService.verificationCode(email, otp);
+            yield EmailService.verificationCode(fetchData.email, otp);
             const response = { message: `Otp sent to ${email}` };
             return response;
         }

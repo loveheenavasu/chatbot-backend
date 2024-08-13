@@ -98,7 +98,7 @@ const signup = async (req: Request): Promise<UserResponse> => {
             if (user.isEmailVerified) return Handler.handleCustomError(EmailAlreadyExists);
             await Models.sessionModel.deleteMany({ userId: user._id });
             const updatedData = await updateUser(user._id, req.body);
-            await EmailService.verificationCode(email, updatedData?.otp!);
+            await EmailService.verificationCode(updatedData?.email!, updatedData?.otp!);
             delete updatedData!._doc.otp;
             const response: UserResponse = {
                 message: `Otp sent to ${updatedData!.email}`,
@@ -108,7 +108,7 @@ const signup = async (req: Request): Promise<UserResponse> => {
         }
         else {
             const newUser = await createNewUser(req.body);
-            await EmailService.verificationCode(email, newUser?.otp!);
+            await EmailService.verificationCode(newUser?.email!, newUser?.otp!);
             delete newUser?._doc.otp;
             const response: UserResponse = {
                 message: `Otp sent to ${newUser?.email}`,
@@ -240,7 +240,7 @@ const forgotPassword = async (req: Request): Promise<MessageResponse> => {
             const query = { _id: _id };
             const update = { otp: otp };
             await Models.userModel.findOneAndUpdate(query, update, options);
-            await EmailService.verificationCode(email!, otp);
+            await EmailService.verificationCode(fetchData.email!, otp);
             const response: MessageResponse = { message: `Otp sent to ${email}` };
             return response;
         }
