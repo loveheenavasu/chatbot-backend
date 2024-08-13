@@ -27,7 +27,6 @@ import Chatbot from '../../interfaces/chatbot.interface';
 import Ips from '../../interfaces/ips.interface';
 import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
-import ChatSession from '../../interfaces/chat-session.interface';
 config();
 const { v4: uuidv4 } = require('uuid');
 

@@ -35,7 +35,7 @@ exports.WrongOtp = {
 };
 exports.ProvideToken = {
     message: "Please provide token",
-    statusCode: 400
+    statusCode: 401
 };
 exports.BearerToken = {
     message: "Not a bearer token",

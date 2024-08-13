@@ -46,7 +46,7 @@ export const WrongOtp: ErrorResponse = {
 
 export const ProvideToken: ErrorResponse = {
     message: "Please provide token",
-    statusCode: 400
+    statusCode: 401
 }
 
 export const BearerToken: ErrorResponse = {
