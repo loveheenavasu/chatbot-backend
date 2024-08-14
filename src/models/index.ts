@@ -5,6 +5,7 @@ import messageModel from "./message.model";
 import chatbotModel from "./chatbot.model";
 import ipAddressModel from "./ips.model";
 import chatSessionModel from "./chat-session.model";
+import themeModel from "./theme.model";
 
 export {
     textModel,
@@ -13,5 +14,6 @@ export {
     messageModel,
     chatbotModel,
     ipAddressModel,
-    chatSessionModel
+    chatSessionModel,
+    themeModel
 }

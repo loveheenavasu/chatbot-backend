@@ -52,4 +52,6 @@ router.delete('/files', Validation.deleteFile, authorization_1.authorization, Co
 router.delete('/logout', authorization_1.authorization, Controller.logout);
 router.get('/chat-history', Validation.documentIdWithPL, authorization_1.authorization, Controller.chatHistory);
 router.get('/chat', Validation.sessionIdWithPL, authorization_1.authorization, Controller.chatDetail);
+router.post('/theme', Validation.themeCreate, Controller.createTheme);
+router.get('/theme', Controller.themeList);
 exports.default = router;

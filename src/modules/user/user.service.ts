@@ -27,6 +27,7 @@ import Chatbot from '../../interfaces/chatbot.interface';
 import Ips from '../../interfaces/ips.interface';
 import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
+import Theme from '../../interfaces/theme.interface';
 config();
 const { v4: uuidv4 } = require('uuid');
 
@@ -59,7 +60,7 @@ interface UserResponse {
     data: User
 }
 
-interface TextResponse {
+interface Response {
     message: string;
     data: Text
 }
@@ -73,7 +74,7 @@ interface VerifyResponse {
     uniqueCode: string
 }
 
-interface TextResponseList {
+interface ResponseList {
     count: number;
     data: Text[];
 }
@@ -86,6 +87,19 @@ interface ChatbotResponse {
 interface MessageResponseList {
     count: number;
     data: Message[]
+}
+
+interface List {
+    _id: string;
+    ipAddress: string;
+    documentId: string;
+    sessionType: string;
+    message: Message[]
+}
+
+interface ChatHistory {
+    count: number;
+    data: List[]
 }
 
 const signup = async (req: Request): Promise<UserResponse> => {
@@ -386,7 +400,7 @@ const createSession = async (user_id: Types.ObjectId, accessToken: string): Prom
     }
 }
 
-const saveTexts = async (req: CustomRequest): Promise<TextResponse> => {
+const saveTexts = async (req: CustomRequest): Promise<Response> => {
     try {
         const { text, documentId } = req.body;
         const { _id } = req.userData!;
@@ -407,7 +421,7 @@ const saveTexts = async (req: CustomRequest): Promise<TextResponse> => {
             }
             data = await embedText(text, Type.TEXT, _id!, undefined, num, docId);
         }
-        const response: TextResponse = {
+        const response: Response = {
             message: "Text Added Successfully",
             data: data
         }
@@ -511,7 +525,7 @@ const updateTexts = async (req: CustomRequest): Promise<MessageResponse> => {
     }
 }
 
-const fileLists = async (req: CustomRequest): Promise<TextResponseList> => {
+const fileLists = async (req: CustomRequest): Promise<ResponseList> => {
     try {
         const { documentId, pagination, limit } = req.query;
         const { _id: userId } = req.userData!;
@@ -523,7 +537,7 @@ const fileLists = async (req: CustomRequest): Promise<TextResponseList> => {
         const option = CommonHelper.setOptions(+pagination!, +limit!);
         const fetchdata: Text[] = await Models.textModel.find(query, projection, option);
         const count = await Models.textModel.countDocuments(query);
-        const response: TextResponseList = {
+        const response: ResponseList = {
             count: count,
             data: fetchdata
         }
@@ -627,7 +641,7 @@ const updateFileText = async (text: string, type: string, documentId: string, us
     }
 }
 
-const textExtract = async (req: CustomRequest): Promise<TextResponse> => {
+const textExtract = async (req: CustomRequest): Promise<Response> => {
     try {
         const { documentId } = req.body
         const { _id: userId } = req.userData!;
@@ -648,7 +662,7 @@ const textExtract = async (req: CustomRequest): Promise<TextResponse> => {
                 data = await updateFileText(textData, Type.FILE, documentId!, userId!, req?.file?.originalname!, docNo)
             }
         }
-        const response: TextResponse = {
+        const response: Response = {
             message: "File Added Successfully",
             data: data!
         }
@@ -812,19 +826,6 @@ const deleteSessions = async (query: object) => {
     }
 }
 
-interface List {
-    _id: string;
-    ipAddress: string;
-    documentId: string;
-    sessionType: string;
-    message: Message[]
-}
-
-interface ChatHistory {
-    count: number;
-    data: List[]
-}
-
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
         const { documentId, pagination, limit } = req.query;
@@ -868,6 +869,40 @@ const chatDetail = async (req: CustomRequest): Promise<MessageResponseList> => {
     }
 }
 
+const createTheme = async (req: Request): Promise<Response> => {
+    try {
+        const { theme } = req.body
+        const dataToSave = {
+            theme,
+            createdAt: moment().utc().valueOf()
+        }
+        const saveData = await Models.themeModel.create(dataToSave);
+        const response: Response = {
+            message: "Theme created successfully",
+            data: saveData
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const themeList = async (req: Request): Promise<ResponseList> => {
+    try {
+        const data = await Models.themeModel.find({}, projection, option);
+        const count = await Models.themeModel.countDocuments({});
+        const response: ResponseList = {
+            count: count,
+            data: data
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
 export {
     signup,
     verifyEmail,
@@ -889,5 +924,7 @@ export {
     deleteChatbot,
     deleteSessions,
     chatHistory,
-    chatDetail
+    chatDetail,
+    createTheme,
+    themeList
 }

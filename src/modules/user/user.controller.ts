@@ -197,6 +197,26 @@ const chatDetail = async (req: CustomRequest, res: Response) => {
     }
 }
 
+const createTheme = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.createTheme(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const themeList = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.themeList(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
 export {
     signup,
     verifyEmail,
@@ -216,5 +236,7 @@ export {
     deleteFile,
     logout,
     chatHistory,
-    chatDetail
+    chatDetail,
+    createTheme,
+    themeList
 }

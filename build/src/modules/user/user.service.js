@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
@@ -825,3 +825,37 @@ const chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.chatDetail = chatDetail;
+const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { theme } = req.body;
+        const dataToSave = {
+            theme,
+            createdAt: (0, moment_1.default)().utc().valueOf()
+        };
+        const saveData = yield Models.themeModel.create(dataToSave);
+        const response = {
+            message: "Theme created successfully",
+            data: saveData
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.createTheme = createTheme;
+const themeList = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield Models.themeModel.find({}, projection, option);
+        const count = yield Models.themeModel.countDocuments({});
+        const response = {
+            count: count,
+            data: data
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.themeList = themeList;

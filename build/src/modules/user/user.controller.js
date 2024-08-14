@@ -32,7 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Service = __importStar(require("./user.service"));
 const Handler = __importStar(require("../../handler/handler"));
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -225,3 +225,23 @@ const chatDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.chatDetail = chatDetail;
+const createTheme = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.createTheme(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.createTheme = createTheme;
+const themeList = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.themeList(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.themeList = themeList;

@@ -239,6 +239,20 @@ const uploadFile = (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const themeCreate = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            theme: Joi.string().trim().required()
+        });
+        const { error } = schema.validate(req.body);
+        if (error) return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
 export {
     signup,
     verify,
@@ -254,6 +268,7 @@ export {
     deleteFile,
     text,
     updateText,
-    uploadFile
+    uploadFile,
+    themeCreate
 }
 

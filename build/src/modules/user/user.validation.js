@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadFile = exports.updateText = exports.text = exports.deleteFile = exports.sessionIdWithPL = exports.documentIdWithPL = exports.textDetail = exports.documentId = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyForgot = exports.resendAndForgot = exports.verify = exports.signup = void 0;
+exports.themeCreate = exports.uploadFile = exports.updateText = exports.text = exports.deleteFile = exports.sessionIdWithPL = exports.documentIdWithPL = exports.textDetail = exports.documentId = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyForgot = exports.resendAndForgot = exports.verify = exports.signup = void 0;
 const Handler = __importStar(require("../../handler/handler"));
 const joi_1 = __importDefault(require("joi"));
 const signup = (req, res, next) => {
@@ -277,3 +277,18 @@ const uploadFile = (req, res, next) => {
     }
 };
 exports.uploadFile = uploadFile;
+const themeCreate = (req, res, next) => {
+    try {
+        const schema = joi_1.default.object({
+            theme: joi_1.default.string().trim().required()
+        });
+        const { error } = schema.validate(req.body);
+        if (error)
+            return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+};
+exports.themeCreate = themeCreate;

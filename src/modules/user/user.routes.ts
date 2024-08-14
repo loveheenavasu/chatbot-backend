@@ -27,4 +27,7 @@ router.delete('/logout', authorization, Controller.logout)
 
 router.get('/chat-history', Validation.documentIdWithPL, authorization, Controller.chatHistory)
 router.get('/chat', Validation.sessionIdWithPL, authorization, Controller.chatDetail)
+
+router.post('/theme', Validation.themeCreate, Controller.createTheme)
+router.get('/theme', Controller.themeList)
 export default router;
