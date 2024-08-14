@@ -828,16 +828,29 @@ exports.chatDetail = chatDetail;
 const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { theme } = req.body;
-        const dataToSave = {
-            theme,
-            createdAt: (0, moment_1.default)().utc().valueOf()
-        };
-        const saveData = yield Models.themeModel.create(dataToSave);
-        const response = {
-            message: "Theme created successfully",
-            data: saveData
-        };
-        return response;
+        const fetchData = yield Models.themeModel.findOne({}, projection, option);
+        if (fetchData) {
+            const { _id } = fetchData;
+            const update = { theme: theme };
+            let updateData = yield Models.themeModel.findOneAndUpdate({ _id: _id }, update, options);
+            const response = {
+                message: "Theme created successfully",
+                data: updateData
+            };
+            return response;
+        }
+        else {
+            const dataToSave = {
+                theme,
+                createdAt: (0, moment_1.default)().utc().valueOf()
+            };
+            const saveData = yield Models.themeModel.create(dataToSave);
+            const response = {
+                message: "Theme created successfully",
+                data: saveData
+            };
+            return response;
+        }
     }
     catch (err) {
         return Handler.handleCustomError(err);

@@ -871,17 +871,30 @@ const chatDetail = async (req: CustomRequest): Promise<MessageResponseList> => {
 
 const createTheme = async (req: Request): Promise<Response> => {
     try {
-        const { theme } = req.body
-        const dataToSave = {
-            theme,
-            createdAt: moment().utc().valueOf()
+        const { theme } = req.body;
+        const fetchData = await Models.themeModel.findOne({}, projection, option);
+        if (fetchData) {
+            const { _id } = fetchData;
+            const update = { theme: theme };
+            let updateData = await Models.themeModel.findOneAndUpdate({ _id: _id }, update, options);
+            const response: Response = {
+                message: "Theme created successfully",
+                data: updateData!
+            }
+            return response;
         }
-        const saveData = await Models.themeModel.create(dataToSave);
-        const response: Response = {
-            message: "Theme created successfully",
-            data: saveData
+        else {
+            const dataToSave = {
+                theme,
+                createdAt: moment().utc().valueOf()
+            }
+            const saveData = await Models.themeModel.create(dataToSave);
+            const response: Response = {
+                message: "Theme created successfully",
+                data: saveData
+            }
+            return response;
         }
-        return response;
     }
     catch (err) {
         return Handler.handleCustomError(err as ErrorResponse);
