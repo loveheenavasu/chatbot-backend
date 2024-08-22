@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
@@ -872,3 +872,100 @@ const themeList = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.themeList = themeList;
+const formAdd = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { documentId, fields } = req.body;
+        const dataToSave = {
+            documentId: documentId,
+            fields,
+            createdAt: (0, moment_1.default)().utc().valueOf()
+        };
+        const saveData = yield Models.formModel.create(dataToSave);
+        const response = {
+            message: "Added successfully",
+            data: saveData
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.formAdd = formAdd;
+const formUpdate = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { _id, fields } = req.body;
+        const dataToUpdate = {
+            fields,
+            updatedAt: (0, moment_1.default)().utc().valueOf()
+        };
+        const updatedData = yield Models.formModel.findOneAndUpdate({ _id: new mongoose_1.Types.ObjectId(_id) }, dataToUpdate, options);
+        const response = {
+            message: "Updated Successfully",
+            data: updatedData
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.formUpdate = formUpdate;
+const formDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { documentId } = req.query;
+        const fetchData = yield Models.formModel.findOne({ documentId: documentId }, projection, option);
+        return fetchData !== null && fetchData !== void 0 ? fetchData : {};
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.formDetail = formDetail;
+const formWithIp = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { documentId } = req.query;
+        const ipAddress = req.ip;
+        const query = { ipAddress: ipAddress, documentId: documentId };
+        const fetchUserInfo = yield Models.infoModel.findOne(query, projection, option);
+        if (!fetchUserInfo) {
+            const query = { documentId: documentId };
+            const fetchFormData = yield Models.formModel.findOne(query, projection, option);
+            const response = {
+                message: "Form Data",
+                data: fetchFormData
+            };
+            return response;
+        }
+        else {
+            const response = {
+                message: "Form Added"
+            };
+            return response;
+        }
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.formWithIp = formWithIp;
+const formInfoAdd = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const ipAddress = req.ip;
+        const { documentId, fields } = req.body;
+        const dataToSave = {
+            documentId, ipAddress, fields,
+            createdAt: (0, moment_1.default)().utc().valueOf()
+        };
+        const saveData = yield Models.infoModel.create(dataToSave);
+        const response = {
+            message: "Form Added successfully",
+            data: saveData
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.formInfoAdd = formInfoAdd;

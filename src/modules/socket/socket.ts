@@ -35,7 +35,6 @@ const connectSocket = (server: object) => {
 
                     console.log("ip---",ip)
                     const { text, documentId, chatSessionId } = payload
-                    console.log("payload----", payload)
                     const res: SocketResponse = {
                         message: text,
                         sessionId: chatSessionId ?? null,

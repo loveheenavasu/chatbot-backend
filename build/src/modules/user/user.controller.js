@@ -32,7 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Service = __importStar(require("./user.service"));
 const Handler = __importStar(require("../../handler/handler"));
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -245,3 +245,53 @@ const themeList = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.themeList = themeList;
+const formAdd = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.formAdd(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.formAdd = formAdd;
+const formDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.formDetail(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.formDetail = formDetail;
+const formUpdate = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.formUpdate(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.formUpdate = formUpdate;
+const formWithIp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.formWithIp(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.formWithIp = formWithIp;
+const formInfoAdd = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.formInfoAdd(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.formInfoAdd = formInfoAdd;

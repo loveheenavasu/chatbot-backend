@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import * as Models from '../../models/index';
 import moment from 'moment';
-import { Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as Handler from '../../handler/handler';
 import { EmailAlreadyExists, EmailNotRegistered, ErrorResponse, NotFound, RegisteredWithGoogle, RegisteredWithPassword, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
 import * as CommonHelper from '../../common/common';
@@ -28,6 +28,9 @@ import Ips from '../../interfaces/ips.interface';
 import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
 import Theme from '../../interfaces/theme.interface';
+import Forms from '../../interfaces/form.interface';
+import { data } from 'cheerio/lib/api/attributes';
+import UserInfo from '../../interfaces/information.interface';
 config();
 const { v4: uuidv4 } = require('uuid');
 
@@ -63,6 +66,16 @@ interface UserResponse {
 interface Response {
     message: string;
     data: Text
+}
+
+interface FormResponse {
+    message: string;
+    data?: Forms
+}
+
+interface UserInfoResponse {
+    message: string;
+    data: UserInfo
 }
 
 interface MessageResponse {
@@ -916,6 +929,104 @@ const themeList = async (req: Request): Promise<ResponseList> => {
     }
 }
 
+
+const formAdd = async (req: Request): Promise<FormResponse> => {
+    try {
+        const { documentId, fields } = req.body;
+        const dataToSave = {
+            documentId: documentId,
+            fields,
+            createdAt: moment().utc().valueOf()
+        }
+        const saveData = await Models.formModel.create(dataToSave);
+        const response: FormResponse = {
+            message: "Added successfully",
+            data: saveData
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const formUpdate = async (req: Request): Promise<FormResponse> => {
+    try {
+        const { _id, fields } = req.body;
+        const dataToUpdate = {
+            fields,
+            updatedAt: moment().utc().valueOf()
+        }
+        const updatedData = await Models.formModel.findOneAndUpdate({ _id: new Types.ObjectId(_id) }, dataToUpdate, options);
+        const response: FormResponse = {
+            message: "Updated Successfully",
+            data: updatedData!
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const formDetail = async (req: Request): Promise<Forms> => {
+    try {
+        const { documentId } = req.query;
+        const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
+        return fetchData ?? {};
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const formWithIp = async (req: Request): Promise<FormResponse> => {
+    try {
+        const { documentId } = req.query;
+        const ipAddress = req.ip;
+        const query = { ipAddress: ipAddress, documentId: documentId };
+        const fetchUserInfo = await Models.infoModel.findOne(query, projection, option);
+        if (!fetchUserInfo) {
+            const query = { documentId: documentId }
+            const fetchFormData = await Models.formModel.findOne(query, projection, option);
+            const response: FormResponse | null = {
+                message: "Form Data",
+                data: fetchFormData!
+            }
+            return response;
+        }
+        else {
+            const response: FormResponse = {
+                message: "Form Added"
+            }
+            return response;
+        }
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const formInfoAdd = async (req: Request): Promise<UserInfoResponse> => {
+    try {
+        const ipAddress = req.ip;
+        const { documentId, fields } = req.body;
+        const dataToSave = {
+            documentId, ipAddress, fields,
+            createdAt: moment().utc().valueOf()
+        }
+        const saveData = await Models.infoModel.create(dataToSave);
+        const response: UserInfoResponse = {
+            message: "Form Added successfully",
+            data: saveData
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
 export {
     signup,
     verifyEmail,
@@ -939,5 +1050,10 @@ export {
     chatHistory,
     chatDetail,
     createTheme,
-    themeList
+    themeList,
+    formAdd,
+    formDetail,
+    formUpdate,
+    formWithIp,
+    formInfoAdd
 }

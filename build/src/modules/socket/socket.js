@@ -60,7 +60,6 @@ const connectSocket = (server) => {
                     }
                     console.log("ip---", ip);
                     const { text, documentId, chatSessionId } = payload;
-                    console.log("payload----", payload);
                     const res = {
                         message: text,
                         sessionId: chatSessionId !== null && chatSessionId !== void 0 ? chatSessionId : null,

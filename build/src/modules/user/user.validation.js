@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.themeCreate = exports.uploadFile = exports.updateText = exports.text = exports.deleteFile = exports.sessionIdWithPL = exports.documentIdWithPL = exports.textDetail = exports.documentId = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyForgot = exports.resendAndForgot = exports.verify = exports.signup = void 0;
+exports.formInfoAdd = exports.formUpdate = exports.formAdd = exports.themeCreate = exports.uploadFile = exports.updateText = exports.text = exports.deleteFile = exports.sessionIdWithPL = exports.documentIdWithPL = exports.textDetail = exports.documentId = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyForgot = exports.resendAndForgot = exports.verify = exports.signup = void 0;
 const Handler = __importStar(require("../../handler/handler"));
 const joi_1 = __importDefault(require("joi"));
 const signup = (req, res, next) => {
@@ -292,3 +292,66 @@ const themeCreate = (req, res, next) => {
     }
 };
 exports.themeCreate = themeCreate;
+const formAdd = (req, res, next) => {
+    try {
+        const schema = joi_1.default.object({
+            documentId: joi_1.default.string().trim().required(),
+            fields: joi_1.default.array().items(joi_1.default.object({
+                name: joi_1.default.string().required(),
+                type: joi_1.default.string().required(),
+                label: joi_1.default.string().required(),
+                isRequired: joi_1.default.boolean().optional()
+            })).optional()
+        });
+        const { error } = schema.validate(req.body);
+        if (error)
+            return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+};
+exports.formAdd = formAdd;
+const formUpdate = (req, res, next) => {
+    try {
+        const schema = joi_1.default.object({
+            _id: joi_1.default.string().trim().required(),
+            fields: joi_1.default.array().items(joi_1.default.object({
+                name: joi_1.default.string().required(),
+                type: joi_1.default.string().required(),
+                label: joi_1.default.string().required(),
+                isRequired: joi_1.default.boolean().optional()
+            })).optional()
+        });
+        const { error } = schema.validate(req.body);
+        if (error)
+            return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+};
+exports.formUpdate = formUpdate;
+const formInfoAdd = (req, res, next) => {
+    try {
+        const schema = joi_1.default.object({
+            documentId: joi_1.default.string().required(),
+            fields: joi_1.default.array().items(joi_1.default.object({
+                name: joi_1.default.string().required(),
+                type: joi_1.default.string().required(),
+                label: joi_1.default.string().required(),
+                value: joi_1.default.string().optional()
+            })).optional()
+        });
+        const { error } = schema.validate(req.body);
+        if (error)
+            return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+};
+exports.formInfoAdd = formInfoAdd;

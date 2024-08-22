@@ -217,6 +217,56 @@ const themeList = async (req: Request, res: Response) => {
     }
 }
 
+const formAdd = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.formAdd(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const formDetail = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.formDetail(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const formUpdate = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.formUpdate(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const formWithIp = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.formWithIp(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const formInfoAdd = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.formInfoAdd(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
 export {
     signup,
     verifyEmail,
@@ -238,5 +288,10 @@ export {
     chatHistory,
     chatDetail,
     createTheme,
-    themeList
+    themeList,
+    formAdd,
+    formDetail,
+    formUpdate,
+    formWithIp,
+    formInfoAdd
 }

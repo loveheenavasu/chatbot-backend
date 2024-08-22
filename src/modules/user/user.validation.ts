@@ -253,6 +253,75 @@ const themeCreate = (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const formAdd = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            documentId: Joi.string().trim().required(),
+            fields: Joi.array().items(
+                Joi.object({
+                    name: Joi.string().required(),
+                    type: Joi.string().required(),
+                    label: Joi.string().required(),
+                    isRequired: Joi.boolean().optional() 
+                })
+            ).optional()
+        });
+        const { error } = schema.validate(req.body);
+        if (error) return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const formUpdate = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            _id: Joi.string().trim().required(),
+            fields: Joi.array().items(
+                Joi.object({
+                    name: Joi.string().required(),
+                    type: Joi.string().required(),
+                    label: Joi.string().required(),
+                    isRequired: Joi.boolean().optional()
+                })
+            ).optional()
+        });
+        const { error } = schema.validate(req.body);
+        if (error) return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const formInfoAdd = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            documentId: Joi.string().required(),
+            fields: Joi.array().items(
+                Joi.object({
+                    name: Joi.string().required(),
+                    type: Joi.string().required(),
+                    label: Joi.string().required(),
+                    value: Joi.string().optional()
+                })
+            ).optional()
+        });
+        const { error } = schema.validate(req.body);
+        if (error) return Handler.handleJoiError(error);
+        next();
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+
+
+
 export {
     signup,
     verify,
@@ -269,6 +338,9 @@ export {
     text,
     updateText,
     uploadFile,
-    themeCreate
+    themeCreate,
+    formAdd,
+    formUpdate,
+    formInfoAdd
 }
 

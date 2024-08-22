@@ -54,4 +54,9 @@ router.get('/chat-history', Validation.documentIdWithPL, authorization_1.authori
 router.get('/chat', Validation.sessionIdWithPL, authorization_1.authorization, Controller.chatDetail);
 router.post('/theme', Validation.themeCreate, Controller.createTheme);
 router.get('/theme', Controller.themeList);
+router.post('/form', Validation.formAdd, authorization_1.authorization, Controller.formAdd);
+router.patch('/form', Validation.formUpdate, authorization_1.authorization, Controller.formUpdate);
+router.get('/form', Validation.documentId, authorization_1.authorization, Controller.formDetail);
+router.get('/form-ip', Validation.documentId, Controller.formWithIp);
+router.post('/form-info', Validation.formInfoAdd, Controller.formInfoAdd);
 exports.default = router;
