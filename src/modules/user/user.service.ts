@@ -990,24 +990,27 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
         const ipAddress = req.ip;
         console.log("ipAddress----", ipAddress)
         const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
-        const query = { documentId: documentId, ipAddress: ipAddress };
-        const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
-        console.log("fetchIpData---", fetchIpData)
         let isFormCompleted = false;
-        if (fetchIpData) {
-            const currentTime = moment().utc().valueOf();
-            const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
-            if (differenceInHours < 24) {
-                const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
-                if (fetchSessions!.isFormCompleted) {
-                    isFormCompleted = true
+        if (fetchData) {
+            const query = { documentId: documentId, ipAddress: ipAddress };
+            const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
+            console.log("fetchIpData---", fetchIpData)
+            if (fetchIpData) {
+                const currentTime = moment().utc().valueOf();
+                const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
+                if (differenceInHours < 24) {
+                    const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
+                    if (fetchSessions!.isFormCompleted) {
+                        isFormCompleted = true
+                    }
+                }
+                else {
+                    const updateData = { createdAt: currentTime }
+                    await Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
                 }
             }
-            else {
-                const updateData = { createdAt: currentTime }
-                await Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
-            }
         }
+        
         const response: FormChatbot = {
             isFormCompleted: isFormCompleted,
             data: fetchData ?? {}
