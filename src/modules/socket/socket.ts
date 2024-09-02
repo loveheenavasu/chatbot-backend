@@ -137,8 +137,10 @@ const connectSocket = (server: object) => {
             socket.on("disconnect", async () => {
                 try {
                     const query = { _id: socket?.chatSessionId }
+                    console.log("query---", query)
                     const update = {
                         sessionType: SessionType.COMPLETED,
+                        isFormCompleted: true,
                         updatedAt: moment().utc().valueOf()
                     }
                     const options = { new: true }
