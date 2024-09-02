@@ -926,9 +926,11 @@ const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { documentId } = req.query;
         const ipAddress = req.ip;
+        console.log("ipAddress----", ipAddress);
         const fetchData = yield Models.formModel.findOne({ documentId: documentId }, projection, option);
         const query = { documentId: documentId, ipAddress: ipAddress };
         const fetchIpData = yield Models.ipAddressModel.findOne(query, projection, option);
+        console.log("fetchIpData---", fetchIpData);
         let isFormCompleted = false;
         if (fetchIpData) {
             const currentTime = (0, moment_1.default)().utc().valueOf();

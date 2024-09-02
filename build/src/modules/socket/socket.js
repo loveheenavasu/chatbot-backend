@@ -68,6 +68,7 @@ const connectSocket = (server) => {
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 try {
                     const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload;
+                    console.log("payload-----", payload);
                     const query = { ipAddress: ip, documentId: documentId };
                     const projection = { __v: 0 };
                     const option = { lean: true };

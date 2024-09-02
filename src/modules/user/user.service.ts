@@ -988,9 +988,11 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
     try {
         const { documentId } = req.query;
         const ipAddress = req.ip;
+        console.log("ipAddress----", ipAddress)
         const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
         const query = { documentId: documentId, ipAddress: ipAddress };
         const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
+        console.log("fetchIpData---", fetchIpData)
         let isFormCompleted = false;
         if (fetchIpData) {
             const currentTime = moment().utc().valueOf();

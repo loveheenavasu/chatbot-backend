@@ -45,7 +45,8 @@ const connectSocket = (server: object) => {
 
             socket.on("search", async (payload: ISocketSearch) => {
                 try {
-                    const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload
+                    const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload;
+                    console.log("payload-----", payload)
                     const query = { ipAddress: ip, documentId: documentId }
                     const projection = { __v: 0 }
                     const option = { lean: true }
@@ -76,7 +77,7 @@ const connectSocket = (server: object) => {
                         sessionId = sessionSave._id!;
                     }
 
-                    if (isFormCompleted == true && type == Role.AI) {  
+                    if (isFormCompleted == true && type == Role.AI) {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you.";
                         await sendMessage(message, Role.AI);
                     }
@@ -98,13 +99,11 @@ const connectSocket = (server: object) => {
 
 
                     socket.chatSessionId = sessionId;
-
-
                     if (type == Role.User && question != null) {
-                         if (question == questionType.END && nextType === questionType.END) {
-                             const message = "Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?";
-                             await SocketService.updateChatSession(isFormCompleted!, sessionId)
-                             await sendMessage(message, Role.AI);
+                        if (question == questionType.END && nextType === questionType.END) {
+                            const message = "Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?";
+                            await SocketService.updateChatSession(isFormCompleted!, sessionId)
+                            await sendMessage(message, Role.AI);
                         } else if (question !== questionType.CUSTOM && nextType !== questionType.END) {
                             let customMsg = await SocketService.customMessage(question!, nextType);
                             if (label) {
