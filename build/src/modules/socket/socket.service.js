@@ -122,10 +122,11 @@ const searchInput = (search, documentId) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.searchInput = searchInput;
-const saveChatSession = (ipAddressId) => __awaiter(void 0, void 0, void 0, function* () {
+const saveChatSession = (ipAddressId, isFormCompleted) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const dataToSave = {
             ipAddressId: ipAddressId,
+            isFormCompleted: isFormCompleted,
             createdAt: (0, moment_1.default)().utc().valueOf()
         };
         const response = yield Models.chatSessionModel.create(dataToSave);

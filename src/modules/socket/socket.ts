@@ -61,7 +61,7 @@ const connectSocket = (server: object) => {
                             sessionId = fetchSession._id!;
                         }
                         else {
-                            const sessionSave = await SocketService.saveChatSession(ipAddressId);
+                            const sessionSave = await SocketService.saveChatSession(ipAddressId, isFormCompleted!);
                             sessionId = sessionSave?._id!;
                         }
                     }
@@ -73,7 +73,7 @@ const connectSocket = (server: object) => {
                         }
                         const saveData: Ips = await Models.ipAddressModel.create(dataToSave);
                         ipAddressId = saveData._id!;
-                        const sessionSave = await SocketService.saveChatSession(ipAddressId)
+                        const sessionSave = await SocketService.saveChatSession(ipAddressId, isFormCompleted!)
                         sessionId = sessionSave._id!;
                     }
 
@@ -140,10 +140,11 @@ const connectSocket = (server: object) => {
 
             socket.on("disconnect", async () => {
                 try {
-                    const query = { _id: socket?.chatSessionId }
+                    const query = { _id: socket?.chatSessionId };
                     const update = {
                         sessionType: SessionType.COMPLETED,
                         // isFormCompleted: true,
+                        isSessionEnd:true,
                         updatedAt: moment().utc().valueOf()
                     }
                     const options = { new: true }

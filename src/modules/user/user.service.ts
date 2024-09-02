@@ -29,6 +29,7 @@ import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
 import Forms from '../../interfaces/form.interface';
 import UserInfo from '../../interfaces/information.interface';
+import { SessionType } from '../../models/chat-session.model';
 config();
 
 const { v4: uuidv4 } = require('uuid');
@@ -998,7 +999,8 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
                 const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
                 if (differenceInHours < 24) {
                     const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
-                    if (fetchSessions!.isFormCompleted) {
+
+                    if (fetchSessions!.sessionType == SessionType.COMPLETED && fetchSessions!.isFormCompleted == true) {
                         isFormCompleted = true
                     }
                 }
@@ -1008,7 +1010,7 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
                 }
             }
         }
-        
+
         const response: FormChatbot = {
             isFormCompleted: isFormCompleted,
             data: fetchData ?? {}

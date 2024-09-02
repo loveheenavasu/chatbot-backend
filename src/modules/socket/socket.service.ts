@@ -96,10 +96,11 @@ const searchInput = async (search: string, documentId: string): Promise<string |
     }
 }
 
-const saveChatSession = async (ipAddressId: Types.ObjectId): Promise<ChatSession> => {
+const saveChatSession = async (ipAddressId: Types.ObjectId, isFormCompleted:boolean): Promise<ChatSession> => {
     try {
         const dataToSave: ChatSession = {
             ipAddressId: ipAddressId,
+            isFormCompleted: isFormCompleted,
             createdAt: moment().utc().valueOf()
         }
         const response = await Models.chatSessionModel.create(dataToSave);

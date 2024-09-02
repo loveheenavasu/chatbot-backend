@@ -83,7 +83,7 @@ const connectSocket = (server) => {
                             sessionId = fetchSession._id;
                         }
                         else {
-                            const sessionSave = yield SocketService.saveChatSession(ipAddressId);
+                            const sessionSave = yield SocketService.saveChatSession(ipAddressId, isFormCompleted);
                             sessionId = sessionSave === null || sessionSave === void 0 ? void 0 : sessionSave._id;
                         }
                     }
@@ -95,7 +95,7 @@ const connectSocket = (server) => {
                         };
                         const saveData = yield Models.ipAddressModel.create(dataToSave);
                         ipAddressId = saveData._id;
-                        const sessionSave = yield SocketService.saveChatSession(ipAddressId);
+                        const sessionSave = yield SocketService.saveChatSession(ipAddressId, isFormCompleted);
                         sessionId = sessionSave._id;
                     }
                     if (isFormCompleted == true && type == message_model_1.Role.AI) {
@@ -163,6 +163,7 @@ const connectSocket = (server) => {
                     const update = {
                         sessionType: chat_session_model_1.SessionType.COMPLETED,
                         // isFormCompleted: true,
+                        isSessionEnd: true,
                         updatedAt: (0, moment_1.default)().utc().valueOf()
                     };
                     const options = { new: true };
