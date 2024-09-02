@@ -102,7 +102,7 @@ const connectSocket = (server) => {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you.";
                         yield sendMessage(message, message_model_1.Role.AI);
                     }
-                    else if (isFormCompleted !== true && type == message_model_1.Role.AI) {
+                    else if (isFormCompleted !== true && type == message_model_1.Role.AI && !question && !nextType) {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you.";
                         yield sendMessage(message, message_model_1.Role.AI);
                     }
@@ -160,10 +160,9 @@ const connectSocket = (server) => {
             socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
                 try {
                     const query = { _id: socket === null || socket === void 0 ? void 0 : socket.chatSessionId };
-                    console.log("query---", query);
                     const update = {
                         sessionType: chat_session_model_1.SessionType.COMPLETED,
-                        isFormCompleted: true,
+                        // isFormCompleted: true,
                         updatedAt: (0, moment_1.default)().utc().valueOf()
                     };
                     const options = { new: true };

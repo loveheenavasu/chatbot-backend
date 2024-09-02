@@ -81,7 +81,7 @@ const connectSocket = (server: object) => {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you.";
                         await sendMessage(message, Role.AI);
                     }
-                    else if (isFormCompleted !== true && type == Role.AI) {
+                    else if (isFormCompleted !== true && type == Role.AI && !question && !nextType) {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you.";
                         await sendMessage(message, Role.AI);
                     }
@@ -141,10 +141,9 @@ const connectSocket = (server: object) => {
             socket.on("disconnect", async () => {
                 try {
                     const query = { _id: socket?.chatSessionId }
-                    console.log("query---", query)
                     const update = {
                         sessionType: SessionType.COMPLETED,
-                        isFormCompleted: true,
+                        // isFormCompleted: true,
                         updatedAt: moment().utc().valueOf()
                     }
                     const options = { new: true }
