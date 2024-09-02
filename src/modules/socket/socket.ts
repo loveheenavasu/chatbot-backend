@@ -81,6 +81,10 @@ const connectSocket = (server: object) => {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you.";
                         await sendMessage(message, Role.AI);
                     }
+                    else if (isFormCompleted !== true && type == Role.AI) {
+                        const message = "Hi there! I'm Chatbot, and I'm here to help you.";
+                        await sendMessage(message, Role.AI);
+                    }
                     else if (isFormCompleted != true && question === questionType.HI && nextType !== questionType.END) {
                         const message = "Hi there! I'm Chatbot, and I'm here to help you. Before we get started, I'd love to know a bit more about you.";
                         await sendMessage(message, Role.AI);
