@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import * as Models from '../../models/index';
 import moment from 'moment';
-import { Model, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import * as Handler from '../../handler/handler';
 import { EmailAlreadyExists, EmailNotRegistered, ErrorResponse, NotFound, RegisteredWithGoogle, RegisteredWithPassword, SomethingWentWrong, UnsupportedFileType, WrongOtp, WrongPassword } from '../../handler/error';
 import * as CommonHelper from '../../common/common';
@@ -27,11 +27,10 @@ import Chatbot from '../../interfaces/chatbot.interface';
 import Ips from '../../interfaces/ips.interface';
 import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
-import Theme from '../../interfaces/theme.interface';
 import Forms from '../../interfaces/form.interface';
-import { data } from 'cheerio/lib/api/attributes';
 import UserInfo from '../../interfaces/information.interface';
 config();
+
 const { v4: uuidv4 } = require('uuid');
 
 const OPEN_API_KEY = process.env.OPEN_API_KEY as string;
@@ -113,6 +112,11 @@ interface List {
 interface ChatHistory {
     count: number;
     data: List[]
+}
+
+interface FormChatbot {
+    isFormCompleted: boolean;
+    data: Forms
 }
 
 const signup = async (req: Request): Promise<UserResponse> => {
@@ -980,6 +984,39 @@ const formDetail = async (req: Request): Promise<Forms> => {
     }
 }
 
+const formChatbot = async (req: Request): Promise<FormChatbot> => {
+    try {
+        const { documentId } = req.query;
+        const ipAddress = req.ip;
+        const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
+        const query = { documentId: documentId, ipAddress: ipAddress };
+        const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
+        let isFormCompleted = false;
+        if (fetchIpData) {
+            const currentTime = moment().utc().valueOf();
+            const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
+            if (differenceInHours < 24) {
+                const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
+                if (fetchSessions!.isFormCompleted) {
+                    isFormCompleted = true
+                }
+            }
+            else {
+                const updateData = { createdAt: currentTime }
+                await Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
+            }
+        }
+        const response: FormChatbot = {
+            isFormCompleted: isFormCompleted,
+            data: fetchData ?? {}
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
 const formWithIp = async (req: Request): Promise<FormResponse> => {
     try {
         const { documentId } = req.query;
@@ -1055,5 +1092,6 @@ export {
     formDetail,
     formUpdate,
     formWithIp,
-    formInfoAdd
+    formInfoAdd,
+    formChatbot
 }

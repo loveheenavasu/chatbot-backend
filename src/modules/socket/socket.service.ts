@@ -9,9 +9,11 @@ import { Role } from "../../models/message.model";
 import { ErrorResponse } from "../../handler/error";
 import { Types } from "mongoose";
 import Message from "../../interfaces/message.interface";
-import { NeoConfig } from "../../interfaces/common.interface";
+import { NeoConfig, SocketResponse } from "../../interfaces/common.interface";
 import ChatSession from "../../interfaces/chat-session.interface";
 import { config } from 'dotenv';
+import { questionType } from "./socket";
+import { documentId } from "../user/user.validation";
 config();
 
 const NEO_URL = process.env.NEO_URL as string;
@@ -34,6 +36,24 @@ const open = new OpenAI({
     apiKey: OPEN_API_KEY,
 })
 
+const SocketRes = async (message: string | null, sessionId: string | null, type: string, questionType?: string, nextType?: string, label?: string): Promise<SocketResponse> => {
+    try {
+        const response: SocketResponse = {
+            message: message,
+            sessionId: sessionId,
+            type: type,
+            questionType: questionType,
+            nextType: nextType,
+            label: label
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+
 const saveMessage = async (message: string | null, documentId: string, ipAddressId: Types.ObjectId, sessionId: Types.ObjectId, messageType: string) => {
     try {
         const dataToSave: Message = {
@@ -51,9 +71,9 @@ const saveMessage = async (message: string | null, documentId: string, ipAddress
     }
 }
 
-const searchInput = async (search: string, documentId: string, ipAddressId: Types.ObjectId, sessionId: Types.ObjectId): Promise<string | null> => {
+const searchInput = async (search: string, documentId: string): Promise<string | null> => {
     try {
-        await saveMessage(search, documentId, ipAddressId, sessionId, Role.User); //save user search input message in db
+        // await saveMessage(search, documentId, ipAddressId, sessionId, Role.User); //save user search input message in db
         const embeddingVector = await openai.embedQuery(search);
         const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, neoConfig); // Initialize the vector store
         const filter = { "documentId": { "$eq": documentId } };
@@ -69,7 +89,6 @@ const searchInput = async (search: string, documentId: string, ipAddressId: Type
             stop: ['\n'],
         }); // answers the search questions based on the content that is provided to openai.
         const message = response?.choices[0]?.message?.content  // message that comes from openai response
-        await saveMessage(message, documentId, ipAddressId, sessionId, Role.AI); //save openai message in db
         return message;
     }
     catch (err) {
@@ -91,7 +110,94 @@ const saveChatSession = async (ipAddressId: Types.ObjectId): Promise<ChatSession
     }
 }
 
+const customMessage = async (question: string, nextType: string | undefined): Promise<string> => {
+    try {
+        let message: string = "Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?"
+
+        if (question == questionType.HI && nextType == questionType.NAME) {
+            message = "what is your name?"
+        }
+        else if (question == questionType.HI && nextType == questionType.EMAIL) {
+            message = "what is your email address?"
+        }
+        else if (question == questionType.HI && nextType == questionType.PHONE) {
+            message = "what is your phone number?"
+        }
+        else if (question == questionType.NAME && nextType == questionType.END) {
+            message = "Nice to meet you. Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?"
+        }
+        else if (question == questionType.EMAIL && nextType == questionType.END) {
+            message = "Great. Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?"
+        }
+        else if (question == questionType.PHONE && nextType == questionType.END) {
+            message = "Great. Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?"
+        }
+        else if (question == questionType.NAME && nextType == questionType.CUSTOM) {
+            message = "Nice to meet you."
+        }
+        else if (question == questionType.EMAIL && nextType == questionType.CUSTOM) {
+            message = "Great, thanks."
+        }
+        else if (question == questionType.PHONE && nextType == questionType.CUSTOM) {
+            message = "Great, thanks."
+        }
+        else if (question == questionType.NAME && nextType == questionType.EMAIL) {
+            message = "Nice to meet you, what's your email address?"
+        }
+        else if (question == questionType.NAME && nextType == questionType.PHONE) {
+            message = "Nice to meet you, what's your phone number?"
+        }
+        else if (question == questionType.EMAIL && nextType == questionType.PHONE) {
+            message = "Great, thanks. what's your phone number?"
+        }
+        else if (question == questionType.EMAIL && nextType == questionType.NAME) {
+            message = "Great, thanks. what's your name?"
+        }
+        else if (question == questionType.PHONE && nextType == questionType.NAME) {
+            message = "Great, thanks. what's your name?"
+        }
+        else if (question == questionType.PHONE && nextType == questionType.EMAIL) {
+            message = "Great, thanks. what's your email address?"
+        }
+        return message;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const formQues = async (documentId: string, label: string): Promise<string | undefined> => {
+    try {
+        const fetchData = await Models.formModel.findOne({ documentId: documentId }, { __v: 0 }, { lean: true });
+        if (fetchData) {
+            const result = fetchData.fields!.filter(field => field.label === label);
+            const response = result[0].label;
+            return response;
+        }
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const updateChatSession = async (isFormCompleted: boolean, sessionId: Types.ObjectId) => {
+    try {
+        let query = { _id: sessionId }
+        const update = { isFormCompleted: true }
+        const data = await Models.chatSessionModel.findOneAndUpdate(query, update, { new: true })
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+
 export {
     searchInput,
-    saveChatSession
+    saveChatSession,
+    customMessage,
+    saveMessage,
+    SocketRes,
+    formQues,
+    updateChatSession
 }

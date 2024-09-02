@@ -22,7 +22,10 @@ export interface NeoConfig {
 export interface SocketResponse {
     message?: string | null,
     sessionId?: Types.ObjectId | string | null,
-    type?: string
+    type?: string;
+    questionType?: string;
+    nextType?: string;
+    label?: string;
 }
 
 export interface SignupPayload {

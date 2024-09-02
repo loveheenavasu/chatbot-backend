@@ -31,10 +31,10 @@ router.get('/chat', Validation.sessionIdWithPL, authorization, Controller.chatDe
 router.post('/theme', Validation.themeCreate, Controller.createTheme)
 router.get('/theme', Controller.themeList)
 
-
 router.post('/form', Validation.formAdd, authorization, Controller.formAdd)
-router.patch('/form', Validation.formUpdate, authorization, Controller.formUpdate)
+router.put('/form', Validation.formUpdate, authorization, Controller.formUpdate)
 router.get('/form', Validation.documentId, authorization, Controller.formDetail)
+router.get('/form-chatbot', Validation.documentId, Controller.formChatbot)
 router.get('/form-ip', Validation.documentId, Controller.formWithIp)
 router.post('/form-info', Validation.formInfoAdd, Controller.formInfoAdd)
 

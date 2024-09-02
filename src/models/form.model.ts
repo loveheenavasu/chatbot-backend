@@ -10,7 +10,8 @@ const formSchema = new mongoose.Schema<Forms>({
             name: { type: String, default: null },
             type: { type: String, default: null },
             label: { type: String, default: null },
-            isRequired: { type: Boolean, default: false }
+            isRequired: { type: Boolean, default: false },
+            isCustom: { type: Boolean, default: false }
         }
     ],
     createdAt: { type: Number, default: () => moment().utc().valueOf() },

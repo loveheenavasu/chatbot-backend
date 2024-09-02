@@ -1,6 +1,7 @@
 import moment from 'moment';
 import mongoose, { Types } from 'mongoose';
 import ChatSession from '../interfaces/chat-session.interface';
+import { boolean } from 'joi';
 export enum SessionType {
     ONGOING = "ONGOING",
     COMPLETED = "COMPLETED"
@@ -8,6 +9,7 @@ export enum SessionType {
 const chatSessionSchema = new mongoose.Schema<ChatSession>({
     ipAddressId: { type: Types.ObjectId, default: null, ref: "Ips" },
     sessionType: { type: String, enum: Object.values(SessionType), default: SessionType.ONGOING },
+    isFormCompleted: { type: Boolean, default: false },
     createdAt: { type: Number, default: () => moment().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 }, {

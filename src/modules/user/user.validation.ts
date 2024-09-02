@@ -262,7 +262,8 @@ const formAdd = (req: Request, res: Response, next: NextFunction) => {
                     name: Joi.string().required(),
                     type: Joi.string().required(),
                     label: Joi.string().required(),
-                    isRequired: Joi.boolean().optional() 
+                    isRequired: Joi.boolean().optional(),
+                    isCustom: Joi.boolean().optional()
                 })
             ).optional()
         });
@@ -284,7 +285,8 @@ const formUpdate = (req: Request, res: Response, next: NextFunction) => {
                     name: Joi.string().required(),
                     type: Joi.string().required(),
                     label: Joi.string().required(),
-                    isRequired: Joi.boolean().optional()
+                    isRequired: Joi.boolean().optional(),
+                    isCustom: Joi.boolean().optional()
                 })
             ).optional()
         });

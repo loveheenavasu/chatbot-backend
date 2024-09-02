@@ -13,6 +13,20 @@ interface ISocketSearch {
     text: string;
     documentId: string;
     chatSessionId?: string;
+    questionType?: string;
+    type?: Role
+    nextType?: string;
+    label?: string;
+    isFormCompleted?: boolean;
+}
+
+export enum questionType {
+    HI = "HI",
+    NAME = "NAME",
+    EMAIL = "EMAIL",
+    PHONE = "PHONE",
+    CUSTOM = "CUSTOM",
+    END = "END"
 }
 
 const connectSocket = (server: object) => {
@@ -23,24 +37,15 @@ const connectSocket = (server: object) => {
 
         io.on("connection", async (socket: Socket | any) => {
             socket.setMaxListeners(0);
+            const headers = socket?.request?.headers;
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket?.request?.connection?.remoteAddress || socket?.conn?.remoteAddress;
+            if (ip && ip.includes(',')) {
+                ip = ip.split(',')[0].trim()
+            }
 
             socket.on("search", async (payload: ISocketSearch) => {
                 try {
-                    const headers = socket?.request?.headers;
-                    let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket?.request?.connection?.remoteAddress || socket?.conn?.remoteAddress;
-
-                    if (ip && ip.includes(',')) {
-                        ip = ip.split(',')[0].trim()
-                    }
-
-                    console.log("ip---",ip)
-                    const { text, documentId, chatSessionId } = payload
-                    const res: SocketResponse = {
-                        message: text,
-                        sessionId: chatSessionId ?? null,
-                        type: Role.User
-                    }
-                    socket.emit("searches", res);
+                    const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload
                     const query = { ipAddress: ip, documentId: documentId }
                     const projection = { __v: 0 }
                     const option = { lean: true }
@@ -48,13 +53,11 @@ const connectSocket = (server: object) => {
                     let ipAddressId: Types.ObjectId;
                     let sessionId: Types.ObjectId;
                     if (fetchData) {
-                        const { _id } = fetchData
-                        ipAddressId = _id!
+                        ipAddressId = fetchData._id!
                         const query = { _id: new Types.ObjectId(chatSessionId), sessionType: SessionType.ONGOING }
                         const fetchSession: ChatSession | null = await Models.chatSessionModel.findOne(query, projection, option);
                         if (fetchSession) {
-                            const { _id } = fetchSession;
-                            sessionId = _id!;
+                            sessionId = fetchSession._id!;
                         }
                         else {
                             const sessionSave = await SocketService.saveChatSession(ipAddressId);
@@ -73,14 +76,59 @@ const connectSocket = (server: object) => {
                         sessionId = sessionSave._id!;
                     }
 
-                    const data = await SocketService.searchInput(text, documentId, ipAddressId, sessionId);
-                    const response: SocketResponse = {
-                        message: data,
-                        sessionId: sessionId,
-                        type: Role.AI
+                    if (isFormCompleted == true && type == Role.AI) {  
+                        const message = "Hi there! I'm Chatbot, and I'm here to help you.";
+                        await sendMessage(message, Role.AI);
                     }
-                    socket.chatSessionId = sessionId
-                    socket.emit("searches", response);
+                    else if (isFormCompleted != true && question === questionType.HI && nextType !== questionType.END) {
+                        const message = "Hi there! I'm Chatbot, and I'm here to help you. Before we get started, I'd love to know a bit more about you.";
+                        await sendMessage(message, Role.AI);
+                        if (nextType === questionType.CUSTOM && label) {
+                            const formMsg = await SocketService.formQues(documentId, label);
+                            await sendMessage(formMsg!, Role.AI, label);
+                        }
+                        else {
+                            const customMsg = await SocketService.customMessage(question, nextType);
+                            await sendMessage(customMsg, Role.AI);
+                        }
+                    }
+                    else {
+                        await sendMessage(text!);
+                    }
+
+
+                    socket.chatSessionId = sessionId;
+
+
+                    if (type == Role.User && question != null) {
+                         if (question == questionType.END && nextType === questionType.END) {
+                             const message = "Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?";
+                             await SocketService.updateChatSession(isFormCompleted!, sessionId)
+                             await sendMessage(message, Role.AI);
+                        } else if (question !== questionType.CUSTOM && nextType !== questionType.END) {
+                            let customMsg = await SocketService.customMessage(question!, nextType);
+                            if (label) {
+                                const formMsg = await SocketService.formQues(documentId, label);
+                                customMsg += ' ' + formMsg;
+                            }
+                            await sendMessage(customMsg, Role.AI, label);
+                        }
+                        else if (question === questionType.CUSTOM && nextType === questionType.CUSTOM && label) {
+                            const formMsg = await SocketService.formQues(documentId, label);
+                            await sendMessage(formMsg!, Role.AI, label);
+                        }
+                    }
+                    else if (type == Role.User && question == undefined) {
+                        const message = await SocketService.searchInput(text, documentId);
+                        await sendMessage(message!, Role.AI);
+                    }
+
+                    async function sendMessage(msg: string, role?: string, label?: string) {
+                        await SocketService.saveMessage(msg, documentId, ipAddressId, sessionId, role ?? Role.User);
+                        const res = await SocketService.SocketRes(msg, sessionId.toString(), role ?? Role.User, question, nextType, label);
+                        socket.emit("searches", res);
+                    }
+
                 }
                 catch (err) {
                     throw err;
@@ -113,3 +161,4 @@ const connectSocket = (server: object) => {
 export {
     connectSocket
 }
+

@@ -37,6 +37,7 @@ var SessionType;
 const chatSessionSchema = new mongoose_1.default.Schema({
     ipAddressId: { type: mongoose_1.Types.ObjectId, default: null, ref: "Ips" },
     sessionType: { type: String, enum: Object.values(SessionType), default: SessionType.ONGOING },
+    isFormCompleted: { type: Boolean, default: false },
     createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 }, {

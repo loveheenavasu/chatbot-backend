@@ -5,6 +5,7 @@ interface Fields {
     type?: string;
     label?: string;
     isRequired?: boolean;
+    isCustom?: boolean;
 }
 
 export default interface Forms extends Fields {

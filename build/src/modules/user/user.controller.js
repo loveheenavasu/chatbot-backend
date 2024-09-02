@@ -32,7 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Service = __importStar(require("./user.service"));
 const Handler = __importStar(require("../../handler/handler"));
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -265,6 +265,16 @@ const formDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.formDetail = formDetail;
+const formChatbot = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const response = yield Service.formChatbot(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err);
+    }
+});
+exports.formChatbot = formChatbot;
 const formUpdate = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield Service.formUpdate(req);

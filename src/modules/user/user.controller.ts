@@ -237,6 +237,16 @@ const formDetail = async (req: Request, res: Response) => {
     }
 }
 
+const formChatbot = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.formChatbot(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
 const formUpdate = async (req: Request, res: Response) => {
     try {
         const response = await Service.formUpdate(req);
@@ -293,5 +303,6 @@ export {
     formDetail,
     formUpdate,
     formWithIp,
-    formInfoAdd
+    formInfoAdd,
+    formChatbot
 }

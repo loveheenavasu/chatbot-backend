@@ -28,10 +28,10 @@ const { PORT } = process.env;
     app.use(express_1.default.urlencoded({ extended: true }));
     app.use((0, cors_1.default)({ origin: "*" }));
     app.use('/user', user_routes_1.default);
+    yield (0, db_1.dbConnect)();
     const server = http_1.default.createServer(app);
     server.listen(PORT, () => {
         console.log(`Server is listening on port ${PORT}`);
     });
-    yield (0, db_1.dbConnect)();
     (0, socket_1.connectSocket)(server);
 }))();

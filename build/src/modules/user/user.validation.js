@@ -300,7 +300,8 @@ const formAdd = (req, res, next) => {
                 name: joi_1.default.string().required(),
                 type: joi_1.default.string().required(),
                 label: joi_1.default.string().required(),
-                isRequired: joi_1.default.boolean().optional()
+                isRequired: joi_1.default.boolean().optional(),
+                isCustom: joi_1.default.boolean().optional()
             })).optional()
         });
         const { error } = schema.validate(req.body);
@@ -321,7 +322,8 @@ const formUpdate = (req, res, next) => {
                 name: joi_1.default.string().required(),
                 type: joi_1.default.string().required(),
                 label: joi_1.default.string().required(),
-                isRequired: joi_1.default.boolean().optional()
+                isRequired: joi_1.default.boolean().optional(),
+                isCustom: joi_1.default.boolean().optional()
             })).optional()
         });
         const { error } = schema.validate(req.body);

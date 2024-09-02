@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
@@ -922,6 +922,39 @@ const formDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.formDetail = formDetail;
+const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { documentId } = req.query;
+        const ipAddress = req.ip;
+        const fetchData = yield Models.formModel.findOne({ documentId: documentId }, projection, option);
+        const query = { documentId: documentId, ipAddress: ipAddress };
+        const fetchIpData = yield Models.ipAddressModel.findOne(query, projection, option);
+        let isFormCompleted = false;
+        if (fetchIpData) {
+            const currentTime = (0, moment_1.default)().utc().valueOf();
+            const differenceInHours = (0, moment_1.default)(currentTime).diff((0, moment_1.default)(fetchIpData.createdAt), 'hours');
+            if (differenceInHours < 24) {
+                const fetchSessions = yield Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
+                if (fetchSessions.isFormCompleted) {
+                    isFormCompleted = true;
+                }
+            }
+            else {
+                const updateData = { createdAt: currentTime };
+                yield Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
+            }
+        }
+        const response = {
+            isFormCompleted: isFormCompleted,
+            data: fetchData !== null && fetchData !== void 0 ? fetchData : {}
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.formChatbot = formChatbot;
 const formWithIp = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { documentId } = req.query;
