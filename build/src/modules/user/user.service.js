@@ -755,6 +755,7 @@ const deleteChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
         const query = { userId: userId, documentId: documentId };
         yield Models.textModel.deleteMany(query);
         yield Models.chatbotModel.deleteOne(query);
+        yield Models.formModel.deleteOne({ documentId: documentId });
         const query1 = { documentId: documentId };
         yield deleteSessions(query1);
         const response = {

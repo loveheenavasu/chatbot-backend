@@ -817,6 +817,7 @@ const deleteChatbot = async (req: CustomRequest): Promise<MessageResponse> => {
         const query = { userId: userId, documentId: documentId }
         await Models.textModel.deleteMany(query);
         await Models.chatbotModel.deleteOne(query);
+        await Models.formModel.deleteOne({ documentId: documentId });
         const query1 = { documentId: documentId }
         await deleteSessions(query1);
         const response: MessageResponse = {
