@@ -57,7 +57,6 @@ const user_model_1 = require("../../models/user.model");
 const ChatHistoryAggregation = __importStar(require("./aggregation/chat-history.aggregation"));
 const EmailService = __importStar(require("../../common/emailService"));
 const dotenv_1 = require("dotenv");
-const chat_session_model_1 = require("../../models/chat-session.model");
 (0, dotenv_1.config)();
 const { v4: uuidv4 } = require('uuid');
 const OPEN_API_KEY = process.env.OPEN_API_KEY;
@@ -938,9 +937,9 @@ const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
                 const differenceInMinutes = (0, moment_1.default)(currentTime).diff((0, moment_1.default)(fetchIpData.createdAt), 'minutes');
                 console.log("differenceInMinutes----", differenceInMinutes);
-                if (differenceInMinutes < 2) {
+                if (differenceInMinutes < 3) {
                     const fetchSessions = yield Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
-                    if (fetchSessions.sessionType == chat_session_model_1.SessionType.COMPLETED && fetchSessions.isFormCompleted == true) {
+                    if (fetchSessions.isFormCompleted == true) {
                         isFormCompleted = true;
                     }
                 }
