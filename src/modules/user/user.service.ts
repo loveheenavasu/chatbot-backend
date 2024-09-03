@@ -1000,7 +1000,7 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
                 // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
                 const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
                 console.log("differenceInMinutes----", differenceInMinutes)
-                if (differenceInMinutes < 5) {
+                if (differenceInMinutes < 2) {
                     const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
 
                     if (fetchSessions!.sessionType == SessionType.COMPLETED && fetchSessions!.isFormCompleted == true) {
