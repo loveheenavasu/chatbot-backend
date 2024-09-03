@@ -937,7 +937,7 @@ const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
                 // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
                 const differenceInMinutes = (0, moment_1.default)(currentTime).diff((0, moment_1.default)(fetchIpData.createdAt), 'minutes');
                 console.log("differenceInMinutes----", differenceInMinutes);
-                if (differenceInMinutes < 3) {
+                if (differenceInMinutes < 5) {
                     const fetchSessions = yield Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
                     if (fetchSessions.isFormCompleted == true) {
                         isFormCompleted = true;
