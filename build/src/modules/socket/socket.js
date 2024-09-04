@@ -58,16 +58,14 @@ const connectSocket = (server) => {
             cors: { origin: "*" }
         });
         io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e, _f, _g, _h;
+            var _a;
             socket.setMaxListeners(0);
             const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
-            console.log("socket?.request?.headers---", (_b = socket === null || socket === void 0 ? void 0 : socket.request) === null || _b === void 0 ? void 0 : _b.headers);
-            console.log("socket?.conn?.remoteAddress----", (_c = socket === null || socket === void 0 ? void 0 : socket.conn) === null || _c === void 0 ? void 0 : _c.remoteAddress);
-            console.log("socket?.request?.connection?.remoteAddress----", (_e = (_d = socket === null || socket === void 0 ? void 0 : socket.request) === null || _d === void 0 ? void 0 : _d.connection) === null || _e === void 0 ? void 0 : _e.remoteAddress);
-            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || ((_g = (_f = socket === null || socket === void 0 ? void 0 : socket.request) === null || _f === void 0 ? void 0 : _f.connection) === null || _g === void 0 ? void 0 : _g.remoteAddress) || ((_h = socket === null || socket === void 0 ? void 0 : socket.conn) === null || _h === void 0 ? void 0 : _h.remoteAddress);
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || headers['true-client-ip'];
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim();
             }
+            console.log("socket ip---", ip);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 try {
                     const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload;

@@ -990,7 +990,6 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
     try {
         const { documentId } = req.query;
         console.log("req.ip---", req.ip);
-        console.log("req----",req)
         const ipAddress = req.ip;
         const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
         let isFormCompleted = false;

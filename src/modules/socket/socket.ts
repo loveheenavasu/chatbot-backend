@@ -38,14 +38,11 @@ const connectSocket = (server: object) => {
         io.on("connection", async (socket: Socket | any) => {
             socket.setMaxListeners(0);
             const headers = socket?.request?.headers;
-            console.log("socket?.request?.headers---", socket?.request?.headers);
-            console.log("socket?.conn?.remoteAddress----", socket?.conn?.remoteAddress);
-            console.log("socket?.request?.connection?.remoteAddress----", socket?.request?.connection?.remoteAddress)
-            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket?.request?.connection?.remoteAddress || socket?.conn?.remoteAddress;
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || headers['true-client-ip']
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim()
             }
-
+            console.log("socket ip---", ip)
             socket.on("search", async (payload: ISocketSearch) => {
                 try {
                     const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload;
@@ -147,7 +144,7 @@ const connectSocket = (server: object) => {
                     const update = {
                         sessionType: SessionType.COMPLETED,
                         // isFormCompleted: true,
-                        isSessionEnd:true,
+                        isSessionEnd: true,
                         updatedAt: moment().utc().valueOf()
                     }
                     const options = { new: true }
