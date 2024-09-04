@@ -38,6 +38,9 @@ const connectSocket = (server: object) => {
         io.on("connection", async (socket: Socket | any) => {
             socket.setMaxListeners(0);
             const headers = socket?.request?.headers;
+            console.log("socket?.request?.headers---", socket?.request?.headers);
+            console.log("socket?.conn?.remoteAddress----", socket?.conn?.remoteAddress);
+            console.log("socket?.request?.connection?.remoteAddress----", socket?.request?.connection?.remoteAddress)
             let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || socket?.request?.connection?.remoteAddress || socket?.conn?.remoteAddress;
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim()
