@@ -932,8 +932,11 @@ const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
         if (fetchData) {
             const query = { documentId: documentId, ipAddress: ipAddress };
             const fetchIpData = yield Models.ipAddressModel.findOne(query, projection, option);
+            console.log("fetchIpData----", fetchIpData);
             if (fetchIpData) {
                 const currentTime = (0, moment_1.default)().utc().valueOf();
+                console.log("currentTime---", currentTime);
+                console.log("fetchIpData.createdAt---", fetchIpData.createdAt);
                 // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
                 const differenceInMinutes = (0, moment_1.default)(currentTime).diff((0, moment_1.default)(fetchIpData.createdAt), 'minutes');
                 console.log("differenceInMinutes----", differenceInMinutes);

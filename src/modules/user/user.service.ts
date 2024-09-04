@@ -995,8 +995,11 @@ const formChatbot = async (req: Request): Promise<FormChatbot> => {
         if (fetchData) {
             const query = { documentId: documentId, ipAddress: ipAddress };
             const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
+            console.log("fetchIpData----", fetchIpData)
             if (fetchIpData) {
                 const currentTime = moment().utc().valueOf();
+                console.log("currentTime---", currentTime);
+                console.log("fetchIpData.createdAt---", fetchIpData.createdAt)
                 // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
                 const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
                 console.log("differenceInMinutes----", differenceInMinutes)
