@@ -23,7 +23,7 @@ const socket_1 = require("./src/modules/socket/socket");
 const { PORT } = process.env;
 (() => __awaiter(void 0, void 0, void 0, function* () {
     const app = (0, express_1.default)();
-    app.set('trust proxy', true);
+    app.set('trust proxy', true); // correctly retrieve the IP from x-forwarded-for
     app.use(express_1.default.json());
     app.use(express_1.default.urlencoded({ extended: true }));
     app.use((0, cors_1.default)({ origin: "*" }));

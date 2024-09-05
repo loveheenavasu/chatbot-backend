@@ -926,35 +926,35 @@ exports.formDetail = formDetail;
 const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { documentId } = req.query;
-        console.log("req.ip---", req.ip);
-        const ipAddress = req.ip;
+        // console.log("req.ip---", req.ip);
+        // const ipAddress = req.ip;
         const fetchData = yield Models.formModel.findOne({ documentId: documentId }, projection, option);
-        let isFormCompleted = false;
-        if (fetchData) {
-            const query = { documentId: documentId, ipAddress: ipAddress };
-            const fetchIpData = yield Models.ipAddressModel.findOne(query, projection, option);
-            console.log("fetchIpData----", fetchIpData);
-            if (fetchIpData) {
-                const currentTime = (0, moment_1.default)().utc().valueOf();
-                console.log("currentTime---", currentTime);
-                console.log("fetchIpData.createdAt---", fetchIpData.createdAt);
-                // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
-                const differenceInMinutes = (0, moment_1.default)(currentTime).diff((0, moment_1.default)(fetchIpData.createdAt), 'minutes');
-                console.log("differenceInMinutes----", differenceInMinutes);
-                if (differenceInMinutes < 5) {
-                    const fetchSessions = yield Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
-                    if (fetchSessions.isFormCompleted == true) {
-                        isFormCompleted = true;
-                    }
-                }
-                else {
-                    const updateData = { createdAt: currentTime };
-                    yield Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
-                }
-            }
-        }
+        // let isFormCompleted = false;
+        // if (fetchData) {
+        //     const query = { documentId: documentId, ipAddress: ipAddress };
+        //     const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
+        //     console.log("fetchIpData----", fetchIpData)
+        //     if (fetchIpData) {
+        //         const currentTime = moment().utc().valueOf();
+        //         console.log("currentTime---", currentTime);
+        //         console.log("fetchIpData.createdAt---", fetchIpData.createdAt)
+        //         // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
+        //         const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
+        //         console.log("differenceInMinutes----", differenceInMinutes)
+        //         if (differenceInMinutes < 5) {
+        //             const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
+        //             if (fetchSessions!.isFormCompleted == true) {
+        //                 isFormCompleted = true
+        //             }
+        //         }
+        //         else {
+        //             const updateData = { createdAt: currentTime }
+        //             await Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
+        //         }
+        //     }
+        // }
         const response = {
-            isFormCompleted: isFormCompleted,
+            // isFormCompleted: isFormCompleted,
             data: fetchData !== null && fetchData !== void 0 ? fetchData : {}
         };
         return response;

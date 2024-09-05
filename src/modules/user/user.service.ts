@@ -116,7 +116,7 @@ interface ChatHistory {
 }
 
 interface FormChatbot {
-    isFormCompleted: boolean;
+    isFormCompleted?: boolean;
     data: Forms
 }
 
@@ -989,37 +989,37 @@ const formDetail = async (req: Request): Promise<Forms> => {
 const formChatbot = async (req: Request): Promise<FormChatbot> => {
     try {
         const { documentId } = req.query;
-        console.log("req.ip---", req.ip);
-        const ipAddress = req.ip;
+        // console.log("req.ip---", req.ip);
+        // const ipAddress = req.ip;
         const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
-        let isFormCompleted = false;
-        if (fetchData) {
-            const query = { documentId: documentId, ipAddress: ipAddress };
-            const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
-            console.log("fetchIpData----", fetchIpData)
-            if (fetchIpData) {
-                const currentTime = moment().utc().valueOf();
-                console.log("currentTime---", currentTime);
-                console.log("fetchIpData.createdAt---", fetchIpData.createdAt)
-                // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
-                const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
-                console.log("differenceInMinutes----", differenceInMinutes)
-                if (differenceInMinutes < 5) {
-                    const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
+        // let isFormCompleted = false;
+        // if (fetchData) {
+        //     const query = { documentId: documentId, ipAddress: ipAddress };
+        //     const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
+        //     console.log("fetchIpData----", fetchIpData)
+        //     if (fetchIpData) {
+        //         const currentTime = moment().utc().valueOf();
+        //         console.log("currentTime---", currentTime);
+        //         console.log("fetchIpData.createdAt---", fetchIpData.createdAt)
+        //         // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
+        //         const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
+        //         console.log("differenceInMinutes----", differenceInMinutes)
+        //         if (differenceInMinutes < 5) {
+        //             const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
 
-                    if (fetchSessions!.isFormCompleted == true) {
-                        isFormCompleted = true
-                    }
-                }
-                else {
-                    const updateData = { createdAt: currentTime }
-                    await Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
-                }
-            }
-        }
+        //             if (fetchSessions!.isFormCompleted == true) {
+        //                 isFormCompleted = true
+        //             }
+        //         }
+        //         else {
+        //             const updateData = { createdAt: currentTime }
+        //             await Models.ipAddressModel.findOneAndUpdate(query, updateData, options);
+        //         }
+        //     }
+        // }
 
         const response: FormChatbot = {
-            isFormCompleted: isFormCompleted,
+            // isFormCompleted: isFormCompleted,
             data: fetchData ?? {}
         }
         return response;

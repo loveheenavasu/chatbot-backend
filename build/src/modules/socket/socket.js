@@ -61,7 +61,7 @@ const connectSocket = (server) => {
             var _a;
             socket.setMaxListeners(0);
             const headers = (_a = socket === null || socket === void 0 ? void 0 : socket.request) === null || _a === void 0 ? void 0 : _a.headers;
-            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || headers['true-client-ip'];
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || headers['true-client-ip'] || (socket === null || socket === void 0 ? void 0 : socket.request.connection.remoteAddress);
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim();
             }

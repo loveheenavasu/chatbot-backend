@@ -5,7 +5,6 @@ import * as Models from '../../models/index';
 import moment from "moment";
 import { SessionType } from "../../models/chat-session.model";
 import { Types } from "mongoose";
-import { SocketResponse } from "../../interfaces/common.interface";
 import Ips from "../../interfaces/ips.interface";
 import ChatSession from "../../interfaces/chat-session.interface";
 
@@ -38,7 +37,7 @@ const connectSocket = (server: object) => {
         io.on("connection", async (socket: Socket | any) => {
             socket.setMaxListeners(0);
             const headers = socket?.request?.headers;
-            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || headers['true-client-ip']
+            let ip = headers['x-forwarded-for'] || headers['cf-connecting-ip'] || headers['true-client-ip'] || socket?.request.connection.remoteAddress;
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim()
             }
