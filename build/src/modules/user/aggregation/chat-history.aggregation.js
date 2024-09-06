@@ -134,6 +134,8 @@ const redactData = (startDate, endDate) => __awaiter(void 0, void 0, void 0, fun
             setStartDate = moment_timezone_1.default.tz(Number(startDate), systemTimezone).valueOf();
             setEndDate = moment_timezone_1.default.tz(Number(endDate), systemTimezone).valueOf();
         }
+        console.log("set start date---", setStartDate);
+        console.log(" setEndDate ---", setEndDate);
         return {
             $redact: {
                 $cond: {
@@ -147,8 +149,8 @@ const redactData = (startDate, endDate) => __awaiter(void 0, void 0, void 0, fun
                             },
                             {
                                 $and: [
-                                    { $gte: ["$chatsessions.created_at", setStartDate] },
-                                    { $lte: ["$chatsessions.created_at", setEndDate] }
+                                    { $gte: ["$chatsessions.createdAt", setStartDate] },
+                                    { $lte: ["$chatsessions.createdAt", setEndDate] }
                                 ]
                             }
                         ]

@@ -182,8 +182,8 @@ const documentIdWithPL = (req, res, next) => {
             documentId: joi_1.default.string().trim().optional(),
             pagination: joi_1.default.number().optional(),
             limit: joi_1.default.number().optional(),
-            startDate: joi_1.default.number().optional(),
-            endDate: joi_1.default.number().optional()
+            startDate: joi_1.default.string().optional(),
+            endDate: joi_1.default.string().optional()
         });
         const { error } = schema.validate(req.query);
         if (error)
