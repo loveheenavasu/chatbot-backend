@@ -31,8 +31,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.facetData = exports.groupData = exports.lookupMessages = exports.unwindChatSessions = exports.lookupChatSessions = exports.matchData = void 0;
+exports.redactData = exports.facetData = exports.groupData = exports.lookupMessages = exports.unwindChatSessions = exports.lookupChatSessions = exports.matchData = void 0;
+const moment_timezone_1 = __importDefault(require("moment-timezone"));
 const Handler = __importStar(require("../../../handler/handler"));
 const matchData = (documentId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -122,6 +126,44 @@ const lookupMessages = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.lookupMessages = lookupMessages;
+const redactData = (startDate, endDate) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let setStartDate = null, setEndDate = null;
+        const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (!!startDate && !!endDate) {
+            setStartDate = moment_timezone_1.default.tz(Number(startDate), systemTimezone).valueOf();
+            setEndDate = moment_timezone_1.default.tz(Number(endDate), systemTimezone).valueOf();
+        }
+        return {
+            $redact: {
+                $cond: {
+                    if: {
+                        $or: [
+                            {
+                                $and: [
+                                    { $eq: [setStartDate, undefined] },
+                                    { $eq: [setEndDate, undefined] }
+                                ]
+                            },
+                            {
+                                $and: [
+                                    { $gte: ["$chatsessions.created_at", setStartDate] },
+                                    { $lte: ["$chatsessions.created_at", setEndDate] }
+                                ]
+                            }
+                        ]
+                    },
+                    then: "$$KEEP",
+                    else: "$$PRUNE"
+                }
+            }
+        };
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.redactData = redactData;
 const groupData = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         return {

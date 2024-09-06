@@ -1,3 +1,4 @@
+import moment from 'moment-timezone';
 import { ErrorResponse } from "../../../handler/error";
 import * as Handler from "../../../handler/handler";
 
@@ -42,7 +43,7 @@ const unwindChatSessions = async () => {
     try {
         return {
             $unwind: { // array convert into objects with unwind (split into individual documents)
-                path: "$chatsessions", 
+                path: "$chatsessions",
                 preserveNullAndEmptyArrays: false
             }
         }
@@ -89,6 +90,47 @@ const lookupMessages = async () => {
     }
 }
 
+const redactData = async (startDate: number | undefined, endDate: number | undefined) => {
+    try {
+        let setStartDate = null, setEndDate = null;
+        const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (!!startDate && !!endDate) {
+            setStartDate = moment.tz(Number(startDate), systemTimezone).valueOf();
+            setEndDate = moment.tz(Number(endDate), systemTimezone).valueOf();
+        }
+        return {
+            $redact: {
+                $cond: {
+                    if: {
+                        $or: [
+                            {
+                                $and: [
+                                    { $eq: [setStartDate, undefined] },
+                                    { $eq: [setEndDate, undefined] }
+                                ]
+                            },
+                            {
+                                $and: [
+                                    { $gte: ["$chatsessions.created_at", setStartDate] },
+                                    { $lte: ["$chatsessions.created_at", setEndDate] }
+                                ]
+                            }
+                        ]
+                    },
+                    then: "$$KEEP",
+                    else: "$$PRUNE"
+                }
+            }
+        }
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+
+
+
 const groupData = async () => {
     try {
         return {
@@ -130,5 +172,6 @@ export {
     unwindChatSessions,
     lookupMessages,
     groupData,
-    facetData
+    facetData,
+    redactData
 }

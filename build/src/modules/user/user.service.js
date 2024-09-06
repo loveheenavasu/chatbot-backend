@@ -785,7 +785,9 @@ exports.deleteSessions = deleteSessions;
 const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        const { documentId, pagination, limit } = req.query;
+        const { documentId, pagination, limit, startDate, endDate } = req.query;
+        console.log("number---", startDate, typeof startDate);
+        console.log("to----", endDate, typeof endDate);
         const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
         const setLimit = limit !== null && limit !== void 0 ? limit : 10;
         const query = [
@@ -793,6 +795,7 @@ const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
             yield ChatHistoryAggregation.lookupChatSessions(),
             yield ChatHistoryAggregation.unwindChatSessions(),
             yield ChatHistoryAggregation.lookupMessages(),
+            yield ChatHistoryAggregation.redactData(Number(startDate), Number(endDate)),
             yield ChatHistoryAggregation.groupData(),
             yield ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];

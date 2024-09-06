@@ -461,7 +461,6 @@ const createChatbot = async (data: Text): Promise<Chatbot> => {
         }
         const response: Chatbot = await Models.chatbotModel.create(dataToSave);
         return response;
-
     }
     catch (err) {
         return Handler.handleCustomError(err as ErrorResponse);
@@ -847,7 +846,9 @@ const deleteSessions = async (query: object) => {
 
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
-        const { documentId, pagination, limit } = req.query;
+        const { documentId, pagination, limit, startDate, endDate } = req.query;
+        console.log("number---", startDate, typeof startDate)
+        console.log("to----", endDate, typeof endDate);
         const setPagination = pagination ?? 1;
         const setLimit = limit ?? 10
         const query: any = [
@@ -855,6 +856,7 @@ const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
             await ChatHistoryAggregation.lookupChatSessions(),
             await ChatHistoryAggregation.unwindChatSessions(),
             await ChatHistoryAggregation.lookupMessages(),
+            await ChatHistoryAggregation.redactData(Number(startDate), Number(endDate)),
             await ChatHistoryAggregation.groupData(),
             await ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];
