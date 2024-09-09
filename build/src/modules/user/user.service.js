@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
@@ -331,6 +331,17 @@ const login = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
+const profile = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        delete req.userData.accessToken;
+        return (_a = req.userData) !== null && _a !== void 0 ? _a : {};
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.profile = profile;
 const socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
@@ -786,8 +797,6 @@ const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
         const { documentId, pagination, limit, startDate, endDate } = req.query;
-        console.log("number---", startDate, typeof startDate);
-        console.log("to----", endDate, typeof endDate);
         const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
         const setLimit = limit !== null && limit !== void 0 ? limit : 10;
         const query = [

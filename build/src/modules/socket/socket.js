@@ -126,7 +126,7 @@ const connectSocket = (server) => {
                     if (type == message_model_1.Role.User && question != null) {
                         if (question == questionType.END && nextType === questionType.END) {
                             const message = "Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?";
-                            yield SocketService.updateChatSession(isFormCompleted, sessionId);
+                            yield SocketService.updateChatSession(sessionId);
                             yield sendMessage(message, message_model_1.Role.AI);
                         }
                         else if (question !== questionType.CUSTOM && nextType !== questionType.END) {

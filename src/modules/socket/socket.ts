@@ -99,13 +99,11 @@ const connectSocket = (server: object) => {
                     else {
                         await sendMessage(text!);
                     }
-
-
                     socket.chatSessionId = sessionId;
                     if (type == Role.User && question != null) {
                         if (question == questionType.END && nextType === questionType.END) {
                             const message = "Thank you for sharing that information. This will help me provide you with the best possible assistance. Now, how can I help you today?";
-                            await SocketService.updateChatSession(isFormCompleted!, sessionId)
+                            await SocketService.updateChatSession(sessionId)
                             await sendMessage(message, Role.AI);
                         } else if (question !== questionType.CUSTOM && nextType !== questionType.END) {
                             let customMsg = await SocketService.customMessage(question!, nextType);

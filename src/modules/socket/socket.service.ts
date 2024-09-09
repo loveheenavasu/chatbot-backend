@@ -181,7 +181,7 @@ const formQues = async (documentId: string, label: string): Promise<string | und
     }
 }
 
-const updateChatSession = async (isFormCompleted: boolean, sessionId: Types.ObjectId) => {
+const updateChatSession = async (sessionId: Types.ObjectId) => {
     try {
         let query = { _id: sessionId }
         const update = { isFormCompleted: true }

@@ -206,7 +206,7 @@ const formQues = (documentId, label) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.formQues = formQues;
-const updateChatSession = (isFormCompleted, sessionId) => __awaiter(void 0, void 0, void 0, function* () {
+const updateChatSession = (sessionId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let query = { _id: sessionId };
         const update = { isFormCompleted: true };

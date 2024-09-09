@@ -64,11 +64,19 @@ const resetPassword = async (req: Request, res: Response) => {
     }
 }
 
-
-
 const login = async (req: Request, res: Response) => {
     try {
         const response = await Service.login(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
+const profile = async (req: CustomRequest, res: Response) => {
+    try {
+        const response = await Service.profile(req);
         return Handler.handleSuccess(res, response);
     }
     catch (err) {
@@ -304,5 +312,6 @@ export {
     formUpdate,
     formWithIp,
     formInfoAdd,
-    formChatbot
+    formChatbot,
+    profile
 }

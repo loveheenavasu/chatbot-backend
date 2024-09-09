@@ -40,6 +40,7 @@ router.post('/forgot', Validation.resendAndForgot, Controller.forgotPassword);
 router.post('/verify-otp', Validation.verifyForgot, Controller.verifyOtp);
 router.post('/reset', Validation.resetPassword, Controller.resetPassword);
 router.post('/login', Validation.login, Controller.login);
+router.get('/profile', authorization_1.authorization, Controller.profile);
 router.post('/social-login', Validation.socialLogin, Controller.socialLogin);
 router.get('/chatbot', authorization_1.authorization, Controller.chatbotLists);
 router.delete('/chatbot', Validation.documentId, authorization_1.authorization, Controller.deleteChatbot);

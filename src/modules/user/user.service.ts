@@ -371,6 +371,16 @@ const login = async (req: Request): Promise<UserResponse> => {
     }
 }
 
+const profile = async (req: CustomRequest): Promise<User> => {
+    try {
+        delete req.userData!.accessToken;
+        return req.userData! ?? {};
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
 const socialLogin = async (req: Request): Promise<User> => {
     try {
         const { email, name, image, socialToken, isAdmin, firstname, lastname } = req.body;
@@ -847,8 +857,6 @@ const deleteSessions = async (query: object) => {
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
         const { documentId, pagination, limit, startDate, endDate } = req.query;
-        console.log("number---", startDate, typeof startDate)
-        console.log("to----", endDate, typeof endDate);
         const setPagination = pagination ?? 1;
         const setLimit = limit ?? 10
         const query: any = [
@@ -1107,5 +1115,6 @@ export {
     formUpdate,
     formWithIp,
     formInfoAdd,
-    formChatbot
+    formChatbot,
+    profile
 }

@@ -130,9 +130,6 @@ const redactData = async (startDate: number | undefined, endDate: number | undef
     }
 }
 
-
-
-
 const groupData = async () => {
     try {
         return {
