@@ -901,36 +901,37 @@ const exportFileData = async (file: string, data: arrangeChatHistoryData): Promi
         const startDate = data?.conversations[0]?.startDate.split(' ')[0];
         const endDate = data?.conversations[data?.conversations?.length - 1]?.endDate.split(' ')[0];
         const fileName = `${data.chatbotId}_${currentTime}_${endDate}~${startDate}`;
-        const filePath = path.resolve(__dirname, `../../export-files/${fileName}`);
+        const filePath = path.resolve(__dirname, '../../export-files/'+fileName);
         let response: ExportData | undefined;
-        if (file == exportFile.JSON) {
-            fs.writeFileSync(`${filePath}.json`, JSON.stringify(data));
-            const fileBuffer = fs.readFileSync(`${filePath}.json`);
-            response = {
-                fileName: `${fileName}.json`,
-                contentType: 'application/json',
-                buffer: fileBuffer,
-                filePath: `${filePath}.json`
-            };
-        }
-        if (file == exportFile.CSV) {
-            const csvData = await convertToCsv(data);
-            fs.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
-            const fileBuffer = fs.readFileSync(`${filePath}.csv`);
-            response = {
-                fileName: `${fileName}.csv`,
-                contentType: 'text/csv',
-                buffer: fileBuffer,
-                filePath: `${filePath}.csv`
-            };
-        }
+        console.log("🚀 ~ exportFileData ~ filePath:", filePath)
+        // if (file == exportFile.JSON) {
+        //     fs.writeFileSync(`${filePath}.json`, JSON.stringify(data));
+        //     const fileBuffer = fs.readFileSync(`${filePath}.json`);
+        //     response = {
+        //         fileName: `${fileName}.json`,
+        //         contentType: 'application/json',
+        //         buffer: fileBuffer,
+        //         filePath: `${filePath}.json`
+        //     };
+        // }
+        // if (file == exportFile.CSV) {
+        //     const csvData = await convertToCsv(data);
+        //     fs.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
+        //     const fileBuffer = fs.readFileSync(`${filePath}.csv`);
+        //     response = {
+        //         fileName: `${fileName}.csv`,
+        //         contentType: 'text/csv',
+        //         buffer: fileBuffer,
+        //         filePath: `${filePath}.csv`
+        //     };
+        // }
         if (file == exportFile.PDF) {
             const pdfBufferData = await generatePdf(filePath, data);
             response = {
                 fileName: `${fileName}.pdf`,
                 contentType: 'application/pdf',
                 buffer: pdfBufferData,
-                filePath: `${filePath}.pdf`
+                // filePath: `${filePath}.pdf`
             }
         }
         return response;

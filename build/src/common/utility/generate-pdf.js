@@ -28,7 +28,7 @@ const generatePdf = (filePath, data) => __awaiter(void 0, void 0, void 0, functi
         const page = yield browser.newPage();
         yield page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
         const bufferData = yield page.pdf({
-            path: `${filePath}.pdf`,
+            // path: `${filePath}.pdf`,
             format: 'A4',
             printBackground: true,
             margin: {

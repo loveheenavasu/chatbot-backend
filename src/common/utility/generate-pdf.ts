@@ -17,7 +17,7 @@ const generatePdf = async (filePath: string, data: arrangeChatHistoryData): Prom
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
         const bufferData = await page.pdf({
-            path: `${filePath}.pdf`,
+            // path: `${filePath}.pdf`,
             format: 'A4',
             printBackground: true,
             margin: {

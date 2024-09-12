@@ -31,14 +31,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatHistoryExport = exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.logout = exports.deleteFile = exports.fileLists = exports.textExtract = exports.textDetail = exports.updateTexts = exports.saveTexts = exports.deleteChatbot = exports.chatbotLists = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Service = __importStar(require("./user.service"));
 const Handler = __importStar(require("../../handler/handler"));
-const fs_1 = __importDefault(require("fs"));
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield Service.signup(req);
@@ -230,10 +226,10 @@ const chatHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.chatHistory = chatHistory;
 const chatHistoryExport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let filePath;
+    // let filePath: string | undefined;
     try {
         const response = yield Service.chatHistoryExport(req);
-        filePath = response === null || response === void 0 ? void 0 : response.filePath;
+        // filePath = response?.filePath;
         res.setHeader('Content-Disposition', `attachment; filename=${response === null || response === void 0 ? void 0 : response.fileName}`);
         res.setHeader('Content-Type', `${response === null || response === void 0 ? void 0 : response.contentType}`);
         return Handler.handleSuccess(res, response === null || response === void 0 ? void 0 : response.buffer);
@@ -246,11 +242,11 @@ const chatHistoryExport = (req, res) => __awaiter(void 0, void 0, void 0, functi
             console.error('Error occurred after headers sent:', err); // Log error but don't attempt to send another response
         }
     }
-    finally {
-        if (filePath) {
-            fs_1.default.unlinkSync(filePath); // Clean up the temporary file
-        }
-    }
+    // finally {
+    //     if (filePath) {
+    //         fs.unlinkSync(filePath) // Clean up the temporary file
+    //     }
+    // }
 });
 exports.chatHistoryExport = chatHistoryExport;
 const chatDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
