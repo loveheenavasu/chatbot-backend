@@ -29,10 +29,9 @@ import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
 import Forms from '../../interfaces/form.interface';
 import fs from 'fs';
-import Handlebars from 'handlebars';
 import { Role } from '../../models/message.model';
-import puppeteer from 'puppeteer';
 import { ChatHistory, ChatbotResponse, FormChatbot, FormResponse, List, MessageResponse, MessageResponseList, ResponseList, UserInfoResponse, UserResponse, VerifyResponse, arrangeChatHistoryData, Response, ConvoData, ExportData } from '../../types/response';
+import { generatePdf } from '../../common/utility/generate-pdf';
 const { v4: uuidv4 } = require('uuid');
 config();
 
@@ -941,33 +940,7 @@ const exportFileData = async (file: string, data: arrangeChatHistoryData): Promi
     }
 }
 
-const generatePdf = async (filePath: string, data: arrangeChatHistoryData): Promise<Buffer> => {
-    try {
-        const templatePath = path.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
-        const templateSource = fs.readFileSync(templatePath, 'utf8');
-        const template = Handlebars.compile(templateSource); // Compile the template
-        const html = template(data); // Render the HTML
-        const browser = await puppeteer.launch(); // Launch Puppeteer
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
-        const bufferData = await page.pdf({
-            path: `${filePath}.pdf`,
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '15mm',
-                bottom: '15mm',
-                left: '15mm',
-                right: '15mm'
-            }
-        }); // Generate PDF
-        await browser.close();
-        return bufferData;
-    }
-    catch (err) {
-        return Handler.handleCustomError(err as ErrorResponse);
-    }
-}
+
 
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {

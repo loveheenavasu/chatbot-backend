@@ -58,9 +58,8 @@ const ChatHistoryAggregation = __importStar(require("./aggregation/chat-history.
 const EmailService = __importStar(require("../../common/emailService"));
 const dotenv_1 = require("dotenv");
 const fs_1 = __importDefault(require("fs"));
-const handlebars_1 = __importDefault(require("handlebars"));
 const message_model_1 = require("../../models/message.model");
-const puppeteer_1 = __importDefault(require("puppeteer"));
+const generate_pdf_1 = require("../../common/utility/generate-pdf");
 const { v4: uuidv4 } = require('uuid');
 (0, dotenv_1.config)();
 const OPEN_API_KEY = process.env.OPEN_API_KEY;
@@ -929,7 +928,7 @@ const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, functio
             };
         }
         if (file == exportFile.PDF) {
-            const pdfBufferData = yield generatePdf(filePath, data);
+            const pdfBufferData = yield (0, generate_pdf_1.generatePdf)(filePath, data);
             response = {
                 fileName: `${fileName}.pdf`,
                 contentType: 'application/pdf',
@@ -938,33 +937,6 @@ const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, functio
             };
         }
         return response;
-    }
-    catch (err) {
-        return Handler.handleCustomError(err);
-    }
-});
-const generatePdf = (filePath, data) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const templatePath = path_1.default.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
-        const templateSource = fs_1.default.readFileSync(templatePath, 'utf8');
-        const template = handlebars_1.default.compile(templateSource); // Compile the template
-        const html = template(data); // Render the HTML
-        const browser = yield puppeteer_1.default.launch(); // Launch Puppeteer
-        const page = yield browser.newPage();
-        yield page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
-        const bufferData = yield page.pdf({
-            path: `${filePath}.pdf`,
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '15mm',
-                bottom: '15mm',
-                left: '15mm',
-                right: '15mm'
-            }
-        }); // Generate PDF
-        yield browser.close();
-        return bufferData;
     }
     catch (err) {
         return Handler.handleCustomError(err);
