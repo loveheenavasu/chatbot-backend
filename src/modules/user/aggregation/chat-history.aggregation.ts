@@ -98,8 +98,6 @@ const redactData = async (startDate: number | undefined, endDate: number | undef
             setStartDate = moment.tz(Number(startDate), systemTimezone).valueOf();
             setEndDate = moment.tz(Number(endDate), systemTimezone).valueOf();
         }
-        console.log("set start date---", setStartDate)
-        console.log(" setEndDate ---", setEndDate)
         return {
             $redact: {
                 $cond: {

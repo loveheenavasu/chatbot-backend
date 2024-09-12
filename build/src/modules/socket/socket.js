@@ -65,7 +65,6 @@ const connectSocket = (server) => {
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim();
             }
-            console.log("socket ip---", ip);
             socket.on("search", (payload) => __awaiter(void 0, void 0, void 0, function* () {
                 try {
                     const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload;

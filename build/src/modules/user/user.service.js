@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.chatHistoryExport = exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
@@ -57,8 +57,12 @@ const user_model_1 = require("../../models/user.model");
 const ChatHistoryAggregation = __importStar(require("./aggregation/chat-history.aggregation"));
 const EmailService = __importStar(require("../../common/emailService"));
 const dotenv_1 = require("dotenv");
-(0, dotenv_1.config)();
+const fs_1 = __importDefault(require("fs"));
+const handlebars_1 = __importDefault(require("handlebars"));
+const message_model_1 = require("../../models/message.model");
+const puppeteer_1 = __importDefault(require("puppeteer"));
 const { v4: uuidv4 } = require('uuid');
+(0, dotenv_1.config)();
 const OPEN_API_KEY = process.env.OPEN_API_KEY;
 const NEO_URL = process.env.NEO_URL;
 const NEO_USERNAME = process.env.NEO_USERNAME;
@@ -79,6 +83,12 @@ const option = { lean: true };
 const options = { new: true };
 const optionWithSortDesc = { lean: true, sort: { _id: -1 } };
 const optionWithSortAsc = { lean: true, sort: { _id: 1 } };
+var exportFile;
+(function (exportFile) {
+    exportFile["JSON"] = "JSON";
+    exportFile["CSV"] = "CSV";
+    exportFile["PDF"] = "PDF";
+})(exportFile || (exportFile = {}));
 const signup = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.body;
@@ -793,10 +803,177 @@ const deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.deleteSessions = deleteSessions;
+const arrangeData = (data, documentId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const conversations = [];
+        const fetchChatbot = yield Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
+        let text = "";
+        let date = "";
+        if (fetchChatbot) {
+            const fetchText = yield Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
+            text = fetchText ? fetchText.text.split(' ').slice(0, 4).join(' ') + '...' : "";
+            date = fetchText ? (0, moment_1.default)(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
+        }
+        for (let i = 0; i < data.length; i++) {
+            const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
+            let startDate = (0, moment_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).format('YYYY-MM-DD HH:mm');
+            let endDate = (0, moment_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).format('YYYY-MM-DD HH:mm');
+            const messages = fetchMessages.map(message => ({
+                role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
+                message: message.message
+            }));
+            const convoData = {
+                sessionId: (_b = data[i]) === null || _b === void 0 ? void 0 : _b._id.toString(),
+                startDate: startDate,
+                endDate: endDate,
+                messages: messages
+            };
+            conversations.push(convoData);
+        }
+        const response = {
+            chatbotId: documentId,
+            chatbotName: text,
+            date: date,
+            conversations: conversations
+        };
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+const convertToCsv = (data) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        let csv = '';
+        // General Information
+        csv += `,Chatbot ID,Chatbot Name,Date\n`;
+        csv += `,${data.chatbotId},${data.chatbotName},${data.date}\n\n`;
+        // Placeholder for Date Created and Last Message At
+        csv += `________________,______________________________________,____________________________________________________________________________________________________________\n\n`;
+        for (let i = 0; i < data.conversations.length; i++) {
+            const conversation = data.conversations[i];
+            csv += `,Date Created,Last Message At\n`;
+            csv += `,${conversation.startDate},${conversation.endDate}\n\n`;
+            csv += `,Conversation:,Session ID\n`;
+            csv += `,${conversation.sessionId}\n\n`;
+            csv += `,Messages:,Role,Message\n`;
+            if ((_a = conversation.messages) === null || _a === void 0 ? void 0 : _a.length) {
+                for (let j = 0; j < conversation.messages.length; j++) {
+                    const message = conversation.messages[j];
+                    csv += `,${message.role},"${message.message}"\n`;
+                }
+            }
+            csv += `________________,______________________________________,________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________\n\n`;
+        }
+        return csv;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+const chatHistoryExport = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
+        const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
+        const setLimit = limit !== null && limit !== void 0 ? limit : 10;
+        const query = [
+            yield ChatHistoryAggregation.matchData(documentId === null || documentId === void 0 ? void 0 : documentId.toString()),
+            yield ChatHistoryAggregation.lookupChatSessions(),
+            yield ChatHistoryAggregation.unwindChatSessions(),
+            yield ChatHistoryAggregation.lookupMessages(),
+            yield ChatHistoryAggregation.redactData(Number(startDate), Number(endDate)),
+            yield ChatHistoryAggregation.groupData(),
+            yield ChatHistoryAggregation.facetData(+setPagination, +setLimit)
+        ];
+        const fetchData = yield Models.ipAddressModel.aggregate(query);
+        const exportArrangedData = yield arrangeData((_a = fetchData[0]) === null || _a === void 0 ? void 0 : _a.data, documentId === null || documentId === void 0 ? void 0 : documentId.toString());
+        const exportData = yield exportFileData(exportFile === null || exportFile === void 0 ? void 0 : exportFile.toString(), exportArrangedData);
+        return exportData;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.chatHistoryExport = chatHistoryExport;
+const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    try {
+        const currentTime = (0, moment_1.default)().utc().valueOf();
+        const startDate = (_a = data === null || data === void 0 ? void 0 : data.conversations[0]) === null || _a === void 0 ? void 0 : _a.startDate.split(' ')[0];
+        const endDate = (_c = data === null || data === void 0 ? void 0 : data.conversations[((_b = data === null || data === void 0 ? void 0 : data.conversations) === null || _b === void 0 ? void 0 : _b.length) - 1]) === null || _c === void 0 ? void 0 : _c.endDate.split(' ')[0];
+        const fileName = `${data.chatbotId}_${currentTime}_${endDate}~${startDate}`;
+        const filePath = path_1.default.resolve(__dirname, `../../export-files/${fileName}`);
+        let response;
+        if (file == exportFile.JSON) {
+            fs_1.default.writeFileSync(`${filePath}.json`, JSON.stringify(data));
+            const fileBuffer = fs_1.default.readFileSync(`${filePath}.json`);
+            response = {
+                fileName: `${fileName}.json`,
+                contentType: 'application/json',
+                buffer: fileBuffer,
+                filePath: `${filePath}.json`
+            };
+        }
+        if (file == exportFile.CSV) {
+            const csvData = yield convertToCsv(data);
+            fs_1.default.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
+            const fileBuffer = fs_1.default.readFileSync(`${filePath}.csv`);
+            response = {
+                fileName: `${fileName}.csv`,
+                contentType: 'text/csv',
+                buffer: fileBuffer,
+                filePath: `${filePath}.csv`
+            };
+        }
+        if (file == exportFile.PDF) {
+            const pdfBufferData = yield generatePdf(filePath, data);
+            response = {
+                fileName: `${fileName}.pdf`,
+                contentType: 'application/pdf',
+                buffer: pdfBufferData,
+                filePath: `${filePath}.pdf`
+            };
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+const generatePdf = (filePath, data) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const templatePath = path_1.default.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
+        const templateSource = fs_1.default.readFileSync(templatePath, 'utf8');
+        const template = handlebars_1.default.compile(templateSource); // Compile the template
+        const html = template(data); // Render the HTML
+        const browser = yield puppeteer_1.default.launch(); // Launch Puppeteer
+        const page = yield browser.newPage();
+        yield page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
+        const bufferData = yield page.pdf({
+            path: `${filePath}.pdf`,
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '15mm',
+                bottom: '15mm',
+                left: '15mm',
+                right: '15mm'
+            }
+        }); // Generate PDF
+        yield browser.close();
+        return bufferData;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
 const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        const { documentId, pagination, limit, startDate, endDate } = req.query;
+        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
         const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
         const setLimit = limit !== null && limit !== void 0 ? limit : 10;
         const query = [
@@ -938,21 +1115,17 @@ exports.formDetail = formDetail;
 const formChatbot = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { documentId } = req.query;
-        // console.log("req.ip---", req.ip);
         // const ipAddress = req.ip;
         const fetchData = yield Models.formModel.findOne({ documentId: documentId }, projection, option);
         // let isFormCompleted = false;
         // if (fetchData) {
         //     const query = { documentId: documentId, ipAddress: ipAddress };
         //     const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
-        //     console.log("fetchIpData----", fetchIpData)
         //     if (fetchIpData) {
         //         const currentTime = moment().utc().valueOf();
-        //         console.log("currentTime---", currentTime);
-        //         console.log("fetchIpData.createdAt---", fetchIpData.createdAt)
+        //        
         //         // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
         //         const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
-        //         console.log("differenceInMinutes----", differenceInMinutes)
         //         if (differenceInMinutes < 5) {
         //             const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
         //             if (fetchSessions!.isFormCompleted == true) {

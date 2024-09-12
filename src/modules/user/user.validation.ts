@@ -150,7 +150,8 @@ const documentIdWithPL = (req: Request, res: Response, next: NextFunction) => {
             pagination: Joi.number().optional(),
             limit: Joi.number().optional(),
             startDate: Joi.string().optional(),
-            endDate: Joi.string().optional()
+            endDate: Joi.string().optional(),
+            exportFile: Joi.string().optional()
         });
         const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);

@@ -41,7 +41,6 @@ const connectSocket = (server: object) => {
             if (ip && ip.includes(',')) {
                 ip = ip.split(',')[0].trim()
             }
-            console.log("socket ip---", ip)
             socket.on("search", async (payload: ISocketSearch) => {
                 try {
                     const { text, documentId, chatSessionId, questionType: question, type, nextType, label, isFormCompleted } = payload;
@@ -151,8 +150,6 @@ const connectSocket = (server: object) => {
                     throw err;
                 }
             })
-
-
         })
     }
     catch (err) {

@@ -28,11 +28,13 @@ import Ips from '../../interfaces/ips.interface';
 import Message from '../../interfaces/message.interface';
 import { config } from 'dotenv';
 import Forms from '../../interfaces/form.interface';
-import UserInfo from '../../interfaces/information.interface';
-import { SessionType } from '../../models/chat-session.model';
-config();
-
+import fs from 'fs';
+import Handlebars from 'handlebars';
+import { Role } from '../../models/message.model';
+import puppeteer from 'puppeteer';
+import { ChatHistory, ChatbotResponse, FormChatbot, FormResponse, List, MessageResponse, MessageResponseList, ResponseList, UserInfoResponse, UserResponse, VerifyResponse, arrangeChatHistoryData, Response, ConvoData, ExportData } from '../../types/response';
 const { v4: uuidv4 } = require('uuid');
+config();
 
 const OPEN_API_KEY = process.env.OPEN_API_KEY as string;
 const NEO_URL = process.env.NEO_URL as string;
@@ -58,66 +60,11 @@ const options = { new: true };
 const optionWithSortDesc = { lean: true, sort: { _id: -1 } };
 const optionWithSortAsc = { lean: true, sort: { _id: 1 } };
 
-interface UserResponse {
-    message?: string;
-    data: User
-}
 
-interface Response {
-    message: string;
-    data: Text
-}
-
-interface FormResponse {
-    message: string;
-    data?: Forms
-}
-
-interface UserInfoResponse {
-    message: string;
-    data: UserInfo
-}
-
-interface MessageResponse {
-    message: string
-}
-
-interface VerifyResponse {
-    message: string;
-    uniqueCode: string
-}
-
-interface ResponseList {
-    count: number;
-    data: Text[];
-}
-
-interface ChatbotResponse {
-    count: number;
-    data: Chatbot[];
-}
-
-interface MessageResponseList {
-    count: number;
-    data: Message[]
-}
-
-interface List {
-    _id: string;
-    ipAddress: string;
-    documentId: string;
-    sessionType: string;
-    message: Message[]
-}
-
-interface ChatHistory {
-    count: number;
-    data: List[]
-}
-
-interface FormChatbot {
-    isFormCompleted?: boolean;
-    data: Forms
+enum exportFile {
+    JSON = "JSON",
+    CSV = "CSV",
+    PDF = "PDF"
 }
 
 const signup = async (req: Request): Promise<UserResponse> => {
@@ -854,9 +801,177 @@ const deleteSessions = async (query: object) => {
     }
 }
 
+const arrangeData = async (data: List[], documentId: string): Promise<arrangeChatHistoryData> => {
+    try {
+        const conversations: ConvoData[] = [];
+        const fetchChatbot = await Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
+        let text = "";
+        let date = "";
+        if (fetchChatbot) {
+            const fetchText = await Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
+            text = fetchText ? fetchText.text!.split(' ').slice(0, 4).join(' ') + '...' : "";
+            date = fetchText ? moment(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
+        }
+        for (let i = 0; i < data.length; i++) {
+            const fetchMessages = await Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
+            let startDate = moment(fetchMessages[0]?.createdAt).format('YYYY-MM-DD HH:mm');
+            let endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).format('YYYY-MM-DD HH:mm');
+            const messages = fetchMessages.map(message => ({
+                role: message.messageType === Role.AI ? "assistant" : "user",
+                message: message.message!
+            }));
+            const convoData: ConvoData = {
+                sessionId: data[i]?._id.toString(),
+                startDate: startDate,
+                endDate: endDate,
+                messages: messages
+            };
+            conversations.push(convoData);
+        }
+        const response: arrangeChatHistoryData = {
+            chatbotId: documentId,
+            chatbotName: text,
+            date: date,
+            conversations: conversations
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const convertToCsv = async (data: arrangeChatHistoryData): Promise<string> => {
+    try {
+        let csv = '';
+        // General Information
+        csv += `,Chatbot ID,Chatbot Name,Date\n`;
+        csv += `,${data.chatbotId},${data.chatbotName},${data.date}\n\n`;
+
+        // Placeholder for Date Created and Last Message At
+        csv += `________________,______________________________________,____________________________________________________________________________________________________________\n\n`;
+
+        for (let i = 0; i < data.conversations.length; i++) {
+            const conversation = data.conversations[i];
+            csv += `,Date Created,Last Message At\n`;
+            csv += `,${conversation.startDate},${conversation.endDate}\n\n`;
+            csv += `,Conversation:,Session ID\n`;
+            csv += `,${conversation.sessionId}\n\n`;
+            csv += `,Messages:,Role,Message\n`;
+            if (conversation.messages?.length) {
+                for (let j = 0; j < conversation.messages.length; j++) {
+                    const message = conversation.messages[j];
+                    csv += `,${message.role},"${message.message}"\n`;
+                }
+            }
+            csv += `________________,______________________________________,________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________\n\n`;
+        }
+        return csv;
+    } catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+};
+
+const chatHistoryExport = async (req: CustomRequest): Promise<ExportData | undefined> => {
+    try {
+        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
+        const setPagination = pagination ?? 1;
+        const setLimit = limit ?? 10
+        const query: any = [
+            await ChatHistoryAggregation.matchData(documentId?.toString()!),
+            await ChatHistoryAggregation.lookupChatSessions(),
+            await ChatHistoryAggregation.unwindChatSessions(),
+            await ChatHistoryAggregation.lookupMessages(),
+            await ChatHistoryAggregation.redactData(Number(startDate), Number(endDate)),
+            await ChatHistoryAggregation.groupData(),
+            await ChatHistoryAggregation.facetData(+setPagination, +setLimit)
+        ];
+        const fetchData = await Models.ipAddressModel.aggregate(query);
+        const exportArrangedData = await arrangeData(fetchData[0]?.data, documentId?.toString()!);
+        const exportData = await exportFileData(exportFile?.toString()!, exportArrangedData)
+        return exportData;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const exportFileData = async (file: string, data: arrangeChatHistoryData): Promise<ExportData | undefined> => {
+    try {
+        const currentTime = moment().utc().valueOf();
+        const startDate = data?.conversations[0]?.startDate.split(' ')[0];
+        const endDate = data?.conversations[data?.conversations?.length - 1]?.endDate.split(' ')[0];
+        const fileName = `${data.chatbotId}_${currentTime}_${endDate}~${startDate}`;
+        const filePath = path.resolve(__dirname, `../../export-files/${fileName}`);
+        let response: ExportData | undefined;
+        if (file == exportFile.JSON) {
+            fs.writeFileSync(`${filePath}.json`, JSON.stringify(data));
+            const fileBuffer = fs.readFileSync(`${filePath}.json`);
+            response = {
+                fileName: `${fileName}.json`,
+                contentType: 'application/json',
+                buffer: fileBuffer,
+                filePath: `${filePath}.json`
+            };
+        }
+        if (file == exportFile.CSV) {
+            const csvData = await convertToCsv(data);
+            fs.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
+            const fileBuffer = fs.readFileSync(`${filePath}.csv`);
+            response = {
+                fileName: `${fileName}.csv`,
+                contentType: 'text/csv',
+                buffer: fileBuffer,
+                filePath: `${filePath}.csv`
+            };
+        }
+        if (file == exportFile.PDF) {
+            const pdfBufferData = await generatePdf(filePath, data);
+            response = {
+                fileName: `${fileName}.pdf`,
+                contentType: 'application/pdf',
+                buffer: pdfBufferData,
+                filePath: `${filePath}.pdf`
+            }
+        }
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const generatePdf = async (filePath: string, data: arrangeChatHistoryData): Promise<Buffer> => {
+    try {
+        const templatePath = path.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
+        const templateSource = fs.readFileSync(templatePath, 'utf8');
+        const template = Handlebars.compile(templateSource); // Compile the template
+        const html = template(data); // Render the HTML
+        const browser = await puppeteer.launch(); // Launch Puppeteer
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
+        const bufferData = await page.pdf({
+            path: `${filePath}.pdf`,
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '15mm',
+                bottom: '15mm',
+                left: '15mm',
+                right: '15mm'
+            }
+        }); // Generate PDF
+        await browser.close();
+        return bufferData;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
-        const { documentId, pagination, limit, startDate, endDate } = req.query;
+        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
         const setPagination = pagination ?? 1;
         const setLimit = limit ?? 10
         const query: any = [
@@ -945,7 +1060,6 @@ const themeList = async (req: Request): Promise<ResponseList> => {
     }
 }
 
-
 const formAdd = async (req: Request): Promise<FormResponse> => {
     try {
         const { documentId, fields } = req.body;
@@ -999,21 +1113,17 @@ const formDetail = async (req: Request): Promise<Forms> => {
 const formChatbot = async (req: Request): Promise<FormChatbot> => {
     try {
         const { documentId } = req.query;
-        // console.log("req.ip---", req.ip);
         // const ipAddress = req.ip;
         const fetchData: Forms | null = await Models.formModel.findOne({ documentId: documentId }, projection, option);
         // let isFormCompleted = false;
         // if (fetchData) {
         //     const query = { documentId: documentId, ipAddress: ipAddress };
         //     const fetchIpData = await Models.ipAddressModel.findOne(query, projection, option);
-        //     console.log("fetchIpData----", fetchIpData)
         //     if (fetchIpData) {
         //         const currentTime = moment().utc().valueOf();
-        //         console.log("currentTime---", currentTime);
-        //         console.log("fetchIpData.createdAt---", fetchIpData.createdAt)
+        //        
         //         // const differenceInHours = moment(currentTime).diff(moment(fetchIpData.createdAt), 'hours');
         //         const differenceInMinutes = moment(currentTime).diff(moment(fetchIpData.createdAt), 'minutes');
-        //         console.log("differenceInMinutes----", differenceInMinutes)
         //         if (differenceInMinutes < 5) {
         //             const fetchSessions = await Models.chatSessionModel.findOne({ ipAddressId: fetchIpData._id }, projection, optionWithSortDesc);
 
@@ -1116,5 +1226,6 @@ export {
     formWithIp,
     formInfoAdd,
     formChatbot,
-    profile
+    profile,
+    chatHistoryExport
 }

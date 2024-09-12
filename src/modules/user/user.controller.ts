@@ -3,6 +3,7 @@ import * as Service from './user.service';
 import * as Handler from '../../handler/handler';
 import { ErrorResponse } from '../../handler/error';
 import { CustomRequest } from '../../interfaces/common.interface';
+import fs from 'fs';
 
 const signup = async (req: Request, res: Response) => {
     try {
@@ -195,6 +196,29 @@ const chatHistory = async (req: CustomRequest, res: Response) => {
     }
 }
 
+const chatHistoryExport = async (req: CustomRequest, res: Response) => {
+    let filePath: string | undefined;
+    try {
+        const response = await Service.chatHistoryExport(req);
+        filePath = response?.filePath;
+        res.setHeader('Content-Disposition', `attachment; filename=${response?.fileName}`);
+        res.setHeader('Content-Type', `${response?.contentType}`);
+        return Handler.handleSuccess(res, response?.buffer);
+    }
+    catch (err) {
+        if (!res.headersSent) {
+            return Handler.handleCatchError(res, err as ErrorResponse);  // Handle errors only if response has not been sent
+        } else {
+            console.error('Error occurred after headers sent:', err); // Log error but don't attempt to send another response
+        }
+    }
+    finally {
+        if (filePath) {
+            fs.unlinkSync(filePath) // Clean up the temporary file
+        }
+    }
+}
+
 const chatDetail = async (req: CustomRequest, res: Response) => {
     try {
         const response = await Service.chatDetail(req);
@@ -313,5 +337,6 @@ export {
     formWithIp,
     formInfoAdd,
     formChatbot,
-    profile
+    profile,
+    chatHistoryExport
 }
