@@ -10,16 +10,18 @@ const generatePdf = async (data: arrangeChatHistoryData): Promise<Buffer> => {
     try {
         const templatePath = path.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
         const templateSource = fs.readFileSync(templatePath, 'utf8');
+        const margin = "15mm"; // Define a uniform margin value
         const options = {
             format: 'A4',
             border: {
-                top: "10mm",            
-                right: "10mm",
-                bottom: "10mm",
-                left: "10mm"
+                right: margin,
+                left: margin
+            },
+            header: {
+                height: '15mm'
             },
             footer: {
-                height: '10mm'
+                height: '15mm'
             }
         };
         const template = Handlebars.compile(templateSource); // Compile the template

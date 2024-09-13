@@ -22,16 +22,18 @@ const generatePdf = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const templatePath = path_1.default.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
         const templateSource = fs_1.default.readFileSync(templatePath, 'utf8');
+        const margin = "15mm"; // Define a uniform margin value
         const options = {
             format: 'A4',
             border: {
-                top: "10mm",
-                right: "10mm",
-                bottom: "10mm",
-                left: "10mm"
+                right: margin,
+                left: margin
+            },
+            header: {
+                height: '15mm'
             },
             footer: {
-                height: '10mm'
+                height: '15mm'
             }
         };
         const template = handlebars_1.default.compile(templateSource); // Compile the template
