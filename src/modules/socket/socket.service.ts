@@ -84,7 +84,10 @@ const searchInput = async (search: string, documentId: string): Promise<string |
             messages: [
                 {
                     role: 'system',
-                    content: `You are an assistant that answers based on the provided content unless the user greets you (e.g., "hello", "hi"). If the user greets you, respond with a friendly greeting and nothing else. If the user asks something related to the provided content, answer based on the provided content. Do not use any external knowledge.`
+                    content: `You are an assistant that responds based on the provided content. 
+                    - If the user greets you with "hello", "hi", or similar, respond with a simple greeting.
+                    - If the user says something neutral or non-informative like "okay", "thanks", "alright", respond with a polite acknowledgment such as "Got it!" or "You're welcome!".
+                    - If the user asks a question or makes a statement related to the provided content, respond using the content.`
                     // content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.'
                 },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
@@ -100,7 +103,7 @@ const searchInput = async (search: string, documentId: string): Promise<string |
     }
 }
 
-const saveChatSession = async (ipAddressId: Types.ObjectId, isFormCompleted:boolean): Promise<ChatSession> => {
+const saveChatSession = async (ipAddressId: Types.ObjectId, isFormCompleted: boolean): Promise<ChatSession> => {
     try {
         const dataToSave: ChatSession = {
             ipAddressId: ipAddressId,
