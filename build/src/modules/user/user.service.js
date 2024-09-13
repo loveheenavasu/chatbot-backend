@@ -903,41 +903,30 @@ const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, functio
         const startDate = (_a = data === null || data === void 0 ? void 0 : data.conversations[0]) === null || _a === void 0 ? void 0 : _a.startDate.split(' ')[0];
         const endDate = (_c = data === null || data === void 0 ? void 0 : data.conversations[((_b = data === null || data === void 0 ? void 0 : data.conversations) === null || _b === void 0 ? void 0 : _b.length) - 1]) === null || _c === void 0 ? void 0 : _c.endDate.split(' ')[0];
         const fileName = `${data.chatbotId}_${currentTime}_${endDate}~${startDate}`;
-        const filePath = path_1.default.resolve(__dirname, '../../export-files/' + fileName);
         let response;
-        // console.log("🚀 ~ exportFileData ~ filePath:", filePath)
-        // console.log("data---", data)
         if (file == exportFile.JSON) {
-            // fs.writeFileSync(`${filePath}.json`, JSON.stringify(data));
             const fileBuffer = Buffer.from(JSON.stringify(data), 'utf-8');
-            // console.log("fileBuffer---", fileBuffer)
-            // const fileBuffer = fs.readFileSync(`${filePath}.json`);
             response = {
                 fileName: `${fileName}.json`,
                 contentType: 'application/json',
                 buffer: fileBuffer,
-                // filePath: `${filePath}.json`
             };
         }
         if (file == exportFile.CSV) {
             const csvData = yield convertToCsv(data);
             const fileBuffer = Buffer.from(csvData, 'utf-8');
-            // fs.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
-            // const fileBuffer = fs.readFileSync(`${filePath}.csv`);
             response = {
                 fileName: `${fileName}.csv`,
                 contentType: 'text/csv',
-                buffer: fileBuffer,
-                // filePath: `${filePath}.csv`
+                buffer: fileBuffer
             };
         }
         if (file == exportFile.PDF) {
-            const pdfBufferData = yield (0, generate_pdf_1.generatePdf)(filePath, data);
+            const pdfBufferData = yield (0, generate_pdf_1.generatePdf)(data);
             response = {
                 fileName: `${fileName}.pdf`,
                 contentType: 'application/pdf',
-                buffer: pdfBufferData,
-                // filePath: `${filePath}.pdf`
+                buffer: pdfBufferData
             };
         }
         return response;

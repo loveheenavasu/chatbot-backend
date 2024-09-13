@@ -18,32 +18,25 @@ const fs_1 = __importDefault(require("fs"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const handler_1 = require("../../handler/handler");
 const html_pdf_1 = __importDefault(require("html-pdf"));
-const generatePdf = (filePath, data) => __awaiter(void 0, void 0, void 0, function* () {
+const generatePdf = (data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const templatePath = path_1.default.join(__dirname, '../../email-templates/chat-history.html'); // Load the HTML template
         const templateSource = fs_1.default.readFileSync(templatePath, 'utf8');
-        const options = { format: 'A4', border: '10mm' };
+        const options = {
+            format: 'A4',
+            border: {
+                top: "10mm",
+                right: "10mm",
+                bottom: "10mm",
+                left: "10mm"
+            },
+            footer: {
+                height: '10mm'
+            }
+        };
         const template = handlebars_1.default.compile(templateSource); // Compile the template
         const html = template(data);
-        // Generate PDF from HTML
-        const bufferData = yield generatePdfBuffer(html, options);
-        // console.log("🚀 ~ generatePdf ~ bufferData:", bufferData)
-        // Render the HTML
-        // const browser = await puppeteer.launch(); // Launch Puppeteer
-        // const page = await browser.newPage();
-        // await page.setContent(html, { waitUntil: 'networkidle0' }); // Set HTML content directly without saving to file
-        // const bufferData = await page.pdf({
-        //     path: `${filePath}.pdf`,
-        //     format: 'A4',
-        //     printBackground: true,
-        //     margin: {
-        //         top: '15mm',
-        //         bottom: '15mm',
-        //         left: '15mm',
-        //         right: '15mm'
-        //     }
-        // }); // Generate PDF
-        // await browser.close();
+        const bufferData = yield generatePdfBuffer(html, options); // Generate PDF from HTML
         return bufferData;
     }
     catch (err) {

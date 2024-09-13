@@ -197,10 +197,8 @@ const chatHistory = async (req: CustomRequest, res: Response) => {
 }
 
 const chatHistoryExport = async (req: CustomRequest, res: Response) => {
-    // let filePath: string | undefined;
     try {
         const response = await Service.chatHistoryExport(req);
-        // filePath = response?.filePath;
         res.setHeader('Content-Disposition', `attachment; filename=${response?.fileName}`);
         res.setHeader('Content-Type', `${response?.contentType}`);
         return Handler.handleSuccess(res, response?.buffer);
@@ -212,11 +210,6 @@ const chatHistoryExport = async (req: CustomRequest, res: Response) => {
             console.error('Error occurred after headers sent:', err); // Log error but don't attempt to send another response
         }
     }
-    // finally {
-    //     if (filePath) {
-    //         fs.unlinkSync(filePath) // Clean up the temporary file
-    //     }
-    // }
 }
 
 const chatDetail = async (req: CustomRequest, res: Response) => {

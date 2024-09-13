@@ -91,5 +91,4 @@ export type ExportData = {
     fileName: string;
     contentType: string;
     buffer: Buffer;
-    filePath?: string;
 }
