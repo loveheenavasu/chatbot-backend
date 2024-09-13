@@ -811,12 +811,15 @@ const arrangeData = (data, documentId) => __awaiter(void 0, void 0, void 0, func
         if (fetchChatbot) {
             const fetchText = yield Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text.split(' ').slice(0, 4).join(' ') + '...' : "";
-            date = fetchText ? (0, moment_1.default)(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
+            date = fetchText ? (0, moment_1.default)(fetchText.createdAt).utc().format('YYYY-MM-DD HH:mm') : "";
+            console.log("🚀 ~ arrangeData ~ date:", date);
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
-            let startDate = (0, moment_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).format('YYYY-MM-DD HH:mm');
-            let endDate = (0, moment_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).format('YYYY-MM-DD HH:mm');
+            let startDate = (0, moment_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).utc().format('YYYY-MM-DD HH:mm');
+            console.log("🚀 ~ arrangeData ~ startDate:", startDate);
+            let endDate = (0, moment_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).utc().format('YYYY-MM-DD HH:mm');
+            console.log("🚀 ~ arrangeData ~ endDate:", endDate);
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
                 message: message.message

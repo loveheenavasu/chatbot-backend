@@ -809,12 +809,15 @@ const arrangeData = async (data: List[], documentId: string): Promise<arrangeCha
         if (fetchChatbot) {
             const fetchText = await Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text!.split(' ').slice(0, 4).join(' ') + '...' : "";
-            date = fetchText ? moment(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
+            date = fetchText ? moment(fetchText.createdAt).utc().format('YYYY-MM-DD HH:mm') : "";
+            console.log("🚀 ~ arrangeData ~ date:", date)
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = await Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
-            let startDate = moment(fetchMessages[0]?.createdAt).format('YYYY-MM-DD HH:mm');
-            let endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).format('YYYY-MM-DD HH:mm');
+            let startDate = moment(fetchMessages[0]?.createdAt).utc().format('YYYY-MM-DD HH:mm');
+            console.log("🚀 ~ arrangeData ~ startDate:", startDate)
+            let endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).utc().format('YYYY-MM-DD HH:mm');
+            console.log("🚀 ~ arrangeData ~ endDate:", endDate)
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === Role.AI ? "assistant" : "user",
                 message: message.message!
