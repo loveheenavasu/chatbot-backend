@@ -85,9 +85,10 @@ const searchInput = async (search: string, documentId: string): Promise<string |
                 {
                     role: 'system',
                     content: `You are an assistant that responds based on the provided content. 
-                    - If the user greets you with "hello", "hi", or similar, respond with a simple greeting.
-                    - If the user says something neutral or non-informative like "okay", "thanks", "alright", respond with a polite acknowledgment such as "Got it!" or "You're welcome!".
-                    - If the user asks a question or makes a statement related to the provided content, respond using the content.`
+            - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
+            - If the user says something neutral or non-informative like "okay", "thanks", "alright", respond with a polite acknowledgment such as "Got it!" or "You're welcome!" and do not reference the provided content.
+            - If the user asks a question or makes a statement related to the provided content, respond based on the provided content.
+            - Do not use any external knowledge.`
                     // content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.'
                 },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
