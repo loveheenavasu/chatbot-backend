@@ -805,22 +805,22 @@ const arrangeData = (data, documentId) => __awaiter(void 0, void 0, void 0, func
     var _a, _b;
     try {
         const conversations = [];
-        const timezone = moment_timezone_1.default.tz.guess();
-        console.log("🚀 ~ arrangeData ~ timezone:", timezone);
         const fetchChatbot = yield Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
         let text = "";
         let date = "";
         if (fetchChatbot) {
             const fetchText = yield Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text.split(' ').slice(0, 4).join(' ') + '...' : "";
-            date = fetchText ? (0, moment_timezone_1.default)(fetchText.createdAt).tz(timezone).format('YYYY-MM-DD HH:mm') : "";
+            const date1 = new Date(Number(fetchText === null || fetchText === void 0 ? void 0 : fetchText.createdAt));
+            date = `${date1.toLocaleString()} ${date1.toLocaleString()}`;
+            // date = fetchText ? moment(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
             console.log("🚀 ~ arrangeData ~ date:", date);
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
-            const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).tz(timezone).format('YYYY-MM-DD HH:mm');
+            const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ startDate:", startDate);
-            const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).tz(timezone).format('YYYY-MM-DD HH:mm');
+            const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ endDate:", endDate);
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
