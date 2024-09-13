@@ -26,7 +26,7 @@ router.delete('/files', Validation.deleteFile, authorization, Controller.deleteF
 router.delete('/logout', authorization, Controller.logout)
 
 router.get('/chat-history', Validation.documentIdWithPL, authorization, Controller.chatHistory)
-router.get('/chat-history-export', Validation.documentIdWithPL, authorization, Controller.chatHistoryExport)
+router.get('/chat-history-export', Validation.documentIdWithPL, Controller.chatHistoryExport)
 router.get('/chat', Validation.sessionIdWithPL, authorization, Controller.chatDetail)
 
 router.post('/theme', Validation.themeCreate, Controller.createTheme)

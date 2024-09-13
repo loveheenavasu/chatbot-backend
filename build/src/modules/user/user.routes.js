@@ -52,7 +52,7 @@ router.get('/files', Validation.documentIdWithPL, authorization_1.authorization,
 router.delete('/files', Validation.deleteFile, authorization_1.authorization, Controller.deleteFile);
 router.delete('/logout', authorization_1.authorization, Controller.logout);
 router.get('/chat-history', Validation.documentIdWithPL, authorization_1.authorization, Controller.chatHistory);
-router.get('/chat-history-export', Validation.documentIdWithPL, authorization_1.authorization, Controller.chatHistoryExport);
+router.get('/chat-history-export', Validation.documentIdWithPL, Controller.chatHistoryExport);
 router.get('/chat', Validation.sessionIdWithPL, authorization_1.authorization, Controller.chatDetail);
 router.post('/theme', Validation.themeCreate, Controller.createTheme);
 router.get('/theme', Controller.themeList);

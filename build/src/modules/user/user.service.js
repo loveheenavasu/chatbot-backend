@@ -905,28 +905,32 @@ const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, functio
         const fileName = `${data.chatbotId}_${currentTime}_${endDate}~${startDate}`;
         const filePath = path_1.default.resolve(__dirname, '../../export-files/' + fileName);
         let response;
-        console.log("🚀 ~ exportFileData ~ filePath:", filePath);
-        // if (file == exportFile.JSON) {
-        //     fs.writeFileSync(`${filePath}.json`, JSON.stringify(data));
-        //     const fileBuffer = fs.readFileSync(`${filePath}.json`);
-        //     response = {
-        //         fileName: `${fileName}.json`,
-        //         contentType: 'application/json',
-        //         buffer: fileBuffer,
-        //         filePath: `${filePath}.json`
-        //     };
-        // }
-        // if (file == exportFile.CSV) {
-        //     const csvData = await convertToCsv(data);
-        //     fs.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
-        //     const fileBuffer = fs.readFileSync(`${filePath}.csv`);
-        //     response = {
-        //         fileName: `${fileName}.csv`,
-        //         contentType: 'text/csv',
-        //         buffer: fileBuffer,
-        //         filePath: `${filePath}.csv`
-        //     };
-        // }
+        // console.log("🚀 ~ exportFileData ~ filePath:", filePath)
+        // console.log("data---", data)
+        if (file == exportFile.JSON) {
+            // fs.writeFileSync(`${filePath}.json`, JSON.stringify(data));
+            const fileBuffer = Buffer.from(JSON.stringify(data), 'utf-8');
+            // console.log("fileBuffer---", fileBuffer)
+            // const fileBuffer = fs.readFileSync(`${filePath}.json`);
+            response = {
+                fileName: `${fileName}.json`,
+                contentType: 'application/json',
+                buffer: fileBuffer,
+                // filePath: `${filePath}.json`
+            };
+        }
+        if (file == exportFile.CSV) {
+            const csvData = yield convertToCsv(data);
+            const fileBuffer = Buffer.from(csvData, 'utf-8');
+            // fs.writeFileSync(`${filePath}.csv`, csvData, 'utf8');
+            // const fileBuffer = fs.readFileSync(`${filePath}.csv`);
+            response = {
+                fileName: `${fileName}.csv`,
+                contentType: 'text/csv',
+                buffer: fileBuffer,
+                // filePath: `${filePath}.csv`
+            };
+        }
         if (file == exportFile.PDF) {
             const pdfBufferData = yield (0, generate_pdf_1.generatePdf)(filePath, data);
             response = {
