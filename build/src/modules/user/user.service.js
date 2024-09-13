@@ -813,14 +813,11 @@ const arrangeData = (data, documentId, timezone) => __awaiter(void 0, void 0, vo
             const fetchText = yield Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text.split(' ').slice(0, 4).join(' ') + '...' : "";
             date = fetchText ? (0, moment_timezone_1.default)(fetchText.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm') : "";
-            console.log("🚀 ~ arrangeData ~ date:", date);
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
             const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
-            console.log("🚀 ~ arrangeData ~ startDate:", startDate);
             const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
-            console.log("🚀 ~ arrangeData ~ endDate:", endDate);
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
                 message: message.message

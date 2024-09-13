@@ -800,7 +800,7 @@ const deleteSessions = async (query: object) => {
     }
 }
 
-const arrangeData = async (data: List[], documentId: string, timezone:string | undefined): Promise<arrangeChatHistoryData> => {
+const arrangeData = async (data: List[], documentId: string, timezone: string | undefined): Promise<arrangeChatHistoryData> => {
     try {
         const conversations: ConvoData[] = [];
         const fetchChatbot = await Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
@@ -811,14 +811,11 @@ const arrangeData = async (data: List[], documentId: string, timezone:string | u
             const fetchText = await Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text!.split(' ').slice(0, 4).join(' ') + '...' : "";
             date = fetchText ? moment(fetchText.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm') : "";
-            console.log("🚀 ~ arrangeData ~ date:", date)
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = await Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
             const startDate = moment(fetchMessages[0]?.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
-            console.log("🚀 ~ arrangeData ~ startDate:", startDate)
             const endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
-            console.log("🚀 ~ arrangeData ~ endDate:", endDate)
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === Role.AI ? "assistant" : "user",
                 message: message.message!

@@ -82,7 +82,11 @@ const searchInput = async (search: string, documentId: string): Promise<string |
         const response = await open.chat.completions.create({
             model: 'gpt-3.5-turbo-1106',
             messages: [
-                { role: 'system', content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.' },
+                {
+                    role: 'system',
+                    content: `You are an assistant that answers based on the provided content unless the user greets you (e.g., "hello", "hi"). If the user greets you, respond with a friendly greeting and nothing else. If the user asks something related to the provided content, answer based on the provided content. Do not use any external knowledge.`
+                    // content: 'You are an assistant that only answers based on the provided content. Do not use any external knowledge.'
+                },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
             ],
             max_tokens: 150,
