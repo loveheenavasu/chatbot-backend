@@ -37,7 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatHistoryExport = exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
-const moment_1 = __importDefault(require("moment"));
+const moment_timezone_1 = __importDefault(require("moment-timezone"));
 const mongoose_1 = require("mongoose");
 const Handler = __importStar(require("../../handler/handler"));
 const error_1 = require("../../handler/error");
@@ -156,7 +156,7 @@ const signupData = (payload) => __awaiter(void 0, void 0, void 0, function* () {
             otp: otp,
             firstname: payload.firstname,
             lastname: payload.lastname,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         return data;
     }
@@ -372,7 +372,7 @@ const socialLogin = (req) => __awaiter(void 0, void 0, void 0, function* () {
             isAdmin,
             isEmailVerified: true,
             type: user_model_1.SignType.GOOGLE,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const saveData = yield Models.userModel.create(dataToSave);
         const session = yield createSession(saveData._id, socialToken);
@@ -389,7 +389,7 @@ const createSession = (user_id, accessToken) => __awaiter(void 0, void 0, void 0
         const dataToSession = {
             userId: user_id,
             accessToken: accessToken,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const response = yield Models.sessionModel.create(dataToSession);
         return response;
@@ -438,7 +438,7 @@ const createChatbot = (data) => __awaiter(void 0, void 0, void 0, function* () {
             textId: _id,
             userId: userId,
             documentId: documentId,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const response = yield Models.chatbotModel.create(dataToSave);
         return response;
@@ -466,7 +466,7 @@ const embedText = (text, type, userId, fileName, docNo, docId) => __awaiter(void
             fileName,
             docNo,
             documentId: docId,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const saveData = yield Models.textModel.create(dataToSave);
         return saveData;
@@ -500,7 +500,7 @@ const updateTexts = (req) => __awaiter(void 0, void 0, void 0, function* () {
             const update = {
                 text: text,
                 docNo: docNo,
-                updatedAt: (0, moment_1.default)().utc().valueOf()
+                updatedAt: (0, moment_timezone_1.default)().utc().valueOf()
             };
             yield Models.textModel.updateOne(query, update);
             const response = { message: "Text updated successfully" };
@@ -614,7 +614,7 @@ const updateFileText = (text, type, documentId, userId, fileName, docNo) => __aw
             fileName,
             documentId,
             docNo,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const saveData = yield Models.textModel.create(dataToSave);
         return saveData;
@@ -805,20 +805,22 @@ const arrangeData = (data, documentId) => __awaiter(void 0, void 0, void 0, func
     var _a, _b;
     try {
         const conversations = [];
+        const timezone = moment_timezone_1.default.tz.guess();
+        console.log("🚀 ~ arrangeData ~ timezone:", timezone);
         const fetchChatbot = yield Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
         let text = "";
         let date = "";
         if (fetchChatbot) {
             const fetchText = yield Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text.split(' ').slice(0, 4).join(' ') + '...' : "";
-            date = fetchText ? (0, moment_1.default)(fetchText.createdAt).utc().format('YYYY-MM-DD HH:mm') : "";
+            date = fetchText ? (0, moment_timezone_1.default)(fetchText.createdAt).tz(timezone).format('YYYY-MM-DD HH:mm') : "";
             console.log("🚀 ~ arrangeData ~ date:", date);
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
-            let startDate = (0, moment_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).utc().format('YYYY-MM-DD HH:mm');
+            const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).tz(timezone).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ startDate:", startDate);
-            let endDate = (0, moment_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).utc().format('YYYY-MM-DD HH:mm');
+            const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).tz(timezone).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ endDate:", endDate);
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
@@ -902,7 +904,7 @@ exports.chatHistoryExport = chatHistoryExport;
 const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     try {
-        const currentTime = (0, moment_1.default)().utc().valueOf();
+        const currentTime = (0, moment_timezone_1.default)().utc().valueOf();
         const startDate = (_a = data === null || data === void 0 ? void 0 : data.conversations[0]) === null || _a === void 0 ? void 0 : _a.startDate.split(' ')[0];
         const endDate = (_c = data === null || data === void 0 ? void 0 : data.conversations[((_b = data === null || data === void 0 ? void 0 : data.conversations) === null || _b === void 0 ? void 0 : _b.length) - 1]) === null || _c === void 0 ? void 0 : _c.endDate.split(' ')[0];
         const fileName = `${data.chatbotId}_${currentTime}_${endDate}~${startDate}`;
@@ -1000,7 +1002,7 @@ const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             const dataToSave = {
                 theme,
-                createdAt: (0, moment_1.default)().utc().valueOf()
+                createdAt: (0, moment_timezone_1.default)().utc().valueOf()
             };
             const saveData = yield Models.themeModel.create(dataToSave);
             const response = {
@@ -1036,7 +1038,7 @@ const formAdd = (req) => __awaiter(void 0, void 0, void 0, function* () {
         const dataToSave = {
             documentId: documentId,
             fields,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const saveData = yield Models.formModel.create(dataToSave);
         const response = {
@@ -1055,7 +1057,7 @@ const formUpdate = (req) => __awaiter(void 0, void 0, void 0, function* () {
         const { _id, fields } = req.body;
         const dataToUpdate = {
             fields,
-            updatedAt: (0, moment_1.default)().utc().valueOf()
+            updatedAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const updatedData = yield Models.formModel.findOneAndUpdate({ _id: new mongoose_1.Types.ObjectId(_id) }, dataToUpdate, options);
         const response = {
@@ -1150,7 +1152,7 @@ const formInfoAdd = (req) => __awaiter(void 0, void 0, void 0, function* () {
         const { documentId, fields } = req.body;
         const dataToSave = {
             documentId, ipAddress, fields,
-            createdAt: (0, moment_1.default)().utc().valueOf()
+            createdAt: (0, moment_timezone_1.default)().utc().valueOf()
         };
         const saveData = yield Models.infoModel.create(dataToSave);
         const response = {
