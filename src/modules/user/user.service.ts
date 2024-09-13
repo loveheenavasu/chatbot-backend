@@ -800,25 +800,24 @@ const deleteSessions = async (query: object) => {
     }
 }
 
-const arrangeData = async (data: List[], documentId: string): Promise<arrangeChatHistoryData> => {
+const arrangeData = async (data: List[], documentId: string, timezone:string | undefined): Promise<arrangeChatHistoryData> => {
     try {
         const conversations: ConvoData[] = [];
         const fetchChatbot = await Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
+        const serverTimezone = timezone ?? 'Asia/Kolkata';
         let text = "";
         let date = "";
         if (fetchChatbot) {
             const fetchText = await Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text!.split(' ').slice(0, 4).join(' ') + '...' : "";
-            const date1 = new Date(Number(fetchText?.createdAt));
-            date = `${date1.toLocaleString()} ${date1.toLocaleString()}`
-            // date = fetchText ? moment(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
+            date = fetchText ? moment(fetchText.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm') : "";
             console.log("🚀 ~ arrangeData ~ date:", date)
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = await Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
-            const startDate = moment(fetchMessages[0]?.createdAt).format('YYYY-MM-DD HH:mm');
+            const startDate = moment(fetchMessages[0]?.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ startDate:", startDate)
-            const endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).format('YYYY-MM-DD HH:mm');
+            const endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ endDate:", endDate)
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === Role.AI ? "assistant" : "user",
@@ -878,7 +877,7 @@ const convertToCsv = async (data: arrangeChatHistoryData): Promise<string> => {
 
 const chatHistoryExport = async (req: CustomRequest): Promise<ExportData | undefined> => {
     try {
-        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
+        const { documentId, pagination, limit, startDate, endDate, exportFile, timezone } = req.query;
         const setPagination = pagination ?? 1;
         const setLimit = limit ?? 10
         const query: any = [
@@ -891,7 +890,7 @@ const chatHistoryExport = async (req: CustomRequest): Promise<ExportData | undef
             await ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];
         const fetchData = await Models.ipAddressModel.aggregate(query);
-        const exportArrangedData = await arrangeData(fetchData[0]?.data, documentId?.toString()!);
+        const exportArrangedData = await arrangeData(fetchData[0]?.data, documentId?.toString()!, timezone?.toString());
         const exportData = await exportFileData(exportFile?.toString()!, exportArrangedData)
         return exportData;
     }

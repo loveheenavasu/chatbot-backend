@@ -184,7 +184,8 @@ const documentIdWithPL = (req, res, next) => {
             limit: joi_1.default.number().optional(),
             startDate: joi_1.default.string().optional(),
             endDate: joi_1.default.string().optional(),
-            exportFile: joi_1.default.string().optional()
+            exportFile: joi_1.default.string().optional(),
+            timezone: joi_1.default.string().optional()
         });
         const { error } = schema.validate(req.query);
         if (error)

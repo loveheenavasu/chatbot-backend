@@ -801,26 +801,25 @@ const deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.deleteSessions = deleteSessions;
-const arrangeData = (data, documentId) => __awaiter(void 0, void 0, void 0, function* () {
+const arrangeData = (data, documentId, timezone) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
         const conversations = [];
         const fetchChatbot = yield Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
+        const serverTimezone = timezone !== null && timezone !== void 0 ? timezone : 'Asia/Kolkata';
         let text = "";
         let date = "";
         if (fetchChatbot) {
             const fetchText = yield Models.textModel.findOne({ _id: fetchChatbot.textId }, projection, option);
             text = fetchText ? fetchText.text.split(' ').slice(0, 4).join(' ') + '...' : "";
-            const date1 = new Date(Number(fetchText === null || fetchText === void 0 ? void 0 : fetchText.createdAt));
-            date = `${date1.toLocaleString()} ${date1.toLocaleString()}`;
-            // date = fetchText ? moment(fetchText.createdAt).format('YYYY-MM-DD HH:mm') : "";
+            date = fetchText ? (0, moment_timezone_1.default)(fetchText.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm') : "";
             console.log("🚀 ~ arrangeData ~ date:", date);
         }
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
-            const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).format('YYYY-MM-DD HH:mm');
+            const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ startDate:", startDate);
-            const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).format('YYYY-MM-DD HH:mm');
+            const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             console.log("🚀 ~ arrangeData ~ endDate:", endDate);
             const messages = fetchMessages.map(message => ({
                 role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
@@ -879,7 +878,7 @@ const convertToCsv = (data) => __awaiter(void 0, void 0, void 0, function* () {
 const chatHistoryExport = (req) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
+        const { documentId, pagination, limit, startDate, endDate, exportFile, timezone } = req.query;
         const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
         const setLimit = limit !== null && limit !== void 0 ? limit : 10;
         const query = [
@@ -892,7 +891,7 @@ const chatHistoryExport = (req) => __awaiter(void 0, void 0, void 0, function* (
             yield ChatHistoryAggregation.facetData(+setPagination, +setLimit)
         ];
         const fetchData = yield Models.ipAddressModel.aggregate(query);
-        const exportArrangedData = yield arrangeData((_a = fetchData[0]) === null || _a === void 0 ? void 0 : _a.data, documentId === null || documentId === void 0 ? void 0 : documentId.toString());
+        const exportArrangedData = yield arrangeData((_a = fetchData[0]) === null || _a === void 0 ? void 0 : _a.data, documentId === null || documentId === void 0 ? void 0 : documentId.toString(), timezone === null || timezone === void 0 ? void 0 : timezone.toString());
         const exportData = yield exportFileData(exportFile === null || exportFile === void 0 ? void 0 : exportFile.toString(), exportArrangedData);
         return exportData;
     }
