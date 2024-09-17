@@ -819,7 +819,7 @@ const arrangeData = (data, documentId, timezone) => __awaiter(void 0, void 0, vo
             const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             const messages = fetchMessages.map(message => ({
-                role: message.messageType === message_model_1.Role.AI ? "assistant" : "user",
+                role: message.messageType === message_model_1.Role.AI ? "Assistant" : "User",
                 message: message.message
             }));
             const convoData = {

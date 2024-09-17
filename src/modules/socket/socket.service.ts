@@ -5,7 +5,6 @@ import { OpenAI } from 'openai';
 import * as Models from '../../models/index';
 import * as Handler from "../../handler/handler";
 import moment from "moment";
-import { Role } from "../../models/message.model";
 import { ErrorResponse } from "../../handler/error";
 import { Types } from "mongoose";
 import Message from "../../interfaces/message.interface";
@@ -13,7 +12,6 @@ import { NeoConfig, SocketResponse } from "../../interfaces/common.interface";
 import ChatSession from "../../interfaces/chat-session.interface";
 import { config } from 'dotenv';
 import { questionType } from "./socket";
-import { documentId } from "../user/user.validation";
 config();
 
 const NEO_URL = process.env.NEO_URL as string;

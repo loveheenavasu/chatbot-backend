@@ -127,7 +127,6 @@ const connectSocket = (server: object) => {
                         const res = await SocketService.SocketRes(msg, sessionId.toString(), role ?? Role.User, question, nextType, label);
                         socket.emit("searches", res);
                     }
-
                 }
                 catch (err) {
                     throw err;

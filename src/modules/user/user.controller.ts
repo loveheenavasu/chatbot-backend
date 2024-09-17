@@ -196,7 +196,7 @@ const chatHistory = async (req: CustomRequest, res: Response) => {
     }
 }
 
-const chatHistoryExport = async (req: CustomRequest, res: Response) => {
+const chatHistoryExport = async (req: CustomRequest, res: Response | any) => {
     try {
         const response = await Service.chatHistoryExport(req);
         res.setHeader('Content-Disposition', `attachment; filename=${response?.fileName}`);

@@ -800,7 +800,7 @@ const deleteSessions = async (query: object) => {
     }
 }
 
-const arrangeData = async (data: List[], documentId: string, timezone: string | undefined): Promise<arrangeChatHistoryData> => {
+const arrangeData = async (data: List[], documentId: string, timezone:string | undefined): Promise<arrangeChatHistoryData> => {
     try {
         const conversations: ConvoData[] = [];
         const fetchChatbot = await Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
@@ -817,7 +817,7 @@ const arrangeData = async (data: List[], documentId: string, timezone: string | 
             const startDate = moment(fetchMessages[0]?.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             const endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             const messages = fetchMessages.map(message => ({
-                role: message.messageType === Role.AI ? "assistant" : "user",
+                role: message.messageType === Role.AI ? "Assistant" : "User",
                 message: message.message!
             }));
             const convoData: ConvoData = {
@@ -934,8 +934,6 @@ const exportFileData = async (file: string, data: arrangeChatHistoryData): Promi
         return Handler.handleCustomError(err as ErrorResponse);
     }
 }
-
-
 
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
