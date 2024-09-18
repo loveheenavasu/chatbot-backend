@@ -15,14 +15,16 @@ const generatePdf = async (data: arrangeChatHistoryData): Promise<Buffer> => {
             format: 'A4',
             border: {
                 right: margin,
-                left: margin
+                left: margin,
+                top: margin,
+                bottom: margin
             },
-            header: {
-                height: '15mm'
-            },
-            footer: {
-                height: '15mm'
-            }
+            // header: {
+            //     height: '15mm'
+            // },
+            // footer: {
+            //     height: '15mm'
+            // }
         };
         const template = Handlebars.compile(templateSource); // Compile the template
         const html = template(data);

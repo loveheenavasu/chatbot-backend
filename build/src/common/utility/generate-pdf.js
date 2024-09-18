@@ -27,14 +27,16 @@ const generatePdf = (data) => __awaiter(void 0, void 0, void 0, function* () {
             format: 'A4',
             border: {
                 right: margin,
-                left: margin
+                left: margin,
+                top: margin,
+                bottom: margin
             },
-            header: {
-                height: '15mm'
-            },
-            footer: {
-                height: '15mm'
-            }
+            // header: {
+            //     height: '15mm'
+            // },
+            // footer: {
+            //     height: '15mm'
+            // }
         };
         const template = handlebars_1.default.compile(templateSource); // Compile the template
         const html = template(data);
