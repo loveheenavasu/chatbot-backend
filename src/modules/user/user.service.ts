@@ -815,10 +815,10 @@ const arrangeData = async (data: List[], documentId: string, timezone:string | u
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = await Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
             const startDate = moment(fetchMessages[0]?.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
-            const endDate = moment(fetchMessages[fetchMessages?.length - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
+            const endDate = moment(fetchMessages[fetchMessages?.length - 1]?.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             const messages = fetchMessages.map(message => ({
-                role: message.messageType === Role.AI ? "Assistant" : "User",
-                message: message.message!
+                role: message?.messageType === Role.AI ? "Assistant" : "User",
+                message: message?.message!
             }));
             const convoData: ConvoData = {
                 sessionId: data[i]?._id.toString(),

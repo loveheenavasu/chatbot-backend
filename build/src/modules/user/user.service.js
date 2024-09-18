@@ -802,7 +802,7 @@ const deleteSessions = (query) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.deleteSessions = deleteSessions;
 const arrangeData = (data, documentId, timezone) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
         const conversations = [];
         const fetchChatbot = yield Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
@@ -817,13 +817,13 @@ const arrangeData = (data, documentId, timezone) => __awaiter(void 0, void 0, vo
         for (let i = 0; i < data.length; i++) {
             const fetchMessages = yield Models.messageModel.find({ sessionId: data[i]._id }, projection, optionWithSortAsc);
             const startDate = (0, moment_timezone_1.default)((_a = fetchMessages[0]) === null || _a === void 0 ? void 0 : _a.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
-            const endDate = (0, moment_timezone_1.default)(fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1].createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
+            const endDate = (0, moment_timezone_1.default)((_b = fetchMessages[(fetchMessages === null || fetchMessages === void 0 ? void 0 : fetchMessages.length) - 1]) === null || _b === void 0 ? void 0 : _b.createdAt).tz(serverTimezone).format('YYYY-MM-DD HH:mm');
             const messages = fetchMessages.map(message => ({
-                role: message.messageType === message_model_1.Role.AI ? "Assistant" : "User",
-                message: message.message
+                role: (message === null || message === void 0 ? void 0 : message.messageType) === message_model_1.Role.AI ? "Assistant" : "User",
+                message: message === null || message === void 0 ? void 0 : message.message
             }));
             const convoData = {
-                sessionId: (_b = data[i]) === null || _b === void 0 ? void 0 : _b._id.toString(),
+                sessionId: (_c = data[i]) === null || _c === void 0 ? void 0 : _c._id.toString(),
                 startDate: startDate,
                 endDate: endDate,
                 messages: messages
