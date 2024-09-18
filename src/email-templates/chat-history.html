@@ -17,6 +17,12 @@
             /* Adjust container to fit full width */
         }
 
+        .container,
+        .section,
+        .session {
+            page-break-inside: avoid;
+        }
+
         h1 {
             text-align: center;
         }
@@ -37,7 +43,7 @@
         td {
             padding: 5px;
             /* Reduced padding */
-            border-bottom: 1px solid #ddd;
+            /* border-bottom: 1px solid #ddd; */
         }
 
         tr:nth-child(even) td {
