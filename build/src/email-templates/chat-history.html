@@ -32,12 +32,13 @@
             margin-bottom: 0;
             padding-bottom: 0;
         }
-/* 
+
+        /* 
         .container {
             max-width: 100%;
             /* Adjust container to fit full width */
-        /* } */ */
-
+        /* } */
+        */
         /* .container,
         .section,
         .session {
@@ -51,6 +52,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         th {
@@ -59,10 +61,14 @@
             padding: 5px;
             /* Reduced padding */
             text-align: left;
+            white-space: nowrap;
+            /* Prevent extra space */
+
         }
 
         td {
             padding: 5px;
+            white-space: normal;
             /* Reduced padding */
             /* border-bottom: 1px solid #ddd; */
         }
