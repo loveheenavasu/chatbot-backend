@@ -5,23 +5,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        /* body {
             margin: 0;
             /* Ensure no body margin */
+        /* }  */
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
             font-size: 8px;
+            padding: 0;
         }
 
         .container {
+            page-break-inside: avoid;
             max-width: 100%;
-            /* Adjust container to fit full width */
+            margin: 0;
+            padding: 0;
         }
 
-        .container,
         .section,
         .session {
             page-break-inside: avoid;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
+/* 
+        .container {
+            max-width: 100%;
+            /* Adjust container to fit full width */
+        /* } */ */
+
+        /* .container,
+        .section,
+        .session {
+            page-break-inside: avoid;
+        } */
 
         h1 {
             text-align: center;
