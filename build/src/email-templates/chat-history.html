@@ -7,39 +7,36 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 1px;
+            margin: 0;
+            /* Ensure no body margin */
             font-size: 8px;
         }
 
         .container {
-            max-width: 800px;
-            /* margin: 0 auto; */
+            max-width: 100%;
+            /* Adjust container to fit full width */
         }
 
         h1 {
             text-align: center;
         }
 
-        /* .section {
-            margin-bottom: 20px;
-        } */
-
         table {
             width: 100%;
             border-collapse: collapse;
-            /* margin-top: 20px; */
         }
 
         th {
             background-color: #7ab3e7;
-            /* background-color: #2e86e4; */
             color: white;
-            padding: 10px;
+            padding: 5px;
+            /* Reduced padding */
             text-align: left;
         }
 
         td {
-            padding: 10px;
+            padding: 5px;
+            /* Reduced padding */
             border-bottom: 1px solid #ddd;
         }
 
@@ -51,35 +48,22 @@
             background-color: #ffffff;
         }
 
-        .role {
-            font-weight: bold;
-        }
-
         .session {
-            border: 1px solid #ddd;
             padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            /* Add some space for each session */
+            margin-bottom: 10px;
+            /* Ensure consistent spacing */
         }
 
-        .info-table td,
-        .info-table th {
-            text-align: left;
-        }
-
-        /* Specific styles for the Chatbot Details table */
         .chatbot-details-table {
             margin: 0;
             border: 1px solid #ddd;
-            /* Border around the table */
             border-collapse: collapse;
-            /* Ensure borders are collapsed */
         }
 
         .chatbot-details-table th,
         .chatbot-details-table td {
             border: 1px solid #ddd;
-            /* Border around table cells */
         }
     </style>
 </head>
@@ -87,7 +71,6 @@
 <body>
     <div class="container">
         <div class="section">
-            <!-- <h2>Chatbot Details</h2> -->
             <table class="chatbot-details-table">
                 <thead>
                     <tr>
@@ -122,7 +105,7 @@
                         <tr>
                             <td>{{sessionId}}</td>
                             <td>{{startDate}}</td>
-                            <td>{{endDate}} </td>
+                            <td>{{endDate}}</td>
                         </tr>
                     </tbody>
                 </table>
