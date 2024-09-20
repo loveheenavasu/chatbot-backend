@@ -124,7 +124,7 @@ const searchFromAi = (contents, search) => __awaiter(void 0, void 0, void 0, fun
                     content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.
                         - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
                         - If the user says something neutral or non-informative like "how are you" "okay", "thanks", "alright", respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
-                        - - If the user responds positively, like "I'm good" or "I'm fine", respond with "I'm very glad to know! If there's anything further I can do for you, please don't hesitate to let me know — I am here to help in any way I can."`
+                        - - If the user responds positively, like "I'm good", "I'm doing great" or "I'm fine", respond with "I'm very glad to know! If there's anything further I can do for you, please don't hesitate to let me know — I am here to help in any way I can."`
                 },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
             ],
