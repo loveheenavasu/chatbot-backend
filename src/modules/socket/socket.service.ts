@@ -87,8 +87,8 @@ const searchInput = async (search: string, documentId: string): Promise<string |
 const searchFromAi = async (contents: string, search: string): Promise<string | null> => {
     try {
         const response = await open.chat.completions.create({
-            // model: 'gpt-3.5-turbo-1106',
-            model: 'gpt-4o',
+            model: 'gpt-3.5-turbo-1106',
+            // model: 'gpt-4o',
             messages: [
                 {
                     role: 'system',

@@ -116,8 +116,8 @@ const searchFromAi = (contents, search) => __awaiter(void 0, void 0, void 0, fun
     var _a, _b;
     try {
         const response = yield open.chat.completions.create({
-            // model: 'gpt-3.5-turbo-1106',
-            model: 'gpt-4o',
+            model: 'gpt-3.5-turbo-1106',
+            // model: 'gpt-4o',
             messages: [
                 {
                     role: 'system',
