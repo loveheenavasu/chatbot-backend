@@ -97,7 +97,6 @@ const saveMessage = (message, documentId, ipAddressId, sessionId, messageType) =
 });
 exports.saveMessage = saveMessage;
 const searchInput = (search, documentId) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     try {
         // await saveMessage(search, documentId, ipAddressId, sessionId, Role.User); //save user search input message in db
         const embeddingVector = yield openai.embedQuery(search);
@@ -105,32 +104,39 @@ const searchInput = (search, documentId) => __awaiter(void 0, void 0, void 0, fu
         const filter = { "documentId": { "$eq": documentId } };
         const searchResult = yield vectorStore.similaritySearchVectorWithScore(embeddingVector, 5, "", { filter, filterType: 'exact' }); // search embeddings into vector db according to our input search embeddingVector and on exact filter documents.
         const contents = searchResult.map((result) => result[0].pageContent).join(" ");
-        const response = yield open.chat.completions.create({
-            model: 'gpt-3.5-turbo-1106',
-            messages: [
-                {
-                    role: 'system',
-                    //         content: `You are an assistant that responds based on the provided content. 
-                    // - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
-                    // - If the user says something neutral or non-informative like "how are you" "okay", "thanks", "alright", respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
-                    // - If the user asks a question or makes a statement related to the provided content, respond based on the provided content.
-                    // - Do not use any external knowledge.`
-                    content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.
-                        - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.`
-                },
-                { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
-            ],
-            max_tokens: 150,
-            stop: ['\n'],
-        }); // answers the search questions based on the content that is provided to openai.
-        const message = (_b = (_a = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content; // message that comes from openai response
-        return message;
+        const response = yield searchFromAi(contents, search);
+        return response;
     }
     catch (err) {
         return Handler.handleCustomError(err);
     }
 });
 exports.searchInput = searchInput;
+const searchFromAi = (contents, search) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    try {
+        const response = yield open.chat.completions.create({
+            // model: 'gpt-3.5-turbo-1106',
+            model: 'gpt-4o',
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.
+                        - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
+                        - If the user says something neutral or non-informative like "how are you" "okay", "thanks", "alright", respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
+                        - - If the user responds positively, like "I'm good" or "I'm fine", respond with "I'm very glad to know! If there's anything further I can do for you, please don't hesitate to let me know — I am here to help in any way I can."`
+                },
+                { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
+            ],
+            max_tokens: 150,
+            stop: ['\n'],
+        }); // answers the search questions based on the content that is provided to openai.
+        return (_b = (_a = response === null || response === void 0 ? void 0 : response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content; // message that comes from openai response 
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
 const saveChatSession = (ipAddressId, isFormCompleted) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const dataToSave = {

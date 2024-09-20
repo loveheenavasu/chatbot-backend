@@ -51,7 +51,6 @@ const SocketRes = async (message: string | null, sessionId: string | null, type:
     }
 }
 
-
 const saveMessage = async (message: string | null, documentId: string, ipAddressId: Types.ObjectId, sessionId: Types.ObjectId, messageType: string) => {
     try {
         const dataToSave: Message = {
@@ -77,31 +76,39 @@ const searchInput = async (search: string, documentId: string): Promise<string |
         const filter = { "documentId": { "$eq": documentId } };
         const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 5, "", { filter, filterType: 'exact' }); // search embeddings into vector db according to our input search embeddingVector and on exact filter documents.
         const contents = searchResult.map((result: [Document, number]) => result[0].pageContent).join(" ");
+        const response = await searchFromAi(contents, search);
+        return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const searchFromAi = async (contents: string, search: string): Promise<string | null> => {
+    try {
         const response = await open.chat.completions.create({
-            model: 'gpt-3.5-turbo-1106',
+            // model: 'gpt-3.5-turbo-1106',
+            model: 'gpt-4o',
             messages: [
                 {
                     role: 'system',
-            //         content: `You are an assistant that responds based on the provided content. 
-            // - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
-            // - If the user says something neutral or non-informative like "how are you" "okay", "thanks", "alright", respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
-            // - If the user asks a question or makes a statement related to the provided content, respond based on the provided content.
-            // - Do not use any external knowledge.`
                     content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.
-                        - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.`
+                        - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
+                        - If the user says something neutral or non-informative like "how are you" "okay", "thanks", "alright", respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
+                        - - If the user responds positively, like "I'm good" or "I'm fine", respond with "I'm very glad to know! If there's anything further I can do for you, please don't hesitate to let me know — I am here to help in any way I can."`
                 },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
             ],
             max_tokens: 150,
             stop: ['\n'],
         }); // answers the search questions based on the content that is provided to openai.
-        const message = response?.choices[0]?.message?.content  // message that comes from openai response
-        return message;
+        return response?.choices[0]?.message?.content  // message that comes from openai response 
     }
     catch (err) {
         return Handler.handleCustomError(err as ErrorResponse);
     }
 }
+
 
 const saveChatSession = async (ipAddressId: Types.ObjectId, isFormCompleted: boolean): Promise<ChatSession> => {
     try {
