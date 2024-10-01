@@ -3,7 +3,6 @@ import * as Service from './user.service';
 import * as Handler from '../../handler/handler';
 import { ErrorResponse } from '../../handler/error';
 import { CustomRequest } from '../../interfaces/common.interface';
-import fs from 'fs';
 
 const signup = async (req: Request, res: Response) => {
     try {

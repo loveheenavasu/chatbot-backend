@@ -70,7 +70,6 @@ const saveMessage = async (message: string | null, documentId: string, ipAddress
 
 const searchInput = async (search: string, documentId: string): Promise<string | null> => {
     try {
-        // await saveMessage(search, documentId, ipAddressId, sessionId, Role.User); //save user search input message in db
         const embeddingVector = await openai.embedQuery(search);
         const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, neoConfig); // Initialize the vector store
         const filter = { "documentId": { "$eq": documentId } };
@@ -94,8 +93,13 @@ const searchFromAi = async (contents: string, search: string): Promise<string | 
                     role: 'system',
                     content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.
                         - If the user greets you with phrases like "hello", "hi", "hey", or similar, respond with a simple greeting like "Hello!" and do not respond with the provided content.
-                        - If the user says something neutral or non-informative like "how are you" "okay", "thanks", "alright", respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
-                        - - If the user responds positively, like "I'm good", "I'm doing great" or "I'm fine", respond with "I'm very glad to know! If there's anything further I can do for you, please don't hesitate to let me know — I am here to help in any way I can."`
+                        - If the user says something neutral or non-informative like "how are you" respond with a polite acknowledgment such as "I am doing great, thanks for asking! How about you?" and do not reference the provided content.
+                        - If the user says something neutral or non-informative like "okay", "ok", "oki", "okh", "alright" respond with a polite acknowledgment such as "Got it! If you need anything or have any questions, feel free to ask." or "You're welcome!" and do not reference the provided content.
+                        - If the user says something neutral or non-informative like "thanks", "thank you" respond with a polite acknowledgment such as "You're welcome!" and do not reference the provided content.
+                        - If the user responds positively, like "I'm good", "I'm doing great" or "I'm fine", respond with "I'm very glad to know! If there's anything further I can do for you, please don't hesitate to let me know — I am here to help in any way I can."
+                        - If the user says something neutral or non-informative like "bye", "goodbye" respond with a polite acknowledgment such as "Goodbye! Feel free to reach out if you have more questions in the future." and do not reference the provided content.
+                        `
+                    
                 },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
             ],
