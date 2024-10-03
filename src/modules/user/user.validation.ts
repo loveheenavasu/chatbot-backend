@@ -152,7 +152,7 @@ const documentIdWithPL = (req: Request, res: Response, next: NextFunction) => {
             startDate: Joi.string().optional(),
             endDate: Joi.string().optional(),
             exportFile: Joi.string().optional(),
-            timezone:Joi.string().optional()
+            timezone: Joi.string().optional()
         });
         const { error } = schema.validate(req.query);
         if (error) return Handler.handleJoiError(error);
@@ -246,7 +246,9 @@ const uploadFile = (req: Request, res: Response, next: NextFunction) => {
 const themeCreate = (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
-            theme: Joi.string().trim().required()
+            documentId: Joi.string().trim().required(),
+            theme: Joi.string().trim().required(),
+            color: Joi.string().trim().optional()
         });
         const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);

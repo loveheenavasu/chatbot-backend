@@ -3,16 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.colorType = void 0;
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = __importDefault(require("mongoose"));
-var colorType;
-(function (colorType) {
-    colorType["PRIMARY"] = "PRIMARY";
-    colorType["SECONDARY"] = "SECONDARY";
-})(colorType || (exports.colorType = colorType = {}));
 const themeSchema = new mongoose_1.default.Schema({
     theme: { type: String, default: null },
+    color: { type: String, default: null },
+    documentId: { type: String, default: null },
     createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 }, {

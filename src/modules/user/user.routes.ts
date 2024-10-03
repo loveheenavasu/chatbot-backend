@@ -30,7 +30,8 @@ router.get('/chat-history-export', Validation.documentIdWithPL, Controller.chatH
 router.get('/chat', Validation.sessionIdWithPL, authorization, Controller.chatDetail)
 
 router.post('/theme', Validation.themeCreate, Controller.createTheme)
-router.get('/theme', Controller.themeList)
+// router.get('/theme/:documentId', Controller.themeList)
+router.get('/theme-detail/:documentId', Controller.themeDetail)
 
 router.post('/form', Validation.formAdd, authorization, Controller.formAdd)
 router.put('/form', Validation.formUpdate, authorization, Controller.formUpdate)

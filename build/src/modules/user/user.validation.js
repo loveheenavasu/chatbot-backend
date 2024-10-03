@@ -284,7 +284,9 @@ exports.uploadFile = uploadFile;
 const themeCreate = (req, res, next) => {
     try {
         const schema = joi_1.default.object({
-            theme: joi_1.default.string().trim().required()
+            documentId: joi_1.default.string().trim().required(),
+            theme: joi_1.default.string().trim().required(),
+            color: joi_1.default.string().trim().optional()
         });
         const { error } = schema.validate(req.body);
         if (error)

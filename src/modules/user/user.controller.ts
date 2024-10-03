@@ -241,6 +241,17 @@ const themeList = async (req: Request, res: Response) => {
     }
 }
 
+
+const themeDetail = async (req: Request, res: Response) => {
+    try {
+        const response = await Service.themeDetail(req);
+        return Handler.handleSuccess(res, response);
+    }
+    catch (err) {
+        return Handler.handleCatchError(res, err as ErrorResponse);
+    }
+}
+
 const formAdd = async (req: Request, res: Response) => {
     try {
         const response = await Service.formAdd(req);
@@ -330,5 +341,6 @@ export {
     formInfoAdd,
     formChatbot,
     profile,
-    chatHistoryExport
+    chatHistoryExport,
+    themeDetail
 }

@@ -30,8 +30,9 @@ import { config } from 'dotenv';
 import Forms from '../../interfaces/form.interface';
 import fs from 'fs';
 import { Role } from '../../models/message.model';
-import { ChatHistory, ChatbotResponse, FormChatbot, FormResponse, List, MessageResponse, MessageResponseList, ResponseList, UserInfoResponse, UserResponse, VerifyResponse, arrangeChatHistoryData, Response, ConvoData, ExportData } from '../../types/response';
+import { ChatHistory, ChatbotResponse, FormChatbot, FormResponse, List, MessageResponse, MessageResponseList, ResponseList, UserInfoResponse, UserResponse, VerifyResponse, arrangeChatHistoryData, Response, ConvoData, ExportData, ThemeResponse, ThemeResponseList } from '../../types/response';
 import { generatePdf } from '../../common/utility/generate-pdf';
+import Theme from '../../interfaces/theme.interface';
 const { v4: uuidv4 } = require('uuid');
 config();
 
@@ -800,7 +801,7 @@ const deleteSessions = async (query: object) => {
     }
 }
 
-const arrangeData = async (data: List[], documentId: string, timezone:string | undefined): Promise<arrangeChatHistoryData> => {
+const arrangeData = async (data: List[], documentId: string, timezone: string | undefined): Promise<arrangeChatHistoryData> => {
     try {
         const conversations: ConvoData[] = [];
         const fetchChatbot = await Models.chatbotModel.findOne({ documentId: documentId }, projection, option);
@@ -979,31 +980,30 @@ const chatDetail = async (req: CustomRequest): Promise<MessageResponseList> => {
     }
 }
 
-const createTheme = async (req: Request): Promise<Response> => {
+const createTheme = async (req: Request): Promise<ThemeResponse> => {
     try {
-        const { theme } = req.body;
-        const fetchData = await Models.themeModel.findOne({}, projection, option);
+        const { theme, color, documentId } = req.body;
+        const fetchData = await Models.themeModel.findOne({ documentId: documentId }, projection, option);
         if (fetchData) {
             const { _id } = fetchData;
-            const update = { theme: theme };
-            let updateData = await Models.themeModel.findOneAndUpdate({ _id: _id }, update, options);
-            const response: Response = {
+            let updateData = await Models.themeModel.findOneAndUpdate({ _id: _id }, { theme, color }, options);
+            const response: ThemeResponse = {
                 message: "Theme created successfully",
                 data: updateData!
             }
             return response;
         }
         else {
-            const dataToSave = {
-                theme,
-                createdAt: moment().utc().valueOf()
-            }
-            const saveData = await Models.themeModel.create(dataToSave);
-            const response: Response = {
-                message: "Theme created successfully",
-                data: saveData
-            }
-            return response;
+        const dataToSave = {
+            theme, color, documentId,
+            createdAt: moment().utc().valueOf()
+        }
+        const saveData = await Models.themeModel.create(dataToSave);
+        const response: ThemeResponse = {
+            message: "Theme created successfully",
+            data: saveData
+        }
+        return response;
         }
     }
     catch (err) {
@@ -1011,15 +1011,27 @@ const createTheme = async (req: Request): Promise<Response> => {
     }
 }
 
-const themeList = async (req: Request): Promise<ResponseList> => {
+const themeList = async (req: Request): Promise<ThemeResponseList> => {
     try {
-        const data = await Models.themeModel.find({}, projection, option);
-        const count = await Models.themeModel.countDocuments({});
-        const response: ResponseList = {
+        const { documentId } = req.params;
+        const data = await Models.themeModel.find({ documentId: documentId }, projection, option);
+        const count = await Models.themeModel.countDocuments({ documentId: documentId });
+        const response: ThemeResponseList = {
             count: count,
             data: data
         };
         return response;
+    }
+    catch (err) {
+        return Handler.handleCustomError(err as ErrorResponse);
+    }
+}
+
+const themeDetail = async (req: Request): Promise<Theme> => {
+    try {
+        const { documentId } = req.params;
+        const fetchData: Theme | null = await Models.themeModel.findOne({ documentId: documentId }, projection, option);
+        return fetchData! ?? {};
     }
     catch (err) {
         return Handler.handleCustomError(err as ErrorResponse);
@@ -1193,5 +1205,6 @@ export {
     formInfoAdd,
     formChatbot,
     profile,
-    chatHistoryExport
+    chatHistoryExport,
+    themeDetail
 }

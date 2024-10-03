@@ -55,7 +55,8 @@ router.get('/chat-history', Validation.documentIdWithPL, authorization_1.authori
 router.get('/chat-history-export', Validation.documentIdWithPL, Controller.chatHistoryExport);
 router.get('/chat', Validation.sessionIdWithPL, authorization_1.authorization, Controller.chatDetail);
 router.post('/theme', Validation.themeCreate, Controller.createTheme);
-router.get('/theme', Controller.themeList);
+// router.get('/theme/:documentId', Controller.themeList)
+router.get('/theme-detail/:documentId', Controller.themeDetail);
 router.post('/form', Validation.formAdd, authorization_1.authorization, Controller.formAdd);
 router.put('/form', Validation.formUpdate, authorization_1.authorization, Controller.formUpdate);
 router.get('/form', Validation.documentId, authorization_1.authorization, Controller.formDetail);

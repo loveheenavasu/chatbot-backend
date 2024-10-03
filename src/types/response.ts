@@ -3,6 +3,7 @@ import Forms from "../interfaces/form.interface";
 import UserInfo from "../interfaces/information.interface";
 import Message from "../interfaces/message.interface";
 import Text from "../interfaces/text.interface";
+import Theme from "../interfaces/theme.interface";
 import User from "../interfaces/user.interface";
 
 export type UserResponse = {
@@ -13,6 +14,11 @@ export type UserResponse = {
 export type Response = {
     message: string;
     data: Text
+}
+
+export type ThemeResponse = {
+    message: string;
+    data: Theme
 }
 
 export type FormResponse = {
@@ -37,6 +43,11 @@ export type VerifyResponse = {
 export type ResponseList = {
     count: number;
     data: Text[];
+}
+
+export type ThemeResponseList = {
+    count: number;
+    data: Theme[];
 }
 
 export type ChatbotResponse = {

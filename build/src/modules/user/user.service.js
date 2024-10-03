@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chatHistoryExport = exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
+exports.themeDetail = exports.chatHistoryExport = exports.profile = exports.formChatbot = exports.formInfoAdd = exports.formWithIp = exports.formUpdate = exports.formDetail = exports.formAdd = exports.themeList = exports.createTheme = exports.chatDetail = exports.chatHistory = exports.deleteSessions = exports.deleteChatbot = exports.chatbotLists = exports.textExtract = exports.logout = exports.deleteFile = exports.textDetail = exports.fileLists = exports.updateTexts = exports.saveTexts = exports.createSession = exports.socialLogin = exports.login = exports.resetPassword = exports.verifyOtp = exports.forgotPassword = exports.resendOtp = exports.verifyEmail = exports.signup = void 0;
 const Models = __importStar(require("../../models/index"));
 const moment_timezone_1 = __importDefault(require("moment-timezone"));
 const mongoose_1 = require("mongoose");
@@ -983,12 +983,11 @@ const chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.chatDetail = chatDetail;
 const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { theme } = req.body;
-        const fetchData = yield Models.themeModel.findOne({}, projection, option);
+        const { theme, color, documentId } = req.body;
+        const fetchData = yield Models.themeModel.findOne({ documentId: documentId }, projection, option);
         if (fetchData) {
             const { _id } = fetchData;
-            const update = { theme: theme };
-            let updateData = yield Models.themeModel.findOneAndUpdate({ _id: _id }, update, options);
+            let updateData = yield Models.themeModel.findOneAndUpdate({ _id: _id }, { theme, color }, options);
             const response = {
                 message: "Theme created successfully",
                 data: updateData
@@ -997,7 +996,7 @@ const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
         }
         else {
             const dataToSave = {
-                theme,
+                theme, color, documentId,
                 createdAt: (0, moment_timezone_1.default)().utc().valueOf()
             };
             const saveData = yield Models.themeModel.create(dataToSave);
@@ -1015,8 +1014,9 @@ const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.createTheme = createTheme;
 const themeList = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const data = yield Models.themeModel.find({}, projection, option);
-        const count = yield Models.themeModel.countDocuments({});
+        const { documentId } = req.params;
+        const data = yield Models.themeModel.find({ documentId: documentId }, projection, option);
+        const count = yield Models.themeModel.countDocuments({ documentId: documentId });
         const response = {
             count: count,
             data: data
@@ -1028,6 +1028,18 @@ const themeList = (req) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.themeList = themeList;
+const themeDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { documentId } = req.params;
+        const fetchData = yield Models.themeModel.findOne({ documentId: documentId }, projection, option);
+        return (_a = fetchData) !== null && _a !== void 0 ? _a : {};
+    }
+    catch (err) {
+        return Handler.handleCustomError(err);
+    }
+});
+exports.themeDetail = themeDetail;
 const formAdd = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { documentId, fields } = req.body;
