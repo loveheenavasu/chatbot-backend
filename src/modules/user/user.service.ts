@@ -937,7 +937,7 @@ const exportFileData = async (file: string, data: arrangeChatHistoryData): Promi
 
 const chatHistory = async (req: CustomRequest): Promise<ChatHistory> => {
     try {
-        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
+        const { documentId, pagination, limit, startDate, endDate } = req.query;
         const setPagination = pagination ?? 1;
         const setLimit = limit ?? 10
         const query: any = [

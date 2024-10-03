@@ -939,7 +939,7 @@ const exportFileData = (file, data) => __awaiter(void 0, void 0, void 0, functio
 const chatHistory = (req) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
     try {
-        const { documentId, pagination, limit, startDate, endDate, exportFile } = req.query;
+        const { documentId, pagination, limit, startDate, endDate } = req.query;
         const setPagination = pagination !== null && pagination !== void 0 ? pagination : 1;
         const setLimit = limit !== null && limit !== void 0 ? limit : 10;
         const query = [
