@@ -74,6 +74,8 @@ const searchInput = async (search: string, documentId: string): Promise<string |
         const vectorStore = await Neo4jVectorStore.fromDocuments([], openai, neoConfig); // Initialize the vector store
         const filter = { "documentId": { "$eq": documentId } };
         const searchResult = await vectorStore.similaritySearchVectorWithScore(embeddingVector, 5, "", { filter, filterType: 'exact' }); // search embeddings into vector db according to our input search embeddingVector and on exact filter documents.
+        console.log("🚀 ~ searchInput ~ searchResult:", searchResult)
+
         const contents = searchResult.map((result: [Document, number]) => result[0].pageContent).join(" ");
         const response = await searchFromAi(contents, search);
         return response;
@@ -90,8 +92,7 @@ const searchFromAi = async (contents: string, search: string): Promise<string | 
             // model: 'gpt-4o',
             messages: [
                 {
-                    role: 'system',
-                    content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.`
+                    role: 'system', content: `You are an assistant that only answers based on the provided content. Do not use any external knowledge.`
                 },
                 { role: 'user', content: `${contents}\nQuery: ${search}\nAnswer based on context:` }
             ],
