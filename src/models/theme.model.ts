@@ -3,9 +3,11 @@ import mongoose, { Types } from 'mongoose';
 import Theme from '../interfaces/theme.interface';
 
 const themeSchema = new mongoose.Schema<Theme>({
-    theme: { type: String, default: null },
-    color: { type: String, default: null },
     documentId: { type: String, default: null },
+    primaryTheme: { type: String, default: null },
+    primaryText: { type: String, default: null },
+    secondaryTheme: { type: String, default: null },
+    secondaryText: { type: String, default: null },
     createdAt: { type: Number, default: () => moment().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 }, {

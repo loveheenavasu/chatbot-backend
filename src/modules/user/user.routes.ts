@@ -29,7 +29,7 @@ router.get('/chat-history', Validation.documentIdWithPL, authorization, Controll
 router.get('/chat-history-export', Validation.documentIdWithPL, Controller.chatHistoryExport)
 router.get('/chat', Validation.sessionIdWithPL, authorization, Controller.chatDetail)
 
-router.post('/theme', Validation.themeCreate, Controller.createTheme)
+router.post('/theme', Validation.themeCreate, authorization, Controller.createTheme)
 // router.get('/theme/:documentId', Controller.themeList)
 router.get('/theme-detail/:documentId', Controller.themeDetail)
 

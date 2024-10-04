@@ -285,8 +285,10 @@ const themeCreate = (req, res, next) => {
     try {
         const schema = joi_1.default.object({
             documentId: joi_1.default.string().trim().required(),
-            theme: joi_1.default.string().trim().required(),
-            color: joi_1.default.string().trim().optional()
+            primaryTheme: joi_1.default.string().trim().required(),
+            primaryText: joi_1.default.string().trim().required(),
+            secondaryTheme: joi_1.default.string().trim().required(),
+            secondaryText: joi_1.default.string().trim().required(),
         });
         const { error } = schema.validate(req.body);
         if (error)

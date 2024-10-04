@@ -982,11 +982,11 @@ const chatDetail = async (req: CustomRequest): Promise<MessageResponseList> => {
 
 const createTheme = async (req: Request): Promise<ThemeResponse> => {
     try {
-        const { theme, color, documentId } = req.body;
+        const { primaryTheme, primaryText, secondaryTheme, secondaryText, documentId } = req.body;
         const fetchData = await Models.themeModel.findOne({ documentId: documentId }, projection, option);
         if (fetchData) {
             const { _id } = fetchData;
-            let updateData = await Models.themeModel.findOneAndUpdate({ _id: _id }, { theme, color }, options);
+            let updateData = await Models.themeModel.findOneAndUpdate({ _id: _id }, { primaryTheme, primaryText, secondaryTheme, secondaryText }, options);
             const response: ThemeResponse = {
                 message: "Theme created successfully",
                 data: updateData!
@@ -995,7 +995,7 @@ const createTheme = async (req: Request): Promise<ThemeResponse> => {
         }
         else {
         const dataToSave = {
-            theme, color, documentId,
+            primaryTheme, primaryText, secondaryTheme, secondaryText, documentId,
             createdAt: moment().utc().valueOf()
         }
         const saveData = await Models.themeModel.create(dataToSave);

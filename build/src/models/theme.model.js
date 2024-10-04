@@ -6,9 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const themeSchema = new mongoose_1.default.Schema({
-    theme: { type: String, default: null },
-    color: { type: String, default: null },
     documentId: { type: String, default: null },
+    primaryTheme: { type: String, default: null },
+    primaryText: { type: String, default: null },
+    secondaryTheme: { type: String, default: null },
+    secondaryText: { type: String, default: null },
     createdAt: { type: Number, default: () => (0, moment_1.default)().utc().valueOf() },
     updatedAt: { type: Number, default: 0 }
 }, {

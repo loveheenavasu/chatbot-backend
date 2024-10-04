@@ -983,11 +983,11 @@ const chatDetail = (req) => __awaiter(void 0, void 0, void 0, function* () {
 exports.chatDetail = chatDetail;
 const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { theme, color, documentId } = req.body;
+        const { primaryTheme, primaryText, secondaryTheme, secondaryText, documentId } = req.body;
         const fetchData = yield Models.themeModel.findOne({ documentId: documentId }, projection, option);
         if (fetchData) {
             const { _id } = fetchData;
-            let updateData = yield Models.themeModel.findOneAndUpdate({ _id: _id }, { theme, color }, options);
+            let updateData = yield Models.themeModel.findOneAndUpdate({ _id: _id }, { primaryTheme, primaryText, secondaryTheme, secondaryText }, options);
             const response = {
                 message: "Theme created successfully",
                 data: updateData
@@ -996,7 +996,7 @@ const createTheme = (req) => __awaiter(void 0, void 0, void 0, function* () {
         }
         else {
             const dataToSave = {
-                theme, color, documentId,
+                primaryTheme, primaryText, secondaryTheme, secondaryText, documentId,
                 createdAt: (0, moment_timezone_1.default)().utc().valueOf()
             };
             const saveData = yield Models.themeModel.create(dataToSave);

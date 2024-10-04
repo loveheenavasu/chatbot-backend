@@ -243,13 +243,16 @@ const uploadFile = (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+
 const themeCreate = (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
             documentId: Joi.string().trim().required(),
-            theme: Joi.string().trim().required(),
-            color: Joi.string().trim().optional()
-        });
+            primaryTheme: Joi.string().trim().required(),
+            primaryText: Joi.string().trim().required(),
+            secondaryTheme: Joi.string().trim().required(),
+            secondaryText: Joi.string().trim().required(),
+        })
         const { error } = schema.validate(req.body);
         if (error) return Handler.handleJoiError(error);
         next();
